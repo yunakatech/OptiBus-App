@@ -1708,18 +1708,25 @@ class AdminOpsApiController extends Controller
         }
         $offset = max(0, ($page - 1) * $perPage);
         $items = ActivityLog::recentForTenant($perPage, $offset);
-        $total = ActivityLog::countForTenant();
-        $lastPage = max(1, (int) ceil($total / $perPage));
-
-        return $this->ok([
+        $response = [
             'logs' => $items,
-            'pagination' => [
+        ];
+
+        // The Logs screen requests a fixed, recent window and does not use
+        // pagination. Counting every visible record can scan the whole log
+        // table for pool-scoped users and time out on large installations.
+        if ($limit <= 0 || $request->query->has('page')) {
+            $total = ActivityLog::countForTenant();
+            $lastPage = max(1, (int) ceil($total / $perPage));
+            $response['pagination'] = [
                 'page' => min($page, $lastPage),
                 'per_page' => $perPage,
                 'total' => $total,
                 'last_page' => $lastPage,
-            ],
-        ]);
+            ];
+        }
+
+        return $this->ok($response);
     }
 
     public function reportsSummary(Request $request): JsonResponse

@@ -209,12 +209,31 @@
     );
     const activeAmount = $derived(Number(summary.active?.amount ?? 0));
     const activeRemaining = $derived(Number(summary.active?.remaining ?? 0));
+    const collectionTotals = $derived.by(() => {
+        const statuses: StatusKey[] = ['unpaid', 'dp', 'paid'];
+
+        return statuses.reduce(
+            (totals, status) => {
+                const bucket = summary.by_status?.[status];
+                const amount = Number(bucket?.amount ?? 0);
+                const remaining = Number(bucket?.remaining ?? 0);
+
+                totals.amount += amount;
+                totals.remaining += Math.max(remaining, 0);
+
+                return totals;
+            },
+            { amount: 0, remaining: 0 },
+        );
+    });
     const activePaidEstimate = $derived(
-        Math.max(activeAmount - activeRemaining, 0),
+        Math.max(collectionTotals.amount - collectionTotals.remaining, 0),
     );
     const activeCollectionRate = $derived(
-        activeAmount > 0
-            ? Math.round((activePaidEstimate / activeAmount) * 100)
+        collectionTotals.amount > 0
+            ? Math.round(
+                  (activePaidEstimate / collectionTotals.amount) * 100,
+              )
             : 0,
     );
     const paymentFilterActiveCount = $derived(
