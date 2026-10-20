@@ -5512,7 +5512,6 @@ class AdminOpsApiController extends Controller
         }
 
         $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
-        $driverNames = $this->armadaDriverNameMap($poolId > 0 ? $poolId : 0);
 
         $pagination = null;
         if ($request->boolean('paginate')) {
@@ -5526,11 +5525,10 @@ class AdminOpsApiController extends Controller
 
         $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
         $rows = $rows
-            ->map(function ($row) use ($financials, $poolNames, $driverNames) {
+            ->map(function ($row) use ($financials, $poolNames) {
                 $row = $this->withArmadaFinancials($row, $financials);
                 $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
                 $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
-                $row->driver_name = $driverNames['by_id'][(int) ($row->id ?? 0)] ?? $driverNames['by_nopol'][$this->normalizeNopol((string) ($row->nopol ?? ''))] ?? null;
 
                 return $row;
             })
@@ -5595,15 +5593,13 @@ class AdminOpsApiController extends Controller
         }
 
         $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
-        $driverNames = $this->armadaDriverNameMap($poolId > 0 ? $poolId : 0);
 
         $rows = $query->get();
         $poolNames = $this->poolNameMap($rows->pluck('pool_id')->map(static fn ($value): int => (int) $value)->all());
-        $rows = $rows->map(function ($row) use ($financials, $poolNames, $driverNames) {
+        $rows = $rows->map(function ($row) use ($financials, $poolNames) {
             $row = $this->withArmadaFinancials($row, $financials);
             $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
             $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
-            $row->driver_name = $driverNames['by_id'][(int) ($row->id ?? 0)] ?? $driverNames['by_nopol'][$this->normalizeNopol((string) ($row->nopol ?? ''))] ?? null;
 
             return $row;
         });
@@ -5613,7 +5609,6 @@ class AdminOpsApiController extends Controller
             fwrite($out, "\xEF\xBB\xBF");
             fputcsv($out, [
                 'nopol',
-                'driver_name',
                 'pool_name',
                 'kategori',
                 'ac_type',
@@ -5641,7 +5636,6 @@ class AdminOpsApiController extends Controller
 
                 fputcsv($out, [
                     $row->nopol ?? '',
-                    $row->driver_name ?? '',
                     $row->pool_name ?? '',
                     $row->kategori ?? '',
                     $row->ac_type ?? '',
@@ -5713,61 +5707,6 @@ class AdminOpsApiController extends Controller
             $month->copy()->endOfMonth()->toDateString(),
             $normalizedPeriod,
         ];
-    }
-
-    /**
-     * @return array{by_id: array<int, string>, by_nopol: array<string, string>}
-     */
-    private function armadaDriverNameMap(int $poolId = 0): array
-    {
-        $result = [
-            'by_id' => [],
-            'by_nopol' => [],
-        ];
-
-        if (! SchemaCache::hasTable('drivers')) {
-            return $result;
-        }
-
-        $select = ['id', 'nama'];
-        if (SchemaCache::hasColumn('drivers', 'armada_id')) {
-            $select[] = 'armada_id';
-        } else {
-            $select[] = DB::raw('NULL as armada_id');
-        }
-        if (SchemaCache::hasColumn('drivers', 'armada_nopol')) {
-            $select[] = 'armada_nopol';
-        } else {
-            $select[] = DB::raw('NULL as armada_nopol');
-        }
-
-        $query = DB::table('drivers')
-            ->select($select)
-            ->when(SchemaCache::hasColumn('drivers', 'tenant_id'), function (Builder $q): void {
-                PoolScope::applyTenantScope($q, 'drivers.tenant_id');
-            });
-        if ($poolId > 0) {
-            $this->applyPoolScopeIfExists($query, 'drivers', '', $poolId);
-        }
-
-        foreach ($query->orderBy('nama')->get() as $row) {
-            $name = trim((string) ($row->nama ?? ''));
-            if ($name === '') {
-                continue;
-            }
-
-            $driverId = (int) ($row->id ?? 0);
-            if ($driverId > 0 && ! isset($result['by_id'][$driverId])) {
-                $result['by_id'][$driverId] = $name;
-            }
-
-            $nopolKey = $this->normalizeNopol((string) ($row->armada_nopol ?? ''));
-            if ($nopolKey !== '' && ! isset($result['by_nopol'][$nopolKey])) {
-                $result['by_nopol'][$nopolKey] = $name;
-            }
-        }
-
-        return $result;
     }
 
     public function armadasSave(Request $request): JsonResponse
@@ -5971,13 +5910,11 @@ class AdminOpsApiController extends Controller
         }
 
         $financials = $this->armadaFinancialsForMonth($monthStart, $monthEnd);
-        $driverNames = $this->armadaDriverNameMap($poolId > 0 ? $poolId : 0);
 
         $row = $this->withArmadaFinancials($row, $financials);
         $row->pool_id = (int) ($row->pool_id ?? 0) ?: null;
         $poolNames = $this->poolNameMap([$row->pool_id ?? 0]);
         $row->pool_name = $row->pool_id ? ($poolNames[$row->pool_id] ?? null) : null;
-        $row->driver_name = $driverNames['by_id'][(int) ($row->id ?? 0)] ?? $driverNames['by_nopol'][$this->normalizeNopol((string) ($row->nopol ?? ''))] ?? null;
         $row->monthly = $this->armadaMonthlyDetailForPeriod($row, $monthStart, $monthEnd, $poolId);
 
         return $this->ok(['armada' => $row]);

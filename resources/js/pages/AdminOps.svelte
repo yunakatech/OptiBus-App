@@ -306,7 +306,6 @@
         target_bulanan: number;
         pool_id?: number | null;
         pool_name?: string | null;
-        driver_name?: string | null;
     };
     type ArmadaMonthlyBookingRow = {
         id: number;
