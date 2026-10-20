@@ -50,7 +50,6 @@
         target_bulanan: number;
         pool_id?: number | null;
         pool_name?: string | null;
-        driver_name?: string | null;
     };
     type ArmadaMonthlyBookingRow = {
         id: number;
@@ -626,7 +625,7 @@
             .map((row) => ({
                 key: String(row.id),
                 label: row.nopol,
-                subtitle: row.driver_name ?? 'Driver belum diatur',
+                subtitle: row.kategori ?? 'Kategori belum diatur',
                 value: Number(row.revenue || 0),
                 valueText: formatCurrency(Number(row.revenue || 0)),
                 tone: 'bg-cyan-500',
@@ -635,7 +634,6 @@
 
     const armadaTableColumns = [
         { key: 'armada', label: 'Armada', width: 'w-[160px]', sticky: 'left' },
-        { key: 'driver', label: 'Driver', width: 'w-[170px]' },
         {
             key: 'revenue',
             label: 'Revenue',
@@ -742,8 +740,7 @@
                         </Badge>
                     </div>
                     <p class="text-xs text-muted-foreground">
-                        {armadaDetail.driver_name ?? 'Driver belum diatur'} · No.
-                        rangka {armadaDetail.nomor_rangka ?? '-'}
+                        No. rangka {armadaDetail.nomor_rangka ?? '-'}
                     </p>
                     <div
                         class="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
@@ -1306,9 +1303,6 @@
                             >
                                 {row.nopol}
                             </p>
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                {row.driver_name ?? 'Driver belum diatur'}
-                            </p>
                         </div>
                         <span
                             class={`inline-flex shrink-0 items-center rounded-full border px-2.5 py-1 text-xs font-bold tabular-nums ${achievementStyle.badge}`}
@@ -1319,7 +1313,7 @@
 
                     <div
                         class="flex min-w-0 flex-wrap items-center gap-2"
-                        aria-label="Informasi driver dan GPS"
+                        aria-label="Status GPS"
                     >
                         <span
                             class={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold ${gpsTone(activeGps)}`}
@@ -1427,12 +1421,6 @@
                         </div>
                         <div class="mt-0.5 text-[10px] text-muted-foreground">
                             {armada.kategori ?? '-'} / {armada.ac_type}
-                        </div>
-                    </td>
-
-                    <td class="px-2.5 py-1.5 align-top">
-                        <div class="truncate font-medium text-foreground">
-                            {armada.driver_name ?? 'Driver belum diatur'}
                         </div>
                     </td>
 
