@@ -440,11 +440,22 @@ class ActivityLog
      */
     private static function publicRow(array $row): array
     {
+        $extra = self::normalizeExtra($row['extra'] ?? []);
+        $actor = trim((string) ($row['actor'] ?? ''));
+
+        if ($actor === '') {
+            $actor = trim((string) ($extra['user_name'] ?? ''));
+        }
+
+        if ($actor === '') {
+            $actor = trim((string) ($extra['user_email'] ?? ''));
+        }
+
         return [
             'tag' => trim((string) ($row['tag'] ?? 'INFO')),
             'title' => trim((string) ($row['title'] ?? '')),
             'meta' => trim((string) ($row['meta'] ?? '')),
-            'actor' => trim((string) ($row['actor'] ?? '')),
+            'actor' => $actor,
             'created_at' => trim((string) ($row['created_at'] ?? '')),
         ];
     }
