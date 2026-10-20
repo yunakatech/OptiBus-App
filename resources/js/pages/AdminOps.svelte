@@ -817,6 +817,7 @@
     let roles = $state<RoleOption[]>([]);
     let activityLogs = $state<ActivityLogRow[]>([]);
     let activityLogsLoading = $state(false);
+    let activityLogsSearch = $state('');
     let activityLogsMeta = $state<Pagination>({
         page: 1,
         per_page: 50,
@@ -4466,10 +4467,15 @@
         activityLogsLoading = true;
 
         try {
-            const r = await api(
-                'GET',
-                `/api/admin/activity-logs?limit=${encodeURIComponent(String(perPage))}&page=${encodeURIComponent(String(page))}`,
-            );
+            const params = new URLSearchParams({
+                limit: String(perPage),
+                page: String(page),
+            });
+            const search = activityLogsSearch.trim();
+            if (search !== '') {
+                params.set('q', search);
+            }
+            const r = await api('GET', `/api/admin/activity-logs?${params}`);
             activityLogs = Array.isArray(r.logs) ? r.logs : [];
             activityLogsMeta = r.pagination ?? {
                 page,
@@ -12891,6 +12897,42 @@
                 <div
                     class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                 >
+                    <form
+                        class="flex flex-col gap-2 border-b border-border/70 bg-muted/10 p-3 sm:flex-row sm:items-end"
+                        onsubmit={(event) => {
+                            event.preventDefault();
+                            void loadLogs(1);
+                        }}
+                    >
+                        <label class="grid min-w-0 flex-1 gap-1.5">
+                            <span class="text-xs font-medium text-foreground">
+                                Cari aktivitas
+                            </span>
+                            <Input
+                                class="h-9"
+                                bind:value={activityLogsSearch}
+                                placeholder="Aktivitas, detail, tag, atau akun pelaku"
+                                disabled={activityLogsLoading}
+                            />
+                        </label>
+                        <div class="flex gap-2">
+                            <Button
+                                type="submit"
+                                size="sm"
+                                disabled={activityLogsLoading}
+                            >Cari</Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={activityLogsLoading || activityLogsSearch.trim() === ''}
+                                onclick={() => {
+                                    activityLogsSearch = '';
+                                    void loadLogs(1);
+                                }}
+                            >Reset</Button>
+                        </div>
+                    </form>
                     {#if activityLogsLoading}
                         <p class="px-3 pt-3 text-xs text-muted-foreground" role="status">
                             Memuat aktivitas...
@@ -13038,7 +13080,9 @@
                     </div>
                     {#if !activityLogsLoading && activityLogs.length === 0}
                         <p class="px-4 py-8 text-center text-sm text-muted-foreground">
-                            Tidak ada aktivitas dalam 14 hari terakhir.
+                            {activityLogsSearch.trim() === ''
+                                ? 'Tidak ada aktivitas dalam 14 hari terakhir.'
+                                : 'Tidak ada aktivitas yang cocok dalam 14 hari terakhir.'}
                         </p>
                     {/if}
                     <div class="flex flex-col gap-3 border-t border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -13046,6 +13090,11 @@
                             <span>
                                 14 hari terakhir · {activityLogsMeta.total === 0 ? 0 : (activityLogsMeta.page - 1) * activityLogsMeta.per_page + 1}–{Math.min(activityLogsMeta.page * activityLogsMeta.per_page, activityLogsMeta.total)} dari {activityLogsMeta.total} aktivitas
                             </span>
+                            {#if activityLogsSearch.trim() !== ''}
+                                <span class="rounded-full bg-muted px-2 py-1 text-foreground">
+                                    Filter: “{activityLogsSearch.trim()}”
+                                </span>
+                            {/if}
                             <label class="flex items-center gap-2">
                                 Baris
                                 <select

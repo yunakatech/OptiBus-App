@@ -1702,14 +1702,16 @@ class AdminOpsApiController extends Controller
         $page = max(1, (int) $request->query('page', 1));
         $limit = (int) $request->query('limit', 50);
         $perPage = max(10, min(100, $limit));
+        $search = trim((string) $request->query('q', ''));
+        $search = mb_substr($search, 0, 120);
         $to = now();
         $from = $to->copy()->subDays(13)->startOfDay();
         $since = $from->toDateTimeString();
-        $total = ActivityLog::countForTenant(null, $since);
+        $total = ActivityLog::countForTenant(null, $since, $search);
         $lastPage = max(1, (int) ceil($total / $perPage));
         $page = min($page, $lastPage);
         $offset = max(0, ($page - 1) * $perPage);
-        $items = ActivityLog::recentForTenant($perPage, $offset, $since);
+        $items = ActivityLog::recentForTenant($perPage, $offset, $since, $search);
 
         return $this->ok([
             'logs' => $items,
@@ -1722,6 +1724,9 @@ class AdminOpsApiController extends Controller
             'date_range' => [
                 'from' => $from->toDateString(),
                 'to' => $to->toDateString(),
+            ],
+            'filters' => [
+                'q' => $search,
             ],
         ]);
     }
