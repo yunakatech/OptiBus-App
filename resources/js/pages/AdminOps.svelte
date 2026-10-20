@@ -180,6 +180,7 @@
         pool_id?: number | null;
         pool_name?: string | null;
     };
+    type DriverDetailData = DriverRow & { monthly?: any };
     type ServiceRow = { id: number; name: string };
     type SegmentRow = {
         id: number;
@@ -772,7 +773,8 @@
 
     let activeTab = $state<TabName>('routes');
     let activeMode = $state<ViewMode>('data');
-    let driverDetail = $state<DriverRow | null>(null);
+    let driverDetail = $state<DriverDetailData | null>(null);
+    let driverDetailLoading = $state(false);
     let poolDetail = $state<PoolRow | null>(null);
     let lockedMenuView = $state(false);
     let busy = $state(false);
@@ -4433,6 +4435,25 @@
         }
     };
 
+    const loadDriverDetail = async (id: number) => {
+        driverDetailLoading = true;
+        try {
+            const params = new URLSearchParams();
+            if (driverPeriod.trim() !== '') {
+                params.set('period', driverPeriod.trim());
+            }
+            const response = await api(
+                'GET',
+                `/api/admin/drivers/${id}${params.size > 0 ? `?${params.toString()}` : ''}`,
+            );
+            driverDetail = response.driver ?? null;
+        } catch (e) {
+            error = e instanceof Error ? e.message : 'Gagal memuat detail driver.';
+        } finally {
+            driverDetailLoading = false;
+        }
+    };
+
     const loadPools = async (preferInertia = true) => {
         if (preferInertia && usesHybridSettings('pools')) {
             reloadSettingsWithInertia();
@@ -4865,6 +4886,7 @@
     const openDriverView = (row: DriverRow) => {
         driverDetail = row;
         setFormMode('view');
+        void loadDriverDetail(row.id);
     };
     const resetServiceForm = () => (serviceForm = { id: 0, name: '' });
     const resetSegmentForm = (
@@ -8808,6 +8830,7 @@
                     <DriversPanelComponent
                         {activeMode}
                         {driverDetail}
+                        {driverDetailLoading}
                         {drivers}
                         {driverMeta}
                         bind:driverSearch

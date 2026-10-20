@@ -691,6 +691,26 @@ class AdminOpsApiController extends Controller
         }
     }
 
+    public function driversShow(Request $request, int $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'pool_id' => ['nullable', 'integer', 'min:0'],
+            'period' => ['nullable', 'date_format:Y-m'],
+        ]);
+        $poolId = (int) ($validated['pool_id'] ?? 0);
+        [$monthStart, $monthEnd] = $this->driverPeriodBounds($validated['period'] ?? null);
+        $driver = collect($this->driverRowsForMonth($monthStart, $monthEnd, $poolId))
+            ->first(static fn (array $row): bool => (int) ($row['id'] ?? 0) === $id);
+
+        if ($driver === null) {
+            return $this->error('Driver tidak ditemukan.', 404);
+        }
+
+        $driver['monthly'] = $this->driverMonthlyDetailForPeriod($driver, $monthStart, $monthEnd, $poolId);
+
+        return $this->ok(['driver' => $driver]);
+    }
+
     public function driversExport(Request $request): StreamedResponse
     {
         $validated = $request->validate([
@@ -10661,6 +10681,190 @@ XML;
         $row->bop = (float) ($bucket['bop'] ?? 0);
 
         return $row;
+    }
+
+    /**
+     * @param array<string, mixed> $driver
+     * @return array{
+     *     summary: array<string, mixed>,
+     *     bookings: array<int, array<string, mixed>>,
+     *     charters: array<int, array<string, mixed>>,
+     *     bagasi: array<int, array<string, mixed>>
+     * }
+     */
+    private function driverMonthlyDetailForPeriod(array $driver, string $monthStart, string $monthEnd, int $poolId = 0): array
+    {
+        $driverId = (int) ($driver['id'] ?? 0);
+        $driverName = $this->normalizeDriverName((string) ($driver['nama'] ?? ''));
+        $bookings = [];
+
+        if (SchemaCache::hasTable('bookings') && SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'driver_id')) {
+            $bookingQuery = DB::table('bookings as b')
+                ->join('trip_assignments as t', function ($join): void {
+                    $join->on('b.rute', '=', 't.rute')
+                        ->on('b.tanggal', '=', 't.tanggal')
+                        ->on('b.jam', '=', 't.jam')
+                        ->on('b.unit', '=', 't.unit');
+                })
+                ->where('t.driver_id', $driverId)
+                ->whereBetween('b.tanggal', [$monthStart, $monthEnd])
+                ->when(SchemaCache::hasColumn('bookings', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 'b.tenant_id');
+                })
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 't.tenant_id');
+                });
+            $this->applyPoolOrRouteScopeToQuery(
+                $bookingQuery,
+                SchemaCache::hasColumn('trip_assignments', 'pool_id') ? 't.pool_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'route_id') ? 't.route_id' : '',
+                SchemaCache::hasColumn('trip_assignments', 'rute') ? 't.rute' : '',
+                $poolId,
+            );
+            $this->applyNotCanceledFilter($bookingQuery, 'b.status');
+            $bookings = $bookingQuery->orderByDesc('b.tanggal')->orderByDesc('b.jam')->orderByDesc('b.id')->get([
+                'b.id', 'b.tanggal', 'b.jam', 'b.rute', 'b.unit', 'b.seat', 'b.name', 'b.phone',
+                'b.pickup_point', 'b.pembayaran', 'b.status', 'b.price', 'b.discount',
+            ])->map(static fn (object $row): array => [
+                'id' => (int) $row->id,
+                'tanggal' => (string) ($row->tanggal ?? ''),
+                'jam' => substr((string) ($row->jam ?? ''), 0, 5),
+                'departure_date' => (string) ($row->tanggal ?? ''),
+                'rute' => (string) ($row->rute ?? ''),
+                'unit' => (int) ($row->unit ?? 0),
+                'seat' => (string) ($row->seat ?? ''),
+                'name' => (string) ($row->name ?? ''),
+                'phone' => (string) ($row->phone ?? ''),
+                'pickup_point' => (string) ($row->pickup_point ?? ''),
+                'pembayaran' => (string) ($row->pembayaran ?? ''),
+                'status' => (string) ($row->status ?? ''),
+                'total' => max(0.0, (float) ($row->price ?? 0) - (float) ($row->discount ?? 0)),
+                'revenue' => max(0.0, (float) ($row->price ?? 0) - (float) ($row->discount ?? 0)),
+                'bop' => 0.0,
+            ])->values()->all();
+        }
+
+        $charters = [];
+        if (SchemaCache::hasTable('charters') && SchemaCache::hasColumn('charters', 'driver_name')) {
+            $charterQuery = DB::table('charters as c')
+                ->whereBetween('c.start_date', [$monthStart, $monthEnd])
+                ->when(SchemaCache::hasColumn('charters', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 'c.tenant_id');
+                });
+            $this->applyCharterPoolScope($charterQuery, $poolId);
+            $this->applyActiveCharterReportFilter($charterQuery, 'c');
+            $charterRows = $charterQuery->orderByDesc('c.start_date')->orderByDesc('c.id')->get([
+                'c.id', 'c.start_date', 'c.end_date', 'c.departure_time', 'c.name', 'c.phone',
+                'c.pickup_point', 'c.drop_point', 'c.layanan', 'c.payment_status', 'c.bop_status',
+                DB::raw($this->chartersHasStatusColumn() ? 'c.status as status' : 'NULL as status'),
+                'c.price', 'c.bop_price', 'c.driver_name',
+                SchemaCache::hasColumn('charters', 'armada_nopol') ? 'c.armada_nopol' : DB::raw("'' as armada_nopol"),
+            ]);
+            $charters = $charterRows
+                ->filter(fn (object $row): bool => $this->normalizeDriverName((string) ($row->driver_name ?? '')) === $driverName)
+                ->map(fn (object $row): array => [
+                    'id' => (int) $row->id,
+                    'start_date' => (string) ($row->start_date ?? ''),
+                    'end_date' => (string) ($row->end_date ?? ''),
+                    'departure_date' => (string) ($row->start_date ?? ''),
+                    'departure_time' => (string) ($row->departure_time ?? ''),
+                    'name' => (string) ($row->name ?? ''),
+                    'phone' => (string) ($row->phone ?? ''),
+                    'pickup_point' => (string) ($row->pickup_point ?? ''),
+                    'drop_point' => (string) ($row->drop_point ?? ''),
+                    'layanan' => (string) ($row->layanan ?? ''),
+                    'payment_status' => (string) ($row->payment_status ?? ''),
+                    'bop_status' => (string) ($row->bop_status ?? ''),
+                    'status' => (string) ($row->status ?? ''),
+                    'armada_nopol' => (string) ($row->armada_nopol ?? ''),
+                    'driver_name' => (string) ($row->driver_name ?? ''),
+                    'total' => (float) ($row->price ?? 0),
+                    'revenue' => (float) ($row->price ?? 0),
+                    'bop' => (float) ($row->bop_price ?? 0),
+                ])->values()->all();
+        }
+
+        $bagasi = [];
+        if (SchemaCache::hasTable('luggages') && SchemaCache::hasTable('trip_assignments') && SchemaCache::hasColumn('trip_assignments', 'driver_id')) {
+            $luggageDate = SchemaCache::hasColumn('luggages', 'tanggal')
+                ? 'l.tanggal'
+                : (SchemaCache::hasColumn('luggages', 'created_at') ? 'DATE(l.created_at)' : 't.tanggal');
+            $luggageQuery = DB::table('luggages as l')
+                ->join('trip_assignments as t', 'l.trip_assignment_id', '=', 't.id')
+                ->leftJoin('luggage_services as s', 'l.service_id', '=', 's.id')
+                ->where('t.driver_id', $driverId)
+                ->whereBetween(DB::raw('COALESCE('.$luggageDate.', t.tanggal)'), [$monthStart, $monthEnd])
+                ->when(SchemaCache::hasColumn('luggages', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 'l.tenant_id');
+                })
+                ->when(SchemaCache::hasColumn('trip_assignments', 'tenant_id'), function (Builder $query): void {
+                    PoolScope::applyTenantScope($query, 't.tenant_id');
+                });
+            $this->applyPoolOrRouteScopeToQuery(
+                $luggageQuery,
+                $this->luggagesHasPoolIdColumn() ? 'l.pool_id' : '',
+                SchemaCache::hasColumn('luggages', 'rute_id') ? 'l.rute_id' : '',
+                SchemaCache::hasColumn('luggages', 'rute') ? 'l.rute' : '',
+                $poolId,
+            );
+            $this->applyLuggageStatusFilter($luggageQuery, 'l.status', $this->luggageRevenueStatuses());
+            $bagasi = $luggageQuery->orderByDesc('l.created_at')->orderByDesc('l.id')->get([
+                'l.id', DB::raw('COALESCE(l.tanggal, DATE(l.created_at), t.tanggal) as tanggal'),
+                'l.created_at', 'l.kode_resi', 'l.sender_name', 'l.receiver_name', 'l.quantity',
+                'l.payment_status', 'l.status', 'l.price', DB::raw('s.name as service_name'),
+                DB::raw('t.tanggal as departure_date'), DB::raw('t.jam as departure_time'), DB::raw('t.unit as departure_unit'),
+            ])->map(static fn (object $row): array => [
+                'id' => (int) $row->id,
+                'tanggal' => (string) ($row->tanggal ?? ''),
+                'created_at' => (string) ($row->created_at ?? ''),
+                'departure_date' => (string) ($row->departure_date ?? ($row->tanggal ?? '')),
+                'kode_resi' => (string) ($row->kode_resi ?? ''),
+                'sender_name' => (string) ($row->sender_name ?? ''),
+                'receiver_name' => (string) ($row->receiver_name ?? ''),
+                'quantity' => (int) ($row->quantity ?? 0),
+                'payment_status' => (string) ($row->payment_status ?? ''),
+                'status' => (string) ($row->status ?? ''),
+                'service_name' => (string) ($row->service_name ?? ''),
+                'total' => (float) ($row->price ?? 0),
+                'revenue' => (float) ($row->price ?? 0),
+                'bop' => 0.0,
+                'departure_time' => substr((string) ($row->departure_time ?? ''), 0, 5),
+                'departure_unit' => (int) ($row->departure_unit ?? 0),
+            ])->values()->all();
+        }
+
+        $revenue = (float) ($driver['revenue'] ?? 0);
+        $bop = (float) ($driver['bop'] ?? 0);
+        $fixedCost = (float) ($driver['fixed_cost'] ?? 0);
+        $target = (float) ($driver['target_revenue_bulanan'] ?? 0);
+        $achievement = $target > 0 ? ($revenue / $target) * 100 : 0.0;
+        $month = Carbon::createFromFormat('Y-m-d', $monthStart);
+
+        return [
+            'summary' => [
+                'period' => $month->format('Y-m'),
+                'period_label' => $month->locale('id')->translatedFormat('F Y'),
+                'charter_count' => count($charters),
+                'departure_count' => (int) ($driver['departure_count'] ?? 0),
+                'luggage_count' => count($bagasi),
+                'charter_revenue' => (float) ($driver['charter_revenue'] ?? 0),
+                'departure_revenue' => (float) ($driver['departure_revenue'] ?? 0),
+                'luggage_revenue' => (float) ($driver['luggage_revenue'] ?? 0),
+                'total_revenue' => $revenue,
+                'charter_bop' => (float) ($driver['charter_bop'] ?? 0),
+                'departure_bop' => (float) ($driver['departure_bop'] ?? 0),
+                'total_bop' => $bop,
+                'gross' => $revenue - $bop,
+                'fixed_cost' => $fixedCost,
+                'net_margin' => $revenue - $bop - $fixedCost,
+                'target_revenue' => $target,
+                'achievement' => $achievement,
+                'status' => $achievement >= 100 ? 'Tercapai' : 'Kurang',
+            ],
+            'bookings' => $bookings,
+            'charters' => $charters,
+            'bagasi' => $bagasi,
+        ];
     }
 
     /**
