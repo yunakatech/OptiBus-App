@@ -1700,33 +1700,30 @@ class AdminOpsApiController extends Controller
     public function activityLogsIndex(Request $request): JsonResponse
     {
         $page = max(1, (int) $request->query('page', 1));
-        $limit = (int) $request->query('limit', 0);
-        if ($limit > 0) {
-            $perPage = max(10, min(100, $limit));
-        } else {
-            [, $perPage] = $this->paginationParams($request);
-        }
+        $limit = (int) $request->query('limit', 50);
+        $perPage = max(10, min(100, $limit));
+        $to = now();
+        $from = $to->copy()->subDays(13)->startOfDay();
+        $since = $from->toDateTimeString();
+        $total = ActivityLog::countForTenant(null, $since);
+        $lastPage = max(1, (int) ceil($total / $perPage));
+        $page = min($page, $lastPage);
         $offset = max(0, ($page - 1) * $perPage);
-        $items = ActivityLog::recentForTenant($perPage, $offset);
-        $response = [
-            'logs' => $items,
-        ];
+        $items = ActivityLog::recentForTenant($perPage, $offset, $since);
 
-        // The Logs screen requests a fixed, recent window and does not use
-        // pagination. Counting every visible record can scan the whole log
-        // table for pool-scoped users and time out on large installations.
-        if ($limit <= 0 || $request->query->has('page')) {
-            $total = ActivityLog::countForTenant();
-            $lastPage = max(1, (int) ceil($total / $perPage));
-            $response['pagination'] = [
-                'page' => min($page, $lastPage),
+        return $this->ok([
+            'logs' => $items,
+            'pagination' => [
+                'page' => $page,
                 'per_page' => $perPage,
                 'total' => $total,
                 'last_page' => $lastPage,
-            ];
-        }
-
-        return $this->ok($response);
+            ],
+            'date_range' => [
+                'from' => $from->toDateString(),
+                'to' => $to->toDateString(),
+            ],
+        ]);
     }
 
     public function reportsSummary(Request $request): JsonResponse
