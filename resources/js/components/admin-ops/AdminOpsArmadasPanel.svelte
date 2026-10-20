@@ -717,51 +717,49 @@
         {@const monthlyDetail = armadaDetail.monthly ?? null}
         {@const monthly = monthlyDetail?.summary ?? null}
         {@const detailCards = detailMetricCards(armadaDetail)}
-        <div
-            class="space-y-4 rounded-lg border border-border/70 bg-background/95 p-4 shadow-sm"
-        >
-            <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0 space-y-2">
+        <div class="space-y-5">
+            <section class="relative overflow-hidden rounded-xl border border-slate-800 bg-slate-950 px-4 py-5 text-white shadow-md sm:px-6">
+                <div class="pointer-events-none absolute -right-12 -top-16 size-56 rounded-full border-[28px] border-cyan-400/10"></div>
+                <div class="relative flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+                    <div class="min-w-0 space-y-4">
                     <div class="flex flex-wrap items-center gap-2">
                         <p class="text-lg font-bold tracking-tight">
                             {armadaDetail.nopol}
                         </p>
                         <Badge
                             variant="secondary"
-                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                            class="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-white hover:bg-white/10"
                         >
                             {rowPoolName(armadaDetail)}
                         </Badge>
                         <Badge
                             variant="outline"
-                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                            class="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-cyan-100"
                         >
                             {armadaDetail.kategori ?? '-'} / {armadaDetail.ac_type}
                         </Badge>
                     </div>
-                    <p class="text-xs text-muted-foreground">
-                        No. rangka {armadaDetail.nomor_rangka ?? '-'}
-                    </p>
-                    <div
-                        class="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
-                    >
-                        <span
-                            >Platform GPS: {armadaDetail.platform_gps ??
-                                '-'}</span
-                        >
-                        <span>API GPS: {armadaDetail.api_gps ?? '-'}</span>
+                        <div>
+                            <p class="text-[10px] font-semibold uppercase tracking-[0.24em] text-cyan-200/70">Detail Armada</p>
+                            <h2 class="mt-1 break-all text-2xl font-bold tracking-tight sm:text-3xl">{armadaDetail.nopol}</h2>
+                        </div>
+                        <div class="grid gap-3 text-xs text-slate-300 sm:grid-cols-3">
+                            <div><p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Nomor rangka</p><p class="mt-1 break-all font-medium text-slate-100">{armadaDetail.nomor_rangka || 'Belum dicatat'}</p></div>
+                            <div><p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Platform GPS</p><p class="mt-1 break-all font-medium text-slate-100">{armadaDetail.platform_gps || 'Belum diatur'}</p></div>
+                            <div><p class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">API GPS</p><p class="mt-1 break-all font-medium text-slate-100">{armadaDetail.api_gps || 'Belum diatur'}</p></div>
+                        </div>
                     </div>
-                </div>
                 <Button
                     type="button"
                     variant="outline"
-                    class="h-9 shrink-0"
-                    onclick={goBackToData}>Kembali</Button
+                    class="h-10 w-full shrink-0 border-white/20 bg-white/5 text-white hover:bg-white/10 hover:text-white sm:w-auto"
+                    onclick={goBackToData}>Kembali ke daftar</Button
                 >
             </div>
+            </section>
 
-            <div class="rounded-lg border border-border/70 bg-muted/20 p-3">
-                <div class="flex flex-wrap items-center justify-between gap-2">
+            <section class="overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm">
+                <div class="flex flex-col gap-3 border-b border-border/70 bg-muted/20 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
                     <div>
                         <p
                             class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
@@ -775,12 +773,12 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <Badge
                             variant="secondary"
-                            class="rounded-full px-2 py-0.5 text-[10px] uppercase tracking-wide"
+                            class="rounded-full px-2.5 py-1 text-xs font-bold tabular-nums"
                         >
                             {(
                                 monthly?.achievement ??
                                 armadaAchievement(armadaDetail)
-                            ).toFixed(1)}%
+                            ).toFixed(1)}% tercapai
                         </Badge>
                         <Badge
                             variant="outline"
@@ -791,11 +789,11 @@
                     </div>
                 </div>
                 <div
-                    class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
+                    class="grid gap-px bg-border/60 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
                 >
                     {#each detailCards as card (card.key)}
                         <article
-                            class="rounded-md border border-border/70 bg-background px-3 py-2"
+                            class="min-w-0 bg-background px-4 py-3.5 sm:px-5"
                         >
                             <p
                                 class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
@@ -803,7 +801,7 @@
                                 {card.label}
                             </p>
                             <p
-                                class={`mt-1 text-sm font-bold tabular-nums ${card.tone}`}
+                                class={`mt-1.5 break-words text-base font-bold tabular-nums ${card.tone}`}
                             >
                                 {card.valueText}
                             </p>
@@ -815,13 +813,13 @@
                         </article>
                     {/each}
                 </div>
-            </div>
+            </section>
 
-            <div class="grid gap-3 xl:grid-cols-3">
+            <div class="grid gap-4 2xl:grid-cols-3">
                 <section
-                    class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
+                    class="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"
                 >
-                    <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3.5">
                         <div>
                             <p
                                 class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
@@ -841,12 +839,10 @@
                             {formatCurrency(monthly?.departure_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div
-                        class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin"
-                    >
-                        <table class="w-full text-left text-[11px]">
+                    <div class="max-h-[26rem] overflow-auto">
+                        <table class="w-full min-w-[680px] text-left text-xs">
                             <thead
-                                class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                                class="sticky top-0 z-10 bg-muted/60 text-[10px] uppercase tracking-[0.13em] text-muted-foreground backdrop-blur"
                             >
                                 <tr>
                                     <th class="py-2 pr-2 font-semibold"
@@ -927,9 +923,9 @@
                 </section>
 
                 <section
-                    class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
+                    class="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"
                 >
-                    <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3.5">
                         <div>
                             <p
                                 class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
@@ -949,12 +945,10 @@
                             {formatCurrency(monthly?.charter_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div
-                        class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin"
-                    >
-                        <table class="w-full text-left text-[11px]">
+                    <div class="max-h-[26rem] overflow-auto">
+                        <table class="w-full min-w-[760px] text-left text-xs">
                             <thead
-                                class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                                class="sticky top-0 z-10 bg-muted/60 text-[10px] uppercase tracking-[0.13em] text-muted-foreground backdrop-blur"
                             >
                                 <tr>
                                     <th class="py-2 pr-2 font-semibold"
@@ -1066,9 +1060,9 @@
                 </section>
 
                 <section
-                    class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
+                    class="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-background shadow-sm"
                 >
-                    <div class="flex items-center justify-between gap-2">
+                    <div class="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3.5">
                         <div>
                             <p
                                 class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
@@ -1088,12 +1082,10 @@
                             {formatCurrency(monthly?.luggage_revenue ?? 0)}
                         </Badge>
                     </div>
-                    <div
-                        class="table-container mt-3 max-h-72 overflow-auto pr-1 scrollbar-thin"
-                    >
-                        <table class="w-full text-left text-[11px]">
+                    <div class="max-h-[26rem] overflow-auto">
+                        <table class="w-full min-w-[760px] text-left text-xs">
                             <thead
-                                class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                                class="sticky top-0 z-10 bg-muted/60 text-[10px] uppercase tracking-[0.13em] text-muted-foreground backdrop-blur"
                             >
                                 <tr>
                                     <th class="py-2 pr-2 font-semibold"
