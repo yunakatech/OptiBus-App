@@ -496,8 +496,6 @@ class PublicBookingService
         }
 
         return (int) DB::table('public_booking_requests as r')
-            ->join('routes as route', 'r.route_id', '=', 'route.id')
-            ->join('pools as pool', 'r.pool_id', '=', 'pool.id')
             ->where('r.tenant_id', $tenantId)
             ->whereIn('r.pool_id', $poolIds)
             ->where('r.status', 'pending')

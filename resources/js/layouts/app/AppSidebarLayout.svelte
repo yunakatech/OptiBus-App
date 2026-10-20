@@ -12,7 +12,10 @@
     import TenantPoolSwitcher from '@/components/TenantPoolSwitcher.svelte';
     import ToastContainer from '@/components/ToastContainer.svelte';
     import { hasPermission } from '@/lib/access';
-    import { bookingInboxNudge } from '@/lib/bookingInboxNudge.svelte';
+    import {
+        bookingInboxNudge,
+        refreshBookingInboxNudge,
+    } from '@/lib/bookingInboxNudge.svelte';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import type { BreadcrumbItem } from '@/types';
 
@@ -48,41 +51,15 @@
         }
 
         let disposed = false;
-        let requestPending = false;
-
         const refreshInboxNudge = async () => {
             if (
                 disposed ||
-                requestPending ||
                 document.visibilityState === 'hidden'
             ) {
                 return;
             }
 
-            requestPending = true;
-
-            try {
-                const response = await fetch(
-                    '/api/admin/public-booking-requests/count',
-                    {
-                        credentials: 'same-origin',
-                        headers: {
-                            Accept: 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                    },
-                );
-                const payload = await response.json();
-
-                if (!disposed && response.ok && payload.success === true) {
-                    bookingInboxNudge.hasPending =
-                        Number(payload.pending_count ?? 0) > 0;
-                }
-            } catch {
-                // Keep the latest known indicator if a temporary request fails.
-            } finally {
-                requestPending = false;
-            }
+            await refreshBookingInboxNudge();
         };
 
         void refreshInboxNudge();
