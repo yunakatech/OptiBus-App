@@ -1209,6 +1209,7 @@
         >
     {/if}
 {/if}
+{#if activeMode !== 'view'}
 <RevenueChartTable
     title="Armada"
     subtitle=""
@@ -1500,3 +1501,4 @@
         </div>
     {/snippet}
 </RevenueChartTable>
+{/if}
