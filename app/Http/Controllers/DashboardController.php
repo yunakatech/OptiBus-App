@@ -34,7 +34,11 @@ class DashboardController extends Controller
         $this->activePoolId = (int) $request->query('pool_id', 0);
         $dashboardSummary = null;
         $resolveDashboardSummary = function () use ($today, &$dashboardSummary): array {
-            return $dashboardSummary ??= $this->dashboardSummary($today);
+            return $dashboardSummary ??= Cache::remember(
+                'dashboard:summary:'.$today->toDateString().':'.PoolScope::cacheKey($this->activePoolId),
+                now()->addSeconds(30),
+                fn (): array => $this->dashboardSummary($today),
+            );
         };
         $recentActivity = null;
         $resolveRecentActivity = function () use (&$recentActivity): array {
@@ -89,11 +93,6 @@ class DashboardController extends Controller
                 $this->activePoolId = $deferredPoolId;
 
                 return $this->monthlyTrend($today);
-            }, 'dashboard-data'),
-            'yearlyHeatmap' => Inertia::defer(function () use ($today, $deferredPoolId): array {
-                $this->activePoolId = $deferredPoolId;
-
-                return $this->yearlyHeatmap($today);
             }, 'dashboard-data'),
             'recentActivity' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
