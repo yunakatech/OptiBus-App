@@ -12968,11 +12968,6 @@
                                             >
                                                 {row.created_at || '-'}
                                             </div>
-                                            <div
-                                                class="mt-0.5 text-[10px] text-muted-foreground"
-                                            >
-                                                Waktu tercatat
-                                            </div>
                                         </td>
                                         <td
                                             class="border-b border-r border-border/60 px-3 py-2.5 align-top"
@@ -12991,12 +12986,6 @@
                                             >
                                                 {row.title || '-'}
                                             </div>
-                                            <div
-                                                class="mt-0.5 text-[10px] text-muted-foreground"
-                                            >
-                                                Aktivitas yang dilakukan sistem
-                                                atau operator
-                                            </div>
                                         </td>
                                         <td
                                             class="border-b border-r border-border/60 px-3 py-2.5 align-top text-xs text-muted-foreground"
@@ -13010,11 +12999,6 @@
                                                 class="font-medium text-foreground"
                                             >
                                                 {row.actor || 'Akun tidak tercatat'}
-                                            </div>
-                                            <div
-                                                class="mt-0.5 text-[10px] text-muted-foreground"
-                                            >
-                                                Pelaku perubahan
                                             </div>
                                         </td>
                                     </tr>
