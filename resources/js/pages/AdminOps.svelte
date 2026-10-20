@@ -12913,12 +12913,12 @@
                                         <p
                                             class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >
-                                            Aktor
+                                            Akun pelaku
                                         </p>
                                         <p
                                             class="mt-1 break-words font-medium text-foreground"
                                         >
-                                            {row.actor || '-'}
+                                            {row.actor || 'Akun tidak tercatat'}
                                         </p>
                                     </div>
                                 </div>
@@ -12950,8 +12950,8 @@
                                         >Detail</th
                                     >
                                     <th
-                                        class="w-[180px] border-b border-border/70 px-4 py-3 text-left font-semibold"
-                                        >Aktor</th
+                                        class="w-[210px] border-b border-border/70 px-4 py-3 text-left font-semibold"
+                                        >Akun pelaku</th
                                     >
                                 </tr>
                             </thead>
@@ -13009,7 +13009,7 @@
                                             <div
                                                 class="font-medium text-foreground"
                                             >
-                                                {row.actor || '-'}
+                                                {row.actor || 'Akun tidak tercatat'}
                                             </div>
                                             <div
                                                 class="mt-1 text-[11px] text-muted-foreground"

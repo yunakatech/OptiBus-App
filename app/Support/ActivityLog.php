@@ -89,10 +89,7 @@ class ActivityLog
             }
         }
 
-        return array_map(
-            static fn (array $row): array => self::publicRow($row),
-            array_slice($items, $offset, $limit),
-        );
+        return self::publicRows(array_slice($items, $offset, $limit));
     }
 
     /**
@@ -133,10 +130,7 @@ class ActivityLog
             }
         }
 
-        return array_map(
-            static fn (array $row): array => self::publicRow($row),
-            array_slice($items, $offset, $limit),
-        );
+        return self::publicRows(array_slice($items, $offset, $limit));
     }
 
     public static function count(int $poolId = 0, ?int $max = null): int
@@ -280,16 +274,18 @@ class ActivityLog
     private static function recentFromDatabase(int $limit, int $offset, array $scope): array
     {
         if ($scope['all']) {
-            return self::databaseQueryForScope($scope)
+            $rows = self::databaseQueryForScope($scope)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($offset)
                 ->limit($limit)
                 ->get(self::activitySelectColumns())
-                ->map(static fn ($row): array => self::publicRow(self::databaseRow($row)))
+                ->map(static fn ($row): array => self::databaseRow($row))
                 ->filter(static fn (array $row): bool => $row['title'] !== '')
                 ->values()
                 ->all();
+
+            return self::publicRows($rows);
         }
 
         $needed = $offset + $limit;
@@ -327,10 +323,7 @@ class ActivityLog
             }
         }
 
-        return array_map(
-            static fn (array $row): array => self::publicRow($row),
-            array_slice($items, $offset, $limit),
-        );
+        return self::publicRows(array_slice($items, $offset, $limit));
     }
 
     /**
@@ -458,6 +451,72 @@ class ActivityLog
             'actor' => $actor,
             'created_at' => trim((string) ($row['created_at'] ?? '')),
         ];
+    }
+
+    /**
+     * Resolve missing actor labels in one query for older log entries that only
+     * stored the acting user's ID in the extra payload.
+     *
+     * @param array<int, array<string, mixed>> $rows
+     * @return array<int, array<string, string>>
+     */
+    private static function publicRows(array $rows): array
+    {
+        $userIds = [];
+
+        foreach ($rows as $row) {
+            if (trim((string) ($row['actor'] ?? '')) !== '') {
+                continue;
+            }
+
+            $extra = self::normalizeExtra($row['extra'] ?? []);
+            if (
+                trim((string) ($extra['user_name'] ?? '')) === ''
+                && trim((string) ($extra['user_email'] ?? '')) === ''
+            ) {
+                $userId = (int) ($extra['user_id'] ?? 0);
+                if ($userId > 0) {
+                    $userIds[] = $userId;
+                }
+            }
+        }
+
+        $usersById = [];
+        if ($userIds !== [] && SchemaCache::hasTable('users')) {
+            $columns = ['id'];
+            if (SchemaCache::hasColumn('users', 'name')) {
+                $columns[] = 'name';
+            }
+            if (SchemaCache::hasColumn('users', 'email')) {
+                $columns[] = 'email';
+            }
+
+            if (count($columns) > 1) {
+                $usersById = DB::table('users')
+                    ->whereIn('id', array_values(array_unique($userIds)))
+                    ->get($columns)
+                    ->keyBy('id')
+                    ->all();
+            }
+        }
+
+        return array_map(static function (array $row) use ($usersById): array {
+            $extra = self::normalizeExtra($row['extra'] ?? []);
+            $userId = (int) ($extra['user_id'] ?? 0);
+            $user = $usersById[$userId] ?? null;
+
+            if ($user !== null) {
+                if (trim((string) ($extra['user_name'] ?? '')) === '') {
+                    $extra['user_name'] = trim((string) ($user->name ?? ''));
+                }
+                if (trim((string) ($extra['user_email'] ?? '')) === '') {
+                    $extra['user_email'] = trim((string) ($user->email ?? ''));
+                }
+                $row['extra'] = $extra;
+            }
+
+            return self::publicRow($row);
+        }, $rows);
     }
 
     /**
