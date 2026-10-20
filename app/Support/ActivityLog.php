@@ -97,12 +97,12 @@ class ActivityLog
      *
      * @return array<int, array<string, string>>
      */
-    public static function recentForTenant(int $limit = 50, int $offset = 0): array
+    public static function recentForTenant(int $limit = 50, int $offset = 0, ?string $since = null): array
     {
         $scope = self::tenantScope();
 
         if (self::usesDatabase()) {
-            return self::recentFromDatabase(max(1, $limit), max(0, $offset), $scope);
+            return self::recentFromDatabase(max(1, $limit), max(0, $offset), $scope, $since);
         }
 
         $path = storage_path('logs/activity.log');
@@ -122,6 +122,9 @@ class ActivityLog
                 continue;
             }
             if (! self::isVisibleForScope($row, $scope)) {
+                continue;
+            }
+            if ($since !== null && $row['created_at'] < $since) {
                 continue;
             }
             $items[] = $row;
@@ -178,7 +181,7 @@ class ActivityLog
         return $count;
     }
 
-    public static function countForTenant(?int $max = null): int
+    public static function countForTenant(?int $max = null, ?string $since = null): int
     {
         $scope = self::tenantScope();
         $max = $max !== null ? max(1, $max) : null;
@@ -186,6 +189,10 @@ class ActivityLog
         if (self::usesDatabase()) {
             if ($scope['all']) {
                 $query = DB::table('activity_logs')->where('title', '!=', '');
+
+                if ($since !== null) {
+                    $query->where('created_at', '>=', $since);
+                }
 
                 if ($max !== null) {
                     return (int) DB::query()
@@ -196,7 +203,7 @@ class ActivityLog
                 return (int) $query->count();
             }
 
-            return self::countFromDatabase($scope, $max);
+            return self::countFromDatabase($scope, $max, $since);
         }
 
         $path = storage_path('logs/activity.log');
@@ -213,6 +220,9 @@ class ActivityLog
         foreach ($lines as $line) {
             $row = self::parseJsonLine($line);
             if ($row !== null && self::isVisibleForScope($row, $scope)) {
+                if ($since !== null && $row['created_at'] < $since) {
+                    continue;
+                }
                 $count += 1;
                 if ($max !== null && $count >= $max) {
                     break;
@@ -271,10 +281,10 @@ class ActivityLog
      * @param array<string, mixed> $scope
      * @return array<int, array<string, string>>
      */
-    private static function recentFromDatabase(int $limit, int $offset, array $scope): array
+    private static function recentFromDatabase(int $limit, int $offset, array $scope, ?string $since = null): array
     {
         if ($scope['all']) {
-            $rows = self::databaseQueryForScope($scope)
+            $rows = self::databaseQueryForScope($scope, $since)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($offset)
@@ -294,7 +304,7 @@ class ActivityLog
         $batchSize = max(100, min(500, $needed * 4));
 
         while (true) {
-            $rows = self::databaseQueryForScope($scope)
+            $rows = self::databaseQueryForScope($scope, $since)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($scanOffset)
@@ -329,14 +339,14 @@ class ActivityLog
     /**
      * @param array<string, mixed> $scope
      */
-    private static function countFromDatabase(array $scope, ?int $max = null): int
+    private static function countFromDatabase(array $scope, ?int $max = null, ?string $since = null): int
     {
         $count = 0;
         $offset = 0;
         $batchSize = 500;
 
         while (true) {
-            $rows = self::databaseQueryForScope($scope)
+            $rows = self::databaseQueryForScope($scope, $since)
                 ->orderByDesc('created_at')
                 ->orderByDesc('id')
                 ->offset($offset)
@@ -396,7 +406,7 @@ class ActivityLog
     /**
      * @param array<string, mixed> $scope
      */
-    private static function databaseQueryForScope(array $scope): \Illuminate\Database\Query\Builder
+    private static function databaseQueryForScope(array $scope, ?string $since = null): \Illuminate\Database\Query\Builder
     {
         $query = DB::table('activity_logs')->where('title', '!=', '');
         $tenantId = (int) ($scope['tenant_id'] ?? 0);
@@ -406,6 +416,10 @@ class ActivityLog
             && SchemaCache::hasColumn('activity_logs', 'tenant_id')
         ) {
             $query->where('tenant_id', $tenantId);
+        }
+
+        if ($since !== null) {
+            $query->where('created_at', '>=', $since);
         }
 
         return $query;

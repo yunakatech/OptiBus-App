@@ -816,6 +816,13 @@
     let userInvitations = $state<TenantInvitationRow[]>([]);
     let roles = $state<RoleOption[]>([]);
     let activityLogs = $state<ActivityLogRow[]>([]);
+    let activityLogsLoading = $state(false);
+    let activityLogsMeta = $state<Pagination>({
+        page: 1,
+        per_page: 50,
+        total: 0,
+        last_page: 1,
+    });
     let units = $state<UnitRow[]>([]);
     let customerImportInput = $state<HTMLInputElement | null>(null);
     let customerImporting = $state(false);
@@ -4452,9 +4459,27 @@
         setPoolManageAccess(Boolean(r.can_manage ?? true));
     };
 
-    const loadLogs = async () => {
-        const r = await api('GET', '/api/admin/activity-logs?limit=50');
-        activityLogs = r.logs ?? [];
+    const loadLogs = async (
+        page = 1,
+        perPage = activityLogsMeta.per_page,
+    ) => {
+        activityLogsLoading = true;
+
+        try {
+            const r = await api(
+                'GET',
+                `/api/admin/activity-logs?limit=${encodeURIComponent(String(perPage))}&page=${encodeURIComponent(String(page))}`,
+            );
+            activityLogs = Array.isArray(r.logs) ? r.logs : [];
+            activityLogsMeta = r.pagination ?? {
+                page,
+                per_page: perPage,
+                total: activityLogs.length,
+                last_page: 1,
+            };
+        } finally {
+            activityLogsLoading = false;
+        }
     };
 
     const loadActiveTab = async (preferInertia = true) => {
@@ -12866,6 +12891,11 @@
                 <div
                     class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                 >
+                    {#if activityLogsLoading}
+                        <p class="px-3 pt-3 text-xs text-muted-foreground" role="status">
+                            Memuat aktivitas...
+                        </p>
+                    {/if}
                     <div class="grid gap-2 p-2 md:hidden">
                         {#each activityLogs as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
                             <article
@@ -13005,6 +13035,51 @@
                                 {/each}
                             </tbody>
                         </table>
+                    </div>
+                    {#if !activityLogsLoading && activityLogs.length === 0}
+                        <p class="px-4 py-8 text-center text-sm text-muted-foreground">
+                            Tidak ada aktivitas dalam 14 hari terakhir.
+                        </p>
+                    {/if}
+                    <div class="flex flex-col gap-3 border-t border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div class="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                            <span>
+                                14 hari terakhir · {activityLogsMeta.total === 0 ? 0 : (activityLogsMeta.page - 1) * activityLogsMeta.per_page + 1}–{Math.min(activityLogsMeta.page * activityLogsMeta.per_page, activityLogsMeta.total)} dari {activityLogsMeta.total} aktivitas
+                            </span>
+                            <label class="flex items-center gap-2">
+                                Baris
+                                <select
+                                    class="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                                    value={activityLogsMeta.per_page}
+                                    disabled={activityLogsLoading}
+                                    onchange={(event) =>
+                                        void loadLogs(1, Number(event.currentTarget.value))}
+                                >
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-2 self-end sm:self-auto">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={activityLogsLoading || activityLogsMeta.page <= 1}
+                                onclick={() => void loadLogs(activityLogsMeta.page - 1)}
+                            >Sebelumnya</Button>
+                            <span class="min-w-[5rem] text-center text-xs text-muted-foreground">
+                                {activityLogsMeta.page} / {activityLogsMeta.last_page}
+                            </span>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                disabled={activityLogsLoading || activityLogsMeta.page >= activityLogsMeta.last_page}
+                                onclick={() => void loadLogs(activityLogsMeta.page + 1)}
+                            >Berikutnya</Button>
+                        </div>
                     </div>
                 </div>
             {/if}
