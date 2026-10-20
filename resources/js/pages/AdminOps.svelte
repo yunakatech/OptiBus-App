@@ -12866,35 +12866,35 @@
                 <div
                     class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                 >
-                    <div class="grid gap-3 p-3 md:hidden">
+                    <div class="grid gap-2 p-2 md:hidden">
                         {#each activityLogs as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
                             <article
-                                class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
+                                class="rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm"
                             >
                                 <div
-                                    class="flex items-start justify-between gap-3"
+                                    class="flex items-start justify-between gap-2"
                                 >
                                     <div class="min-w-0">
                                         <p
-                                            class="line-clamp-2 text-sm font-semibold text-foreground"
+                                            class="line-clamp-2 text-[13px] font-semibold text-foreground"
                                         >
                                             {row.title || '-'}
                                         </p>
                                         <p
-                                            class="mt-1 truncate text-xs text-muted-foreground"
+                                            class="mt-0.5 truncate text-[11px] text-muted-foreground"
                                         >
                                             {row.created_at || '-'}
                                         </p>
                                     </div>
                                     <span
-                                        class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                        class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                                     >
                                         {row.tag || '-'}
                                     </span>
                                 </div>
-                                <div class="mt-3 grid gap-2 text-xs">
+                                <div class="mt-2 grid gap-1.5 text-xs">
                                     <div
-                                        class="rounded-xl bg-muted/30 px-3 py-2"
+                                        class="rounded-lg bg-muted/30 px-2.5 py-1.5"
                                     >
                                         <p
                                             class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
@@ -12902,13 +12902,13 @@
                                             Detail
                                         </p>
                                         <p
-                                            class="mt-1 break-words font-medium text-foreground"
+                                            class="mt-0.5 break-words font-medium text-foreground"
                                         >
                                             {row.meta || '-'}
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-xl bg-muted/30 px-3 py-2"
+                                        class="rounded-lg bg-muted/30 px-2.5 py-1.5"
                                     >
                                         <p
                                             class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
@@ -12916,7 +12916,7 @@
                                             Akun pelaku
                                         </p>
                                         <p
-                                            class="mt-1 break-words font-medium text-foreground"
+                                            class="mt-0.5 break-words font-medium text-foreground"
                                         >
                                             {row.actor || 'Akun tidak tercatat'}
                                         </p>
@@ -12927,30 +12927,30 @@
                     </div>
                     <div class="hidden overflow-x-auto md:block">
                         <table
-                            class="min-w-[1180px] w-full border-separate border-spacing-0 text-sm"
+                            class="min-w-[980px] w-full border-separate border-spacing-0 text-xs"
                         >
                             <thead
-                                class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
+                                class="bg-muted/20 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
                             >
                                 <tr>
                                     <th
-                                        class="w-[180px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                        class="w-[150px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
                                         >Waktu</th
                                     >
                                     <th
-                                        class="w-[140px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                        class="w-[100px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
                                         >Tag</th
                                     >
                                     <th
-                                        class="w-[320px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                        class="w-[250px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
                                         >Aktivitas</th
                                     >
                                     <th
-                                        class="w-[360px] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                        class="w-[300px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
                                         >Detail</th
                                     >
                                     <th
-                                        class="w-[210px] border-b border-border/70 px-4 py-3 text-left font-semibold"
+                                        class="w-[180px] border-b border-border/70 px-3 py-2 text-left font-semibold"
                                         >Akun pelaku</th
                                     >
                                 </tr>
@@ -12961,7 +12961,7 @@
                                         class="group transition hover:bg-muted/15"
                                     >
                                         <td
-                                            class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                            class="border-b border-r border-border/60 px-3 py-2.5 align-top"
                                         >
                                             <div
                                                 class="font-medium text-foreground"
@@ -12969,22 +12969,22 @@
                                                 {row.created_at || '-'}
                                             </div>
                                             <div
-                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                class="mt-0.5 text-[10px] text-muted-foreground"
                                             >
                                                 Waktu tercatat
                                             </div>
                                         </td>
                                         <td
-                                            class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                            class="border-b border-r border-border/60 px-3 py-2.5 align-top"
                                         >
                                             <span
-                                                class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700"
+                                                class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
                                             >
                                                 {row.tag || '-'}
                                             </span>
                                         </td>
                                         <td
-                                            class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                            class="border-b border-r border-border/60 px-3 py-2.5 align-top"
                                         >
                                             <div
                                                 class="font-semibold text-foreground"
@@ -12992,19 +12992,19 @@
                                                 {row.title || '-'}
                                             </div>
                                             <div
-                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                class="mt-0.5 text-[10px] text-muted-foreground"
                                             >
                                                 Aktivitas yang dilakukan sistem
                                                 atau operator
                                             </div>
                                         </td>
                                         <td
-                                            class="border-b border-r border-border/60 px-4 py-4 align-top text-sm text-muted-foreground"
+                                            class="border-b border-r border-border/60 px-3 py-2.5 align-top text-xs text-muted-foreground"
                                         >
                                             {row.meta || '-'}
                                         </td>
                                         <td
-                                            class="border-b border-border/60 px-4 py-4 align-top"
+                                            class="border-b border-border/60 px-3 py-2.5 align-top"
                                         >
                                             <div
                                                 class="font-medium text-foreground"
@@ -13012,7 +13012,7 @@
                                                 {row.actor || 'Akun tidak tercatat'}
                                             </div>
                                             <div
-                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                class="mt-0.5 text-[10px] text-muted-foreground"
                                             >
                                                 Pelaku perubahan
                                             </div>
