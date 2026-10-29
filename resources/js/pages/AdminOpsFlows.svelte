@@ -4105,24 +4105,31 @@
 
 <AppHead title={tabTitle(activeTab)} />
 
-<div data-content-density="compact" class="space-y-4 p-3 pb-28 md:p-4">
+<div
+    data-content-density="compact"
+    class="space-y-4 bg-[#f1eee5] p-3 pb-28 dark:bg-slate-950 md:p-4"
+>
     {#if tenantWriteDisabled}
         <div
-            class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 shadow-sm"
+            class="border-l-2 border-amber-600 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 dark:bg-amber-950/30 dark:text-amber-100"
         >
             {tenantReadOnlyMessage}
         </div>
     {/if}
 
-    <Card>
-        <CardHeader class="space-y-3">
+    <Card
+        class="rounded-xl border-[#d7d1c3] bg-[#fbfaf6] shadow-none dark:border-slate-700 dark:bg-slate-950"
+    >
+        <CardHeader
+            class="space-y-3 border-b border-[#d7d1c3] pb-4 dark:border-slate-700"
+        >
             <div class="flex flex-wrap items-start justify-between gap-3">
-                <CardTitle>{tabTitle(activeTab)}</CardTitle>
+                <CardTitle class="font-serif text-xl">{tabTitle(activeTab)}</CardTitle>
             </div>
         </CardHeader>
         <CardContent class="space-y-4">
             <div
-                class="sticky top-0 z-10 space-y-3 border-b bg-background pb-3"
+                class="sticky top-0 z-10 space-y-3 border-b border-[#d7d1c3] bg-[#fbfaf6] pb-3 dark:border-slate-700 dark:bg-slate-950"
             >
                 {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view'))}
                     {#if activeTab === 'charters' || activeTab === 'luggages'}
@@ -4720,7 +4727,7 @@
                     {/if}
                 {:else}
                     <div
-                        class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
+                        class="flex flex-wrap items-center justify-between gap-3 border-b border-[#d7d1c3] px-1 py-3 dark:border-slate-700"
                     >
                         {#if canCharterCreate}<Button
                                 type="button"
@@ -4752,13 +4759,13 @@
                                 class="h-7 rounded-lg px-2.5 text-[11px]"
                                 onclick={() => void setCharterScope('history')}
                             >
-                                History
+                                Riwayat
                             </Button>
                         </div>
                     </div>
                     <div class="space-y-3">
                         <div
-                            class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
+                            class="flex flex-wrap items-center justify-between gap-2 bg-[#f5f2e9] px-3 py-2.5 dark:bg-slate-900"
                         >
                             <p
                                 class="text-xs font-medium text-muted-foreground"
@@ -4789,7 +4796,7 @@
                                 <span
                                     class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700"
                                 >
-                                    Canceled {charterCanceledCount()}
+                                    Dibatalkan {charterCanceledCount()}
                                 </span>
                             </div>
                         </div>
@@ -4806,7 +4813,7 @@
                             >
                                 {#each charters as row (row.id)}
                                     <article
-                                        class="group relative overflow-hidden rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm transition-all duration-200 motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:shadow-md hover:shadow-cyan-950/10 svelte-19f8rux"
+                                        class="group relative overflow-hidden rounded-lg border border-[#d7d1c3] bg-white p-3 transition-colors hover:border-[#9da99e] hover:bg-[#faf9f4] dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-900/80"
                                     >
                                         <div
                                             class="mb-2 flex items-start justify-between gap-2"
@@ -6424,7 +6431,7 @@
                                     luggageArrivedStatus,
                                 ].includes(normalizedLuggageStatus)}
                                 <article
-                                    class="rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm"
+                                    class="rounded-lg border border-[#d7d1c3] bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-2.5"
