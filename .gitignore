@@ -40,6 +40,7 @@ pnpm-debug.log*
 .eslintcache
 .stylelintcache
 .cache/
+/.deslop/
 
 # Database dumps and local backups
 *.sql
