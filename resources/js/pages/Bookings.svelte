@@ -10163,17 +10163,17 @@
     {/if}
 
     {#if !consoleOnly && !groupDetailPage}
-        <Card class="border-sidebar-border/70 dark:border-sidebar-border">
+        <Card class="rounded-xl border-[#d7d1c3] bg-[#fbfaf6] shadow-none dark:border-slate-700 dark:bg-slate-950">
             <CardHeader>
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <CardTitle
+                    <CardTitle class="font-serif text-xl"
                         >{listOnly
                             ? 'Keberangkatan'
                             : 'Keberangkatan Terbaru'}</CardTitle
                     >
                     {#if listOnly}
                         <span
-                            class="inline-flex rounded-full border border-cyan-200/80 bg-cyan-50 px-3 py-1 text-sm font-semibold text-cyan-800 shadow-sm dark:border-cyan-500/30 dark:bg-cyan-950/25 dark:text-cyan-100 md:text-base"
+                            class="inline-flex border-l-2 border-[#a94e28] bg-[#f5f2e9] px-3 py-1 text-sm font-semibold text-[#173a34] dark:bg-slate-900 dark:text-emerald-100 md:text-base"
                         >
                             Tanggal aktif: {formatGroupDateLabel(
                                 bookingListDateFrom,
@@ -10191,10 +10191,10 @@
             <CardContent>
                 {#if listOnly}
                     <div
-                        class="sticky top-0 z-20 -mx-3 mb-4 space-y-3 border-b border-border/70 bg-background/95 px-3 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/90 md:top-2 md:mx-0 md:rounded-lg md:border md:border-border/80 md:bg-linear-to-br md:from-background md:via-background md:to-cyan-50/35 md:p-3 md:shadow-sm md:dark:to-cyan-950/15"
+                        class="sticky top-0 z-20 -mx-3 mb-4 space-y-3 border-b border-[#d7d1c3] bg-[#fbfaf6] px-3 py-3 md:top-2 md:mx-0 md:rounded-lg md:border md:p-3 dark:border-slate-700 dark:bg-slate-950"
                     >
                         <div
-                            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.07),rgba(15,23,42,0.02))] px-3 py-3 shadow-sm"
+                            class="flex flex-wrap items-center justify-between gap-3 border-b border-[#d7d1c3] px-1 py-3 dark:border-slate-700"
                         >
                             <Button
                                 type="button"
@@ -10202,7 +10202,7 @@
                                 variant={emptyDepartureOpen
                                     ? 'secondary'
                                     : 'default'}
-                                class="h-9 rounded-xl px-4 text-xs"
+                                class="h-9 rounded-md px-4 text-xs"
                                 disabled={!emptyDepartureOpen &&
                                     tenantWriteDisabled}
                                 onclick={() => void openEmptyDepartureForm()}
@@ -10217,7 +10217,7 @@
                             </Button>
                         </div>
                         <div
-                            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/70 bg-muted/10 px-3 py-2.5 shadow-sm"
+                            class="flex flex-wrap items-center justify-between gap-3 bg-[#f5f2e9] px-3 py-2.5 dark:bg-slate-900"
                         >
                             <div class="space-y-1">
                                 <div
