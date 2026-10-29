@@ -179,7 +179,7 @@
 <Form
     action={formAction}
     method="post"
-    class="overflow-hidden rounded-[1.1rem] border border-[#d7dfd5] bg-white/94 text-[13px] shadow-[0_20px_60px_-42px_rgba(16,61,58,0.85)] backdrop-blur md:[&_input]:h-8 md:[&_input]:px-2.5 md:[&_input]:text-[13px] md:[&_label]:text-xs"
+    class="overflow-hidden border-y border-[#c9c2b3] bg-[#f7f4ec] text-sm md:[&_input]:h-11 md:[&_input]:px-3 md:[&_input]:text-sm md:[&_label]:text-sm"
 >
     {#snippet children({ errors, processing })}
         <input type="hidden" name="plan" value={selectedPlan} />
@@ -219,37 +219,37 @@
             <input type="hidden" name="schedule_days[]" value={day} />
         {/each}
 
-        <div class="grid gap-3 p-3 sm:p-4">
+        <div class="grid gap-4 px-4 py-5 sm:gap-5 sm:px-6 sm:py-6">
             <div class="space-y-1">
                 <p
-                    class="text-xs font-semibold uppercase tracking-[0.18em] text-[#7b6a43]"
+                    class="text-[10px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
                 >
                     {continuationMode ? 'Lanjutkan setup' : 'Setup awal'}
                 </p>
                 <h2
-                    class="text-lg font-semibold tracking-[-0.03em] text-[#103d3a]"
+                    class="font-serif text-2xl font-medium tracking-[-0.03em] text-[#173a34]"
                 >
-                    Buat aplikasi siap dipakai.
+                    Siapkan perjalanan pertama.
                 </h2>
             </div>
 
             {#if continuationMode && progressItems.length > 0}
                 <section
-                    class="rounded-xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3"
+                    class="border-y border-[#c9c2b3] py-3"
                 >
                     <div class="flex items-center justify-between gap-3">
-                        <span class="text-sm font-semibold text-[#103d3a]"
+                        <span class="text-sm font-semibold text-[#173a34]"
                             >Progress</span
                         >
-                        <span class="text-xs font-semibold text-[#7b6a43]"
+                        <span class="text-xs font-semibold text-[#a94e28]"
                             >{progressPercent}%</span
                         >
                     </div>
                     <div
-                        class="mt-2 h-2 overflow-hidden rounded-full bg-[#e8eadf]"
+                        class="mt-2 h-1.5 overflow-hidden bg-[#d8d1c3]"
                     >
                         <div
-                            class="h-full rounded-full bg-[#0d7066]"
+                            class="h-full bg-[#174b43]"
                             style={`width:${progressPercent}%`}
                         ></div>
                     </div>
@@ -261,12 +261,12 @@
                                         class="h-4 w-4 text-emerald-600"
                                     />
                                 {:else}
-                                    <Circle class="h-4 w-4 text-[#b96c20]" />
+                                    <Circle class="h-4 w-4 text-[#a94e28]" />
                                 {/if}
                                 <span
                                     class={item.done
-                                        ? 'text-[#103d3a]'
-                                        : 'text-[#7b6a43]'}
+                                        ? 'text-[#173a34]'
+                                        : 'text-[#80503a]'}
                                 >
                                     {item.label}
                                 </span>
@@ -276,15 +276,15 @@
                 </section>
             {/if}
 
-            <nav class="grid grid-cols-5 gap-1 rounded-xl bg-[#eef1e8] p-1">
+            <nav aria-label="Langkah pengaturan" class="grid grid-cols-5 border-y border-[#c9c2b3]">
                 {#each steps as step, index}
                     {@const Icon = step.icon}
                     <button
                         type="button"
-                        class={`min-w-0 rounded-lg px-1.5 py-1.5 text-center text-[10px] font-semibold transition ${
+                        class={`min-w-0 border-b-2 px-1 py-2 text-center text-[10px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] sm:px-1.5 sm:py-2.5 sm:text-xs ${
                             currentStep === index
-                                ? 'bg-white text-[#103d3a] shadow-sm'
-                                : 'text-[#67726c] hover:bg-white/60'
+                                ? 'border-[#174b43] text-[#173a34]'
+                                : 'border-transparent text-[#68736c] hover:bg-[#eee9dd]'
                         }`}
                         onclick={() => {
                             if (index === 0 || canLeaveTravelStep()) {
@@ -306,7 +306,7 @@
 
             {#if localError}
                 <div
-                    class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800"
+                    class="border-l-2 border-[#a94e28] bg-[#f5e9de] px-3 py-2 text-sm text-[#74442e]"
                 >
                     {localError}
                 </div>
@@ -314,7 +314,7 @@
             {#if firstFormError(errors)}
                 <div
                     role="alert"
-                    class="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs leading-relaxed text-red-800"
+                    class="border-l-2 border-red-700 bg-red-50 px-3 py-2.5 text-sm leading-relaxed text-red-800"
                 >
                     <p class="font-semibold">Data belum dapat disimpan</p>
                     <p class="mt-0.5">{firstFormError(errors)}</p>
@@ -322,7 +322,7 @@
             {/if}
 
             <section
-                class="grid gap-3 rounded-xl border border-[#d9ded4]/90 bg-[#fbfcf8] p-3"
+                class="grid gap-4 border-y border-[#c9c2b3] py-4 sm:gap-5 sm:py-5"
             >
                 {#if currentStep === 0}
                     <div class="grid gap-3 sm:grid-cols-2">
@@ -375,16 +375,16 @@
                     </div>
                 {:else if currentStep === 1}
                     <div class="grid gap-3">
-                        <div class="rounded-xl border border-[#cfe3d4] bg-[#eef8f0] p-3">
+                        <div class="border-l-2 border-[#174b43] bg-[#e8eee7] p-3">
                             <div class="flex items-start gap-2.5">
-                                <div class="rounded-lg bg-white p-2 text-[#0d7066] shadow-sm">
+                                <div class="border border-[#c9c2b3] bg-[#f7f4ec] p-2 text-[#174b43]">
                                     <CalendarDays class="h-4 w-4" />
                                 </div>
                                 <div>
-                                    <p class="font-semibold text-[#103d3a]">
+                                    <p class="font-semibold text-[#173a34]">
                                         Kapan kendaraan berangkat?
                                     </p>
-                                    <p class="mt-0.5 text-xs leading-relaxed text-[#587066]">
+                                    <p class="mt-0.5 text-xs leading-relaxed text-[#53615b]">
                                         Pilih hari operasi dan satu jam keberangkatan utama.
                                         Jam bisa diubah lagi nanti.
                                     </p>
@@ -401,7 +401,7 @@
                                     </p>
                                 </div>
                                 {#if scheduleDays.length > 0}
-                                    <span class="shrink-0 text-[11px] font-semibold text-[#0d7066]">
+                                    <span class="shrink-0 text-[11px] font-semibold text-[#174b43]">
                                         {scheduleDays.length} hari dipilih
                                     </span>
                                 {/if}
@@ -410,10 +410,10 @@
                                 {#each dayOptions as day}
                                     <label
                                         title={day.label}
-                                        class={`cursor-pointer rounded-lg border px-2 py-1.5 text-center text-xs font-semibold transition ${
+                                        class={`cursor-pointer border px-2 py-2 text-center text-xs font-semibold transition-colors ${
                                             scheduleDays.includes(day.value)
-                                                ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a]'
-                                                : 'border-[#d9ded4] bg-white text-[#67726c]'
+                                                ? 'border-[#174b43] bg-[#e8eee7] text-[#173a34]'
+                                                : 'border-[#c9c2b3] bg-transparent text-[#68736c] hover:bg-[#eee9dd]'
                                         }`}
                                     >
                                         <input
@@ -429,7 +429,7 @@
                             <InputError message={errors.schedule_days} />
                         </div>
 
-                        <div class="grid gap-2 rounded-xl border border-[#d9ded4] bg-white p-3">
+                        <div class="grid gap-3 border-y border-[#c9c2b3] py-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
                                     <Label for="departure_time_view">Jam berangkat</Label>
@@ -438,7 +438,7 @@
                                     </p>
                                 </div>
                                 {#if departureTime}
-                                    <span class="rounded-full bg-[#103d3a] px-2.5 py-1 text-xs font-bold text-white">
+                                    <span class="bg-[#174b43] px-2.5 py-1 text-xs font-bold text-white">
                                         {departureTime}
                                     </span>
                                 {/if}
@@ -447,10 +447,10 @@
                                 {#each timeSuggestions as time}
                                     <button
                                         type="button"
-                                        class={`rounded-full border px-3 py-1.5 text-xs font-semibold transition ${
+                                        class={`min-h-10 border px-3 py-2 text-xs font-semibold transition-colors ${
                                             departureTime === time
-                                                ? 'border-[#103d3a] bg-[#103d3a] text-white shadow-sm'
-                                                : 'border-[#d9ded4] bg-[#fbfcf8] text-[#50645c] hover:border-[#0d7066] hover:text-[#0d7066]'
+                                                ? 'border-[#174b43] bg-[#174b43] text-white'
+                                                : 'border-[#c9c2b3] bg-transparent text-[#53615b] hover:bg-[#eee9dd]'
                                         }`}
                                         aria-pressed={departureTime === time}
                                         onclick={() => chooseDepartureTime(time)}
@@ -460,9 +460,9 @@
                                 {/each}
                             </div>
                             <div class="flex items-center gap-2">
-                                <div class="h-px flex-1 bg-[#e6ebe3]"></div>
-                                <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#9aa69f]">atau isi manual</span>
-                                <div class="h-px flex-1 bg-[#e6ebe3]"></div>
+                                <div class="h-px flex-1 bg-[#c9c2b3]"></div>
+                                <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#68736c]">atau isi manual</span>
+                                <div class="h-px flex-1 bg-[#c9c2b3]"></div>
                             </div>
                             <Input
                                 id="departure_time_view"
@@ -477,8 +477,8 @@
                             <InputError message={errors.departure_time} />
                         </div>
 
-                        <div class="rounded-xl border border-dashed border-[#cbd8cc] bg-[#fbfcf8] px-3 py-2.5 text-xs text-[#587066]">
-                            <span class="font-semibold text-[#103d3a]">Ringkasan:</span>
+                        <div class="border-l-2 border-[#a94e28] bg-[#eee9dd] px-3 py-2.5 text-xs text-[#53615b]">
+                            <span class="font-semibold text-[#173a34]">Ringkasan:</span>
                             {#if selectedDayLabels.length > 0 || departureTime}
                                 {selectedDayLabels.length > 0 ? selectedDayLabels.join(', ') : 'hari belum dipilih'}
                                 {departureTime ? ` pukul ${departureTime}` : ', jam belum dipilih'}.
@@ -538,10 +538,10 @@
                                 {#each timeSuggestions as time}
                                     <button
                                         type="button"
-                                        class={`rounded-full border px-2.5 py-1.5 text-xs font-semibold transition ${
+                                        class={`min-h-10 border px-3 py-2 text-xs font-semibold transition-colors ${
                                             filledPickupTimes().includes(time)
-                                                ? 'border-[#0d7066] bg-emerald-50 text-[#103d3a]'
-                                                : 'border-[#d9ded4] bg-[#fbfcf8] text-[#50645c] hover:border-[#0d7066] hover:text-[#0d7066]'
+                                                ? 'border-[#174b43] bg-[#e8eee7] text-[#173a34]'
+                                                : 'border-[#c9c2b3] bg-transparent text-[#53615b] hover:bg-[#eee9dd]'
                                         }`}
                                         aria-pressed={filledPickupTimes().includes(time)}
                                         onclick={() => togglePickupTime(time)}
@@ -601,7 +601,7 @@
                             <select
                                 id="unit_category_view"
                                 bind:value={unitCategory}
-                                class="h-8 rounded-md border border-input bg-card px-2.5 text-[13px] shadow-xs"
+                                class="h-11 rounded-none border border-[#bdb6a8] bg-white px-3 text-sm shadow-none focus-visible:ring-[#174b43]"
                             >
                                 <option value="">Pilih kategori</option>
                                 <option value="Minibus">Minibus</option>
@@ -675,7 +675,7 @@
                         <Button
                             type="button"
                             variant="outline"
-                            class="h-9 rounded-lg text-[13px]"
+                            class="h-11 rounded-none text-sm"
                             onclick={previousStep}
                         >
                             <ArrowLeft class="mr-2 h-4 w-4" /> Kembali
@@ -685,7 +685,7 @@
                         <Button
                             type="submit"
                             variant="outline"
-                            class="h-9 rounded-lg text-[13px]"
+                            class="h-11 rounded-none text-sm"
                             disabled={processing ||
                                 (currentStep === 0 && !canLeaveTravelStep())}
                         >
@@ -697,7 +697,7 @@
                 {#if currentStep < steps.length - 1}
                     <Button
                         type="button"
-                        class="h-9 rounded-lg bg-[#103d3a] text-[13px] text-white hover:bg-[#0b2f2c]"
+                        class="h-11 rounded-none bg-[#174b43] text-sm text-white hover:bg-[#103a34] focus-visible:ring-2 focus-visible:ring-[#a94e28] focus-visible:ring-offset-2"
                         onclick={nextStep}
                         disabled={processing}
                     >
@@ -707,7 +707,7 @@
                 {:else}
                     <Button
                         type="submit"
-                        class="h-9 rounded-lg bg-[#103d3a] text-[13px] text-white hover:bg-[#0b2f2c]"
+                        class="h-11 rounded-none bg-[#174b43] text-sm text-white hover:bg-[#103a34] focus-visible:ring-2 focus-visible:ring-[#a94e28] focus-visible:ring-offset-2"
                         disabled={processing}
                         aria-busy={processing}
                     >
