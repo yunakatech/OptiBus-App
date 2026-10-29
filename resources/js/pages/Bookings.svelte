@@ -13,6 +13,7 @@
     import { page, router } from '@inertiajs/svelte';
     import {
         Armchair,
+        ArrowLeft,
         BusFront,
         CalendarDays,
         CarFront,
@@ -8356,110 +8357,90 @@
             <div
                 class="w-full rounded-lg border border-border/70 bg-background p-4 shadow-sm md:p-5"
             >
-                <div
-                    class="mb-4 flex flex-wrap items-start justify-between gap-3"
-                >
-                    <div class="space-y-2">
-                        <div class="flex flex-wrap items-center gap-2">
-                            <Badge
-                                variant="secondary"
-                                class="rounded-full px-3 py-1 text-[11px]"
-                            >
+                <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
+                    <div class="space-y-1.5">
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            class="h-7 -ml-2 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+                            onclick={navigateBackToBookingList}
+                        >
+                            <ArrowLeft class="h-3.5 w-3.5" />
+                            Kembali ke Data Keberangkatan
+                        </Button>
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <h2 class="text-lg font-bold tracking-tight text-foreground sm:text-xl">
+                                {openGroupDetail.rute}
+                            </h2>
+                            <span class="font-mono text-xs font-semibold uppercase text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
                                 {openGroupDetail.departure_code}
-                            </Badge>
-                            <Badge
-                                variant="secondary"
-                                class="rounded-full px-3 py-1 text-[11px]"
-                            >
+                            </span>
+                            <Badge variant="outline" class="rounded px-2 py-0.5 text-xs font-medium border-border/80 bg-background text-muted-foreground">
                                 Slot {openGroupDetail.unit}
                             </Badge>
-                            {#if !consoleOnly}
-                                <Badge
-                                    variant="secondary"
-                                    class="rounded-full border-cyan-200 bg-cyan-50 px-3 py-1 text-[11px] text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/25 dark:text-cyan-200"
-                                >
-                                    BOP {formatCurrency(
-                                        Number(openGroupDetail.bop || 0),
-                                    )}
+                            {#if !consoleOnly && Number(openGroupDetail.bop || 0) > 0}
+                                <Badge variant="outline" class="rounded px-2 py-0.5 text-xs font-medium border-border/80 bg-background text-muted-foreground">
+                                    BOP {formatCurrency(Number(openGroupDetail.bop || 0))}
                                 </Badge>
                             {/if}
                             {#if isCanceledDeparture(openGroupDetail)}
-                                <Badge
-                                    variant="destructive"
-                                    class="rounded-full px-3 py-1 text-[11px]"
-                                >
+                                <Badge variant="destructive" class="rounded px-2 py-0.5 text-xs">
                                     Batal
                                 </Badge>
                             {:else if isDepartedDeparture(openGroupDetail)}
-                                <Badge
-                                    variant="secondary"
-                                    class="rounded-full border-amber-200 bg-amber-50 px-3 py-1 text-[11px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
-                                >
+                                <Badge variant="outline" class="rounded border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200">
                                     Berangkat
                                 </Badge>
                             {:else if isArrivedDeparture(openGroupDetail)}
-                                <Badge
-                                    variant="secondary"
-                                    class="rounded-full border-emerald-200 bg-emerald-50 px-3 py-1 text-[11px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
-                                >
+                                <Badge variant="outline" class="rounded border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200">
                                     Armada Tiba
                                 </Badge>
                             {:else if isManifestClosed(openGroupDetail)}
-                                <Badge
-                                    variant="secondary"
-                                    class="rounded-full border-slate-200 bg-slate-50 px-3 py-1 text-[11px] text-slate-700 dark:border-slate-500/30 dark:bg-slate-950/25 dark:text-slate-200"
-                                >
+                                <Badge variant="outline" class="rounded border-slate-300 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
                                     Manifest Close
                                 </Badge>
                             {/if}
-                            <Badge
-                                variant="secondary"
-                                class="rounded-full px-3 py-1 text-[11px]"
-                            >
-                                {openGroupDetail.armada_nopol || '-'}
-                            </Badge>
+                            {#if openGroupDetail.armada_nopol}
+                                <span class="rounded bg-muted/60 px-2 py-0.5 font-mono text-xs font-medium text-muted-foreground">
+                                    {openGroupDetail.armada_nopol}
+                                </span>
+                            {/if}
                         </div>
                     </div>
+
                     <div class="flex flex-wrap items-center gap-2">
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            class="rounded-full"
+                            class="h-8 text-xs font-medium"
                             onclick={() => openManifestPrint(openGroupDetail!)}
                         >
-                            <Printer class="mr-1 h-3.5 w-3.5" />
+                            <Printer class="mr-1.5 h-3.5 w-3.5" />
                             Print Manifest
                         </Button>
                         {#if !isManifestLocked(openGroupDetail)}
                             <Button
                                 type="button"
                                 size="sm"
-                                class="rounded-full"
-                                onclick={() =>
-                                    void markBookingGroupAsPaid(
-                                        openGroupDetail!,
-                                    )}
+                                class="h-8 text-xs font-medium"
+                                onclick={() => void markBookingGroupAsPaid(openGroupDetail!)}
                                 disabled={markingPaidSeatId !== null ||
                                     isCanceledDeparture(openGroupDetail) ||
-                                    payableBookingRows(openGroupDetail)
-                                        .length === 0}
+                                    payableBookingRows(openGroupDetail).length === 0}
                             >
-                                <WalletCards class="mr-1 h-3.5 w-3.5" />
-                                {markingPaidSeatId !== null &&
-                                markingPaidSeatId < 0
-                                    ? 'Melunaskan...'
-                                    : 'Lunaskan Semua'}
+                                <WalletCards class="mr-1.5 h-3.5 w-3.5" />
+                                {markingPaidSeatId !== null && markingPaidSeatId < 0 ? 'Melunaskan...' : 'Lunaskan Semua'}
                             </Button>
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                class="rounded-full"
-                                onclick={() =>
-                                    void copyBookingGroup(openGroupDetail!)}
+                                class="h-8 text-xs font-medium"
+                                onclick={() => void copyBookingGroup(openGroupDetail!)}
                             >
-                                <Copy class="mr-1 h-3.5 w-3.5" />
+                                <Copy class="mr-1.5 h-3.5 w-3.5" />
                                 Copy Data
                             </Button>
                         {/if}
@@ -8467,20 +8448,12 @@
                             <Button
                                 type="button"
                                 size="sm"
-                                class="rounded-full bg-rose-600 text-white hover:bg-rose-700 focus-visible:ring-rose-500 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-600"
-                                onclick={() =>
-                                    void closeManifest(openGroupDetail!)}
+                                class="h-8 text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-600"
+                                onclick={() => void closeManifest(openGroupDetail!)}
                             >
                                 Close Manifest
                             </Button>
                         {/if}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            class="rounded-full"
-                            onclick={navigateBackToBookingList}>Kembali</Button
-                        >
                     </div>
                 </div>
 
@@ -10163,371 +10136,301 @@
     {/if}
 
     {#if !consoleOnly && !groupDetailPage}
-        <Card class="rounded-xl border-[#d7d1c3] bg-[#fbfaf6] shadow-none dark:border-slate-700 dark:bg-slate-950">
-            <CardHeader>
+        <Card class="rounded-xl border border-border bg-card shadow-xs">
+            <CardHeader class="border-b border-border/60 pb-3 sm:pb-4">
                 <div class="flex flex-wrap items-center justify-between gap-3">
-                    <CardTitle class="font-serif text-xl"
-                        >{listOnly
-                            ? 'Keberangkatan'
-                            : 'Keberangkatan Terbaru'}</CardTitle
-                    >
+                    <div class="space-y-1">
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <CardTitle class="text-lg font-bold tracking-tight text-foreground md:text-xl">
+                                {listOnly ? 'Data Keberangkatan' : 'Keberangkatan Terbaru'}
+                            </CardTitle>
+                            {#if listOnly}
+                                <span class="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-foreground">
+                                    <CalendarDays class="h-3.5 w-3.5 text-primary" />
+                                    {formatGroupDateLabel(bookingListDateFrom)}
+                                </span>
+                            {/if}
+                        </div>
+                        {#if listOnly}
+                            <div class="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-muted-foreground">
+                                <span class="font-medium text-foreground">
+                                    {bookingListSummary.schedules} jadwal
+                                </span>
+                                <span>•</span>
+                                <span class="font-medium text-foreground">
+                                    {bookingListSummary.activePassengers} penumpang aktif
+                                </span>
+                                {#if bookingListSummary.unpaidSchedules > 0}
+                                    <span>•</span>
+                                    <span class="inline-flex items-center rounded-md border border-amber-300/80 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-200">
+                                        {bookingListSummary.unpaidSchedules} jadwal belum lunas
+                                    </span>
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
+
                     {#if listOnly}
-                        <span
-                            class="inline-flex border-l-2 border-[#a94e28] bg-[#f5f2e9] px-3 py-1 text-sm font-semibold text-[#173a34] dark:bg-slate-900 dark:text-emerald-100 md:text-base"
-                        >
-                            Tanggal aktif: {formatGroupDateLabel(
-                                bookingListDateFrom,
-                            )}
-                        </span>
-                    {/if}
-                </div>
-                {#if !listOnly}
-                    <CardDescription>
-                        Preview data keberangkatan terbaru dari tabel
-                        `bookings`.
-                    </CardDescription>
-                {/if}
-            </CardHeader>
-            <CardContent>
-                {#if listOnly}
-                    <div
-                        class="sticky top-0 z-20 -mx-3 mb-4 space-y-3 border-b border-[#d7d1c3] bg-[#fbfaf6] px-3 py-3 md:top-2 md:mx-0 md:rounded-lg md:border md:p-3 dark:border-slate-700 dark:bg-slate-950"
-                    >
-                        <div
-                            class="flex flex-wrap items-center justify-between gap-3 border-b border-[#d7d1c3] px-1 py-3 dark:border-slate-700"
-                        >
+                        <div class="flex flex-wrap items-center gap-2">
+                            <!-- View mode switcher -->
+                            <div class="hidden items-center rounded-lg border border-border bg-muted/40 p-0.5 lg:inline-flex">
+                                <button
+                                    type="button"
+                                    class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                                        bookingListDesktopView === 'sheet'
+                                            ? 'bg-background text-foreground shadow-xs font-semibold'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                    onclick={() => setBookingListDesktopView('sheet')}
+                                >
+                                    <Rows3 class="h-3.5 w-3.5" />
+                                    Tabel
+                                </button>
+                                <button
+                                    type="button"
+                                    class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                                        bookingListDesktopView === 'cards'
+                                            ? 'bg-background text-foreground shadow-xs font-semibold'
+                                            : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                                    onclick={() => setBookingListDesktopView('cards')}
+                                >
+                                    <LayoutGrid class="h-3.5 w-3.5" />
+                                    Kartu
+                                </button>
+                            </div>
+
+                            <!-- Tambah Jadwal Button -->
                             <Button
                                 type="button"
                                 size="sm"
-                                variant={emptyDepartureOpen
-                                    ? 'secondary'
-                                    : 'default'}
-                                class="h-9 rounded-md px-4 text-xs"
-                                disabled={!emptyDepartureOpen &&
-                                    tenantWriteDisabled}
+                                variant={emptyDepartureOpen ? 'secondary' : 'default'}
+                                class="h-8 gap-1.5 rounded-lg px-3 text-xs font-medium"
+                                disabled={!emptyDepartureOpen && tenantWriteDisabled}
                                 onclick={() => void openEmptyDepartureForm()}
                             >
                                 {#if emptyDepartureOpen}
-                                    <X class="mr-1.5 h-3.5 w-3.5" />
-                                    Tutup
+                                    <X class="h-3.5 w-3.5" />
+                                    Tutup Form
                                 {:else}
-                                    <Plus class="mr-1.5 h-3.5 w-3.5" />
+                                    <Plus class="h-3.5 w-3.5" />
                                     Tambah Jadwal
                                 {/if}
                             </Button>
                         </div>
-                        <div
-                            class="flex flex-wrap items-center justify-between gap-3 bg-[#f5f2e9] px-3 py-2.5 dark:bg-slate-900"
-                        >
-                            <div class="space-y-1">
-                                <div
-                                    class="flex flex-wrap items-center gap-1.5 text-[11px]"
-                                >
-                                    <span
-                                        class="rounded-full border border-border/70 bg-background px-2 py-0.5 font-medium text-muted-foreground"
-                                    >
-                                        {bookingListSummary.schedules} jadwal
-                                    </span>
-                                    <span
-                                        class="rounded-full border border-border/70 bg-background px-2 py-0.5 font-medium text-muted-foreground"
-                                    >
-                                        {bookingListSummary.activePassengers} penumpang
-                                        aktif
-                                    </span>
-                                    <span
-                                        class="rounded-full border border-amber-200/80 bg-amber-50 px-2 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
-                                    >
-                                        {bookingListSummary.unpaidSchedules} jadwal
-                                        belum lunas
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <div
-                                    class="hidden items-center rounded-xl border border-border/70 bg-background/80 p-1 lg:inline-flex"
-                                >
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant={bookingListDesktopView ===
-                                        'sheet'
-                                            ? 'default'
-                                            : 'ghost'}
-                                        class="h-7 gap-1.5 rounded-lg px-2.5 text-[11px]"
-                                        onclick={() =>
-                                            setBookingListDesktopView('sheet')}
-                                    >
-                                        <Rows3 class="h-3.5 w-3.5" />
-                                        Sheet
-                                    </Button>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant={bookingListDesktopView ===
-                                        'cards'
-                                            ? 'default'
-                                            : 'ghost'}
-                                        class="h-7 gap-1.5 rounded-lg px-2.5 text-[11px]"
-                                        onclick={() =>
-                                            setBookingListDesktopView('cards')}
-                                    >
-                                        <LayoutGrid class="h-3.5 w-3.5" />
-                                        Card
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                        <ResponsiveFilterBar
-                            label="Keberangkatan"
-                            activeCount={bookingListFilterActiveCount}
-                            summary={bookingListFilterSummary}
-                            onOpen={beginBookingListFilterDraft}
-                            onApply={applyBookingListFilterDraft}
-                            onReset={resetBookingListFilterDraft}
-                            onCancel={beginBookingListFilterDraft}
-                        >
-                            {#snippet primary()}
-                                <div class="flex items-center gap-2 md:hidden">
-                                    <span
-                                        class="text-xs font-medium text-muted-foreground"
-                                    >
-                                        Tanggal
-                                    </span>
-                                    <span
-                                        class="truncate text-sm font-semibold text-foreground"
-                                    >
-                                        {bookingListFilterSummary}
-                                    </span>
-                                </div>
-                            {/snippet}
-                            {#snippet desktop()}
-                                <div
-                                    class="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
-                                >
-                                    <select
-                                        class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
-                                        bind:value={bookingListRoute}
-                                        aria-label="Filtrer berdasarkan rute"
-                                    >
-                                        <option value="all">Semua Rute</option>
-                                        {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
-                                            <option value={route}
-                                                >{route}</option
-                                            >
-                                        {/each}
-                                    </select>
-                                    <input
-                                        bind:this={bookingListDateInput}
-                                        aria-label="Tanggal keberangkatan"
-                                        type="text"
-                                        value={bookingListDateFrom}
-                                        readonly
-                                        autocomplete="off"
-                                        placeholder="Pilih tanggal"
-                                        class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 md:h-9"
-                                    />
-                                    <select
-                                        class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:h-9"
-                                        bind:value={bookingListPayment}
-                                        aria-label="Status pembayaran"
-                                    >
-                                        <option value="all"
-                                            >Semua Pembayaran</option
-                                        >
-                                        <option value="lunas"
-                                            >Lunas Semua</option
-                                        >
-                                        <option value="belum_lunas"
-                                            >Masih Belum Lunas</option
-                                        >
-                                    </select>
-                                    <Button
-                                        type="button"
-                                        size="sm"
-                                        variant="outline"
-                                        class="h-10 rounded-xl px-3 text-xs md:h-9 md:rounded-full"
-                                        onclick={resetBookingListFilters}
-                                    >
-                                        Reset
-                                    </Button>
-                                </div>
-                            {/snippet}
-                            {#snippet filters()}
-                                <div class="grid gap-3">
-                                    <label
-                                        class="grid gap-1.5 text-sm font-medium"
-                                    >
-                                        Rute
+                    {/if}
+                </div>
+                {#if !listOnly}
+                    <CardDescription>
+                        Preview data keberangkatan terbaru dari tabel `bookings`.
+                    </CardDescription>
+                {/if}
+            </CardHeader>
+            <CardContent class="p-3 sm:p-4 md:p-5">
+                {#if listOnly}
+                    <div class="mb-4 space-y-3">
+                        <div class="rounded-xl border border-border/80 bg-muted/20 p-2.5 sm:p-3">
+                            <ResponsiveFilterBar
+                                label="Keberangkatan"
+                                activeCount={bookingListFilterActiveCount}
+                                summary={bookingListFilterSummary}
+                                onOpen={beginBookingListFilterDraft}
+                                onApply={applyBookingListFilterDraft}
+                                onReset={resetBookingListFilterDraft}
+                                onCancel={beginBookingListFilterDraft}
+                            >
+                                {#snippet primary()}
+                                    <div class="flex items-center gap-2 md:hidden">
+                                        <span class="text-xs font-medium text-muted-foreground">
+                                            Filter:
+                                        </span>
+                                        <span class="truncate text-xs font-semibold text-foreground">
+                                            {bookingListFilterSummary}
+                                        </span>
+                                    </div>
+                                {/snippet}
+                                {#snippet desktop()}
+                                    <div class="grid gap-2.5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
                                         <select
-                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                            bind:value={
-                                                bookingListFilterDraft.route
-                                            }
+                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            bind:value={bookingListRoute}
+                                            aria-label="Filter berdasarkan rute"
                                         >
-                                            <option value="all"
-                                                >Semua Rute</option
-                                            >
-                                            {#each bookingListRoutes() as route, index (`mobile-booking-route-filter-${index}-${route}`)}
-                                                <option value={route}
-                                                    >{route}</option
-                                                >
+                                            <option value="all">Semua Rute</option>
+                                            {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
+                                                <option value={route}>{route}</option>
                                             {/each}
                                         </select>
-                                    </label>
-                                    <FilterDateInput
-                                        label="Tanggal"
-                                        bind:value={bookingListFilterDraft.date}
-                                    />
-                                    <label
-                                        class="grid gap-1.5 text-sm font-medium"
-                                    >
-                                        Pembayaran
+                                        <input
+                                            bind:this={bookingListDateInput}
+                                            aria-label="Tanggal keberangkatan"
+                                            type="text"
+                                            value={bookingListDateFrom}
+                                            readonly
+                                            autocomplete="off"
+                                            placeholder="Pilih tanggal"
+                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                        />
                                         <select
-                                            class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                            bind:value={
-                                                bookingListFilterDraft.payment
-                                            }
+                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            bind:value={bookingListPayment}
+                                            aria-label="Status pembayaran"
                                         >
-                                            <option value="all"
-                                                >Semua Pembayaran</option
-                                            >
-                                            <option value="lunas"
-                                                >Lunas Semua</option
-                                            >
-                                            <option value="belum_lunas"
-                                                >Masih Belum Lunas</option
-                                            >
+                                            <option value="all">Semua Pembayaran</option>
+                                            <option value="lunas">Lunas Semua</option>
+                                            <option value="belum_lunas">Masih Belum Lunas</option>
                                         </select>
-                                    </label>
-                                </div>
-                            {/snippet}
-                        </ResponsiveFilterBar>
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="outline"
+                                            class="h-9 rounded-lg px-3 text-xs"
+                                            onclick={resetBookingListFilters}
+                                        >
+                                            Reset Filter
+                                        </Button>
+                                    </div>
+                                {/snippet}
+                                {#snippet filters()}
+                                    <div class="grid gap-3">
+                                        <label class="grid gap-1.5 text-xs font-medium">
+                                            Rute
+                                            <select
+                                                class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                                                bind:value={bookingListFilterDraft.route}
+                                            >
+                                                <option value="all">Semua Rute</option>
+                                                {#each bookingListRoutes() as route, index (`mobile-booking-route-filter-${index}-${route}`)}
+                                                    <option value={route}>{route}</option>
+                                                {/each}
+                                            </select>
+                                        </label>
+                                        <FilterDateInput
+                                            label="Tanggal"
+                                            bind:value={bookingListFilterDraft.date}
+                                        />
+                                        <label class="grid gap-1.5 text-xs font-medium">
+                                            Pembayaran
+                                            <select
+                                                class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                                                bind:value={bookingListFilterDraft.payment}
+                                            >
+                                                <option value="all">Semua Pembayaran</option>
+                                                <option value="lunas">Lunas Semua</option>
+                                                <option value="belum_lunas">Masih Belum Lunas</option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                {/snippet}
+                            </ResponsiveFilterBar>
+                        </div>
                         {#if emptyDepartureOpen}
-                            <div
-                                class="mt-3 rounded-lg border border-cyan-200/70 bg-background/95 p-3 shadow-sm dark:border-cyan-500/20"
-                            >
-                                <div
-                                    class="mb-2 flex flex-wrap items-center justify-between gap-2"
-                                >
+                            <div class="rounded-xl border border-border bg-card p-4 shadow-xs">
+                                <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
                                     <div>
-                                        <p
-                                            class="text-sm font-semibold text-foreground"
-                                        >
-                                            Tambah jadwal tanpa penumpang
-                                        </p>
-                                        <p
-                                            class="text-xs text-muted-foreground"
-                                        >
-                                            Dipakai untuk membuat card
-                                            keberangkatan kosong berdasarkan
-                                            data Jadwal.
+                                        <h4 class="text-xs font-bold uppercase tracking-wider text-foreground">
+                                            Tambah Jadwal Keberangkatan Kosong
+                                        </h4>
+                                        <p class="text-[11px] text-muted-foreground">
+                                            Membuat slot keberangkatan kosong sesuai data jadwal rute induk.
                                         </p>
                                     </div>
                                     {#if emptyDepartureSchedule()}
-                                        <Badge
-                                            variant="secondary"
-                                            class="rounded-full px-2.5 py-0.5 text-[11px]"
-                                        >
-                                            BOP {formatCurrency(
-                                                Number(
-                                                    emptyDepartureSchedule()
-                                                        ?.bop || 0,
-                                                ),
-                                            )}
+                                        <Badge variant="secondary" class="rounded-md font-mono text-[11px]">
+                                            BOP {formatCurrency(Number(emptyDepartureSchedule()?.bop || 0))}
                                         </Badge>
                                     {/if}
                                 </div>
-                                <div class="grid gap-2 md:grid-cols-5">
-                                    <input
-                                        type="date"
-                                        bind:value={emptyDepartureDate}
-                                        onchange={() =>
-                                            void onEmptyDepartureDateChange()}
-                                        class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                    />
-                                    <select
-                                        class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm md:col-span-2"
-                                        bind:value={emptyDepartureRoute}
-                                        onchange={() =>
-                                            void onEmptyDepartureRouteChange()}
-                                        disabled={loadingEmptyDepartureRoutes}
-                                    >
-                                        <option value=""
-                                            >{loadingEmptyDepartureRoutes
-                                                ? 'Memuat rute...'
-                                                : 'Pilih rute'}</option
+                                <div class="grid gap-2.5 md:grid-cols-5">
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] font-medium text-muted-foreground">Tanggal</label>
+                                        <input
+                                            type="date"
+                                            bind:value={emptyDepartureDate}
+                                            onchange={() => void onEmptyDepartureDateChange()}
+                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        />
+                                    </div>
+                                    <div class="space-y-1 md:col-span-2">
+                                        <label class="text-[11px] font-medium text-muted-foreground">Rute</label>
+                                        <select
+                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            bind:value={emptyDepartureRoute}
+                                            onchange={() => void onEmptyDepartureRouteChange()}
+                                            disabled={loadingEmptyDepartureRoutes}
                                         >
-                                        {#each emptyDepartureRoutes as route, index (`empty-departure-route-${index}-${route}`)}
-                                            <option value={route}
-                                                >{route}</option
-                                            >
-                                        {/each}
-                                    </select>
-                                    <select
-                                        class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
-                                        bind:value={emptyDepartureJam}
-                                        disabled={!emptyDepartureRoute ||
-                                            loadingEmptyDepartureSchedules}
-                                    >
-                                        <option value=""
-                                            >{loadingEmptyDepartureSchedules
-                                                ? 'Memuat jam...'
-                                                : 'Pilih jam'}</option
+                                            <option value="">{loadingEmptyDepartureRoutes ? 'Memuat rute...' : 'Pilih rute'}</option>
+                                            {#each emptyDepartureRoutes as route, index (`empty-departure-route-${index}-${route}`)}
+                                                <option value={route}>{route}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] font-medium text-muted-foreground">Jam Berangkat</label>
+                                        <select
+                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            bind:value={emptyDepartureJam}
+                                            disabled={!emptyDepartureRoute || loadingEmptyDepartureSchedules}
                                         >
-                                        {#each emptyDepartureSchedules as schedule, index (`empty-departure-schedule-${index}-${schedule.jam}`)}
-                                            <option value={schedule.jam}>
-                                                {schedule.jam} - BOP {formatCurrency(
-                                                    Number(schedule.bop || 0),
-                                                )}
-                                            </option>
-                                        {/each}
-                                    </select>
-                                    <select
-                                        class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm"
-                                        bind:value={emptyDepartureUnit}
-                                        disabled={!emptyDepartureJam}
-                                    >
-                                        {#each emptyDepartureUnitOptions() as option, index (`empty-departure-unit-${index}-${option.value}`)}
-                                            <option value={option.value}
-                                                >{option.label}</option
-                                            >
-                                        {/each}
-                                    </select>
+                                            <option value="">{loadingEmptyDepartureSchedules ? 'Memuat jam...' : 'Pilih jam'}</option>
+                                            {#each emptyDepartureSchedules as schedule, index (`empty-departure-schedule-${index}-${schedule.jam}`)}
+                                                <option value={schedule.jam}>
+                                                    {schedule.jam} {schedule.bop ? `(BOP ${formatCurrency(Number(schedule.bop))})` : ''}
+                                                </option>
+                                            {/each}
+                                        </select>
+                                    </div>
+                                    <div class="space-y-1">
+                                        <label class="text-[11px] font-medium text-muted-foreground">Slot Unit</label>
+                                        <select
+                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            bind:value={emptyDepartureUnit}
+                                            disabled={!emptyDepartureJam}
+                                        >
+                                            {#each emptyDepartureUnitOptions() as option, index (`empty-departure-unit-${index}-${option.value}`)}
+                                                <option value={option.value}>{option.label}</option>
+                                            {/each}
+                                        </select>
+                                    </div>
                                 </div>
-                                <div
-                                    class="mt-3 flex flex-wrap items-center justify-between gap-2"
-                                >
-                                    <p class="text-xs text-muted-foreground">
-                                        Card akan muncul di Data Keberangkatan
-                                        walaupun belum ada penumpang.
+                                <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
+                                    <p class="text-[11px] text-muted-foreground">
+                                        Slot keberangkatan akan muncul di daftar Data Keberangkatan.
                                     </p>
-                                    <LoadingButton
-                                        type="button"
-                                        size="sm"
-                                        class="h-8 rounded-full px-3 text-xs"
-                                        onclick={() =>
-                                            void saveEmptyDeparture()}
-                                        loading={savingEmptyDeparture}
-                                        loadingText="Menyimpan..."
-                                        disabled={savingEmptyDeparture ||
-                                            tenantWriteDisabled ||
-                                            !emptyDepartureRoute ||
-                                            !emptyDepartureJam}
-                                    >
-                                        Simpan Jadwal
-                                    </LoadingButton>
+                                    <div class="flex items-center gap-2">
+                                        <Button
+                                            type="button"
+                                            size="sm"
+                                            variant="ghost"
+                                            class="h-8 rounded-lg px-3 text-xs"
+                                            onclick={() => (emptyDepartureOpen = false)}
+                                        >
+                                            Batal
+                                        </Button>
+                                        <LoadingButton
+                                            type="button"
+                                            size="sm"
+                                            class="h-8 rounded-lg px-4 text-xs font-medium"
+                                            onclick={() => void saveEmptyDeparture()}
+                                            loading={savingEmptyDeparture}
+                                            loadingText="Menyimpan..."
+                                            disabled={savingEmptyDeparture || tenantWriteDisabled || !emptyDepartureRoute || !emptyDepartureJam}
+                                        >
+                                            Simpan Jadwal
+                                        </LoadingButton>
+                                    </div>
                                 </div>
                             </div>
                         {/if}
                         {#if formError}
                             <p
-                                class="mt-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/25 dark:text-rose-200"
+                                class="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/25 dark:text-rose-200"
                             >
                                 {formError}
                             </p>
                         {:else if formSuccess}
                             <p
-                                class="mt-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
+                                class="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
                             >
                                 {formSuccess}
                             </p>
@@ -10644,41 +10547,33 @@
 
                                             <div class="table-container">
                                                 <table
-                                                    class="min-w-full table-fixed text-[12px]"
+                                                    class="min-w-full text-left text-xs"
                                                 >
                                                     <thead
-                                                        class="sticky top-0 z-10 bg-background/95 text-left text-[11px] uppercase tracking-[0.14em] text-muted-foreground backdrop-blur"
+                                                        class="sticky top-0 z-10 border-b border-border/70 bg-muted/40 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur"
                                                     >
                                                         <tr>
-                                                            <th
-                                                                class="w-[72px] px-2 py-1.5 font-medium"
-                                                            >
-                                                                Jam
+                                                            <th class="w-32 px-3.5 py-2.5">
+                                                                Jam & Slot
                                                             </th>
-                                                            <th
-                                                                class="w-[156px] px-2 py-1.5 font-medium"
-                                                            >
-                                                                Rute
+                                                            <th class="min-w-[200px] px-3.5 py-2.5">
+                                                                Rute & Kode
                                                             </th>
-                                                            <th
-                                                                class="w-[132px] px-2 py-1.5 font-medium"
-                                                            >
-                                                                Mapping
+                                                            <th class="min-w-[180px] px-3.5 py-2.5">
+                                                                Driver & Armada
                                                             </th>
-                                                            <th
-                                                                class="w-[184px] px-2 py-1.5 font-medium"
-                                                            >
-                                                                Manifest &
-                                                                Pembayaran
+                                                            <th class="w-36 px-3.5 py-2.5">
+                                                                Penumpang
                                                             </th>
-                                                            <th
-                                                                class="w-[88px] px-2 py-1.5 text-right font-medium"
-                                                            >
+                                                            <th class="min-w-[210px] px-3.5 py-2.5">
+                                                                Status Pembayaran
+                                                            </th>
+                                                            <th class="w-44 px-3.5 py-2.5 text-right">
                                                                 Aksi
                                                             </th>
                                                         </tr>
                                                     </thead>
-                                                    <tbody class="text-[12px]">
+                                                    <tbody class="divide-y divide-border/60 text-xs">
                                                         {#each section.groups as group, index (`section-group-${index}-${group.key}`)}
                                                             {@const unpaidAmount =
                                                                 bookingGroupUnpaidAmount(
@@ -10693,293 +10588,139 @@
                                                                     group.armada_nopol,
                                                                 )}
                                                             <tr
-                                                                class={`border-t border-border/60 align-top transition-colors hover:bg-muted/20 ${isCanceledDeparture(group) ? 'bg-rose-50/30 dark:bg-rose-950/10' : ''}`}
+                                                                class={`align-top transition-colors hover:bg-muted/30 ${isCanceledDeparture(group) ? 'bg-rose-50/40 dark:bg-rose-950/15' : ''}`}
                                                             >
-                                                                <td
-                                                                    class="px-2 py-1.5"
-                                                                >
-                                                                    <div
-                                                                        class="space-y-0.5"
-                                                                    >
-                                                                        <div
-                                                                            class="inline-flex items-center gap-1 text-[12px] font-semibold text-foreground"
-                                                                        >
-                                                                            <Clock3
-                                                                                class="h-3 w-3 text-primary"
-                                                                            />
-                                                                            {formatGroupTimeLabel(
-                                                                                group.jam,
-                                                                            )}
+                                                                <td class="px-3.5 py-2.5">
+                                                                    <div class="space-y-1">
+                                                                        <div class="inline-flex items-center gap-1.5 font-bold text-foreground tabular-nums text-sm">
+                                                                            <Clock3 class="h-3.5 w-3.5 text-primary shrink-0" />
+                                                                            {formatGroupTimeLabel(group.jam)}
                                                                         </div>
-                                                                        <div
-                                                                            class="flex flex-wrap gap-1"
-                                                                        >
-                                                                            <Badge
-                                                                                variant="secondary"
-                                                                                class="rounded-md px-1.5 py-0.5 text-[9px]"
-                                                                            >
-                                                                                Slot
-                                                                                {group.unit}
+                                                                        <div class="flex flex-wrap items-center gap-1">
+                                                                            <Badge variant="outline" class="rounded px-1.5 py-0 text-[10px] font-medium border-border/80 bg-background text-muted-foreground">
+                                                                                Slot {group.unit}
                                                                             </Badge>
                                                                             {#if isCanceledDeparture(group)}
-                                                                                <Badge
-                                                                                    variant="destructive"
-                                                                                    class="rounded-md px-1.5 py-0.5 text-[9px]"
-                                                                                >
+                                                                                <Badge variant="destructive" class="rounded px-1.5 py-0 text-[10px]">
                                                                                     Batal
                                                                                 </Badge>
                                                                             {:else if isDepartedDeparture(group)}
-                                                                                <Badge
-                                                                                    variant="secondary"
-                                                                                    class="rounded-md border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[9px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
-                                                                                >
+                                                                                <Badge variant="outline" class="rounded border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200">
                                                                                     Berangkat
                                                                                 </Badge>
                                                                             {:else if isArrivedDeparture(group)}
-                                                                                <Badge
-                                                                                    variant="secondary"
-                                                                                    class="rounded-md border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[9px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
-                                                                                >
+                                                                                <Badge variant="outline" class="rounded border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200">
                                                                                     Tiba
                                                                                 </Badge>
                                                                             {:else if isManifestClosed(group)}
-                                                                                <Badge
-                                                                                    variant="secondary"
-                                                                                    class="rounded-md border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[9px] text-slate-700 dark:border-slate-500/30 dark:bg-slate-950/25 dark:text-slate-200"
-                                                                                >
-                                                                                    Manifest
-                                                                                    Close
+                                                                                <Badge variant="outline" class="rounded border-slate-300 bg-slate-50 px-1.5 py-0 text-[10px] font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
+                                                                                    Manifest Close
                                                                                 </Badge>
                                                                             {/if}
                                                                         </div>
                                                                     </div>
                                                                 </td>
-                                                                <td
-                                                                    class="px-2 py-1.5"
-                                                                >
-                                                                    <div
-                                                                        class="space-y-0.5"
-                                                                    >
-                                                                        <div>
-                                                                            <p
-                                                                                class="text-[9px] font-semibold uppercase tracking-[0.1em] text-muted-foreground"
-                                                                            >
-                                                                                {group.departure_code}
-                                                                            </p>
-                                                                            <p
-                                                                                class="text-[12px] font-semibold leading-snug text-foreground"
-                                                                            >
-                                                                                {group.rute}
-                                                                            </p>
-                                                                        </div>
-                                                                        <div
-                                                                            class="flex flex-wrap gap-1 text-[10px]"
-                                                                        >
-                                                                            <span
-                                                                                class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
-                                                                            >
-                                                                                Total
-                                                                                {group.total}
-                                                                            </span>
-                                                                            <span
-                                                                                class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
-                                                                            >
-                                                                                Aktif
-                                                                                {group.active}
-                                                                            </span>
-                                                                        </div>
+                                                                <td class="px-3.5 py-2.5">
+                                                                    <div class="space-y-0.5">
+                                                                        <span class="font-mono text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                                                                            {group.departure_code}
+                                                                        </span>
+                                                                        <p class="font-semibold text-foreground text-xs leading-snug">
+                                                                            {group.rute}
+                                                                        </p>
                                                                     </div>
                                                                 </td>
-                                                                <td
-                                                                    class="px-2 py-1.5"
-                                                                >
-                                                                    <div
-                                                                        class="space-y-1 text-[10px] leading-snug"
-                                                                    >
-                                                                        <div
-                                                                            class={driverMissing
-                                                                                ? 'text-amber-700 dark:text-amber-200'
-                                                                                : 'text-foreground'}
-                                                                        >
-                                                                            <span
-                                                                                class="font-medium text-muted-foreground"
-                                                                                >Driver:</span
-                                                                            >
-                                                                            <span
-                                                                                class="ml-1 font-semibold"
-                                                                            >
-                                                                                {bookingAssignmentText(
-                                                                                    group.driver_name,
-                                                                                    'Belum ditugaskan',
-                                                                                )}
+                                                                <td class="px-3.5 py-2.5">
+                                                                    <div class="space-y-1 text-xs">
+                                                                        <div class="flex items-center gap-1.5">
+                                                                            <UserRound class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                                                            <span class={driverMissing ? 'font-medium text-amber-600 dark:text-amber-300' : 'text-foreground font-medium'}>
+                                                                                {bookingAssignmentText(group.driver_name, 'Belum ditugaskan')}
                                                                             </span>
                                                                         </div>
-                                                                        <div
-                                                                            class={armadaMissing
-                                                                                ? 'text-amber-700 dark:text-amber-200'
-                                                                                : 'text-foreground'}
-                                                                        >
-                                                                            <span
-                                                                                class="font-medium text-muted-foreground"
-                                                                                >Armada:</span
-                                                                            >
-                                                                            <span
-                                                                                class="ml-1 font-semibold"
-                                                                            >
-                                                                                {bookingAssignmentText(
-                                                                                    group.armada_nopol,
-                                                                                    'Belum ditugaskan',
-                                                                                )}
+                                                                        <div class="flex items-center gap-1.5">
+                                                                            <CarFront class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                                                                            <span class={armadaMissing ? 'font-medium text-amber-600 dark:text-amber-300' : 'text-foreground font-medium'}>
+                                                                                {bookingAssignmentText(group.armada_nopol, 'Belum ditugaskan')}
                                                                             </span>
                                                                         </div>
-                                                                        {#if !consoleOnly}
-                                                                            <div
-                                                                                class="text-foreground"
-                                                                            >
-                                                                                <span
-                                                                                    class="font-medium text-muted-foreground"
-                                                                                    >BOP:</span
-                                                                                >
-                                                                                <span
-                                                                                    class="ml-1 font-semibold"
-                                                                                >
-                                                                                    {formatCurrency(
-                                                                                        Number(
-                                                                                            group.bop ||
-                                                                                                0,
-                                                                                        ),
-                                                                                    )}
-                                                                                </span>
+                                                                        {#if !consoleOnly && Number(group.bop || 0) > 0}
+                                                                            <div class="text-[11px] text-muted-foreground">
+                                                                                BOP: <span class="font-medium text-foreground">{formatCurrency(Number(group.bop || 0))}</span>
                                                                             </div>
                                                                         {/if}
                                                                     </div>
                                                                 </td>
-                                                                <td
-                                                                    class="px-2 py-1.5"
-                                                                >
-                                                                    <div
-                                                                        class="space-y-1.5"
-                                                                    >
-                                                                        <div
-                                                                            class="flex flex-wrap gap-1 text-[10px]"
-                                                                        >
-                                                                            <span
-                                                                                class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
-                                                                            >
-                                                                                Total
-                                                                                {group.total}
-                                                                            </span>
-                                                                            <span
-                                                                                class="rounded-md border border-emerald-200/80 bg-emerald-50 px-1.5 py-0.5 font-medium text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/20 dark:text-emerald-200"
-                                                                            >
-                                                                                Lunas
-                                                                                {group.lunas}
-                                                                            </span>
-                                                                            <span
-                                                                                class="rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
-                                                                            >
-                                                                                Belum
-                                                                                Lunas
-                                                                                {group.belum_lunas}
-                                                                            </span>
-                                                                            <span
-                                                                                class="rounded-md border border-sky-200/80 bg-sky-50 px-1.5 py-0.5 font-medium text-sky-700 dark:border-sky-500/30 dark:bg-sky-950/20 dark:text-sky-200"
-                                                                            >
-                                                                                Refund
-                                                                                {group.refund}
-                                                                            </span>
+                                                                <td class="px-3.5 py-2.5">
+                                                                    <div class="space-y-0.5">
+                                                                        <div class="flex items-baseline gap-1.5 text-xs">
+                                                                            <span class="font-bold text-foreground text-sm">{group.active}</span>
+                                                                            <span class="text-muted-foreground">/ {group.total} pax</span>
+                                                                        </div>
+                                                                        <div class="flex flex-wrap items-center gap-1 text-[11px]">
                                                                             {#if canceledGroupCount(group) > 0}
-                                                                                <span
-                                                                                    class="rounded-md border border-rose-200/80 bg-rose-50 px-1.5 py-0.5 font-medium text-rose-700 dark:border-rose-500/30 dark:bg-rose-950/20 dark:text-rose-200"
-                                                                                >
-                                                                                    Cancel
-                                                                                    {canceledGroupCount(
-                                                                                        group,
-                                                                                    )}
+                                                                                <span class="text-rose-600 dark:text-rose-400 font-medium">
+                                                                                    {canceledGroupCount(group)} cancel
+                                                                                </span>
+                                                                            {:else}
+                                                                                <span class="text-muted-foreground text-[10px]">
+                                                                                    Semua aktif
                                                                                 </span>
                                                                             {/if}
                                                                         </div>
-                                                                        <div
-                                                                            class="grid gap-1 rounded-lg border border-border/70 bg-muted/20 px-2 py-1.5 text-[10px]"
-                                                                        >
-                                                                            <div
-                                                                                class="flex items-center justify-between gap-2"
-                                                                            >
-                                                                                <span
-                                                                                    class="text-muted-foreground"
-                                                                                    >Nilai
-                                                                                    sudah
-                                                                                    lunas</span
-                                                                                >
-                                                                                <span
-                                                                                    class="font-semibold text-foreground"
-                                                                                >
-                                                                                    {formatCurrency(
-                                                                                        bookingGroupPaidAmount(
-                                                                                            group,
-                                                                                        ),
-                                                                                    )}
-                                                                                </span>
-                                                                            </div>
-                                                                            <div
-                                                                                class="flex items-center justify-between gap-2"
-                                                                            >
-                                                                                <span
-                                                                                    class="text-muted-foreground"
-                                                                                    >Nilai
-                                                                                    belum
-                                                                                    lunas</span
-                                                                                >
-                                                                                <span
-                                                                                    class={`font-semibold ${unpaidAmount > 0 ? 'text-amber-700 dark:text-amber-200' : 'text-foreground'}`}
-                                                                                >
-                                                                                    {formatCurrency(
-                                                                                        unpaidAmount,
-                                                                                    )}
-                                                                                </span>
-                                                                            </div>
-                                                                        </div>
                                                                     </div>
                                                                 </td>
-                                                                <td
-                                                                    class="w-[88px] px-2 py-1.5"
-                                                                >
-                                                                    <div
-                                                                        class="flex flex-col items-end gap-1"
-                                                                    >
+                                                                <td class="px-3.5 py-2.5">
+                                                                    <div class="space-y-1">
+                                                                        <div class="flex items-center justify-between text-[11px]">
+                                                                            <span class="text-muted-foreground">Lunas ({group.lunas})</span>
+                                                                            <span class="font-medium text-emerald-700 dark:text-emerald-400">{formatCurrency(bookingGroupPaidAmount(group))}</span>
+                                                                        </div>
+                                                                        {#if unpaidAmount > 0}
+                                                                            <div class="flex items-center justify-between text-[11px] rounded bg-amber-50 dark:bg-amber-950/20 px-1.5 py-0.5 border border-amber-200/80 dark:border-amber-500/25">
+                                                                                <span class="font-medium text-amber-700 dark:text-amber-300">Belum ({group.belum_lunas})</span>
+                                                                                <span class="font-semibold text-amber-700 dark:text-amber-300">{formatCurrency(unpaidAmount)}</span>
+                                                                            </div>
+                                                                        {:else}
+                                                                            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+                                                                                ✓ Lunas Penuh
+                                                                            </div>
+                                                                        {/if}
+                                                                    </div>
+                                                                </td>
+                                                                <td class="px-3.5 py-2.5">
+                                                                    <div class="flex items-center justify-end gap-1.5">
+                                                                        <Button
+                                                                            type="button"
+                                                                            size="sm"
+                                                                            variant="outline"
+                                                                            class="h-7 rounded-md px-2.5 text-xs font-medium"
+                                                                            onclick={() => navigateToGroupDetail(group)}
+                                                                        >
+                                                                            Detail
+                                                                        </Button>
                                                                         {#if canMarkDepartureDeparted(group)}
                                                                             <Button
                                                                                 type="button"
                                                                                 size="sm"
-                                                                                class="h-6 w-full justify-center rounded-md px-1.5 text-[10px] leading-tight"
-                                                                                onclick={() =>
-                                                                                    void markDepartureDeparted(
-                                                                                        group,
-                                                                                    )}
+                                                                                class="h-7 rounded-md bg-amber-600 hover:bg-amber-700 text-white px-2 text-xs"
+                                                                                onclick={() => void markDepartureDeparted(group)}
+                                                                                disabled={cancelingDepartureKey === group.key}
                                                                             >
-                                                                                Armada
-                                                                                Sudah
-                                                                                Berangkat
+                                                                                {cancelingDepartureKey === group.key ? '...' : 'Berangkat'}
                                                                             </Button>
-                                                                        {/if}
-                                                                        {#if canMarkDepartureArrived(group)}
+                                                                        {:else if canMarkDepartureArrived(group)}
                                                                             <Button
                                                                                 type="button"
                                                                                 size="sm"
-                                                                                variant="outline"
-                                                                                class="h-6 w-full justify-center rounded-md px-1.5 text-[10px] leading-tight"
-                                                                                onclick={() =>
-                                                                                    void markDepartureArrived(
-                                                                                        group,
-                                                                                    )}
+                                                                                class="h-7 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-2 text-xs"
+                                                                                onclick={() => void markDepartureArrived(group)}
+                                                                                disabled={cancelingDepartureKey === group.key}
                                                                             >
-                                                                                Armada
-                                                                                Sudah
-                                                                                Tiba
+                                                                                {cancelingDepartureKey === group.key ? '...' : 'Tiba'}
                                                                             </Button>
                                                                         {/if}
-                                                                        <DropdownMenu
-                                                                        >
+                                                                        <DropdownMenu>
                                                                             <DropdownMenuTrigger
                                                                                 asChild
                                                                             >
@@ -10989,8 +10730,8 @@
                                                                                     <Button
                                                                                         type="button"
                                                                                         size="icon"
-                                                                                        variant="outline"
-                                                                                        class="h-7 w-7 rounded-md bg-background/90"
+                                                                                        variant="ghost"
+                                                                                        class="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground"
                                                                                         onclick={props.onclick}
                                                                                         aria-expanded={props[
                                                                                             'aria-expanded'
@@ -11000,7 +10741,7 @@
                                                                                         ]}
                                                                                     >
                                                                                         <MoreHorizontal
-                                                                                            class="h-3.5 w-3.5"
+                                                                                            class="h-4 w-4"
                                                                                         />
                                                                                     </Button>
                                                                                 {/snippet}
@@ -11008,7 +10749,7 @@
                                                                             <DropdownMenuContent
                                                                                 align="end"
                                                                                 sideOffset={6}
-                                                                                class="z-[120] w-40 text-[11px] shadow-lg"
+                                                                                class="z-[120] w-44 text-[11px] shadow-lg"
                                                                             >
                                                                                 <DropdownMenuItem
                                                                                     onclick={() =>
@@ -11123,87 +10864,61 @@
                                     {@const unpaidAmount =
                                         bookingGroupUnpaidAmount(group)}
                                     <div
-                                        class={`group relative rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/60 dark:border-rose-500/35 dark:bg-rose-950/15' : ''}`}
+                                        class={`group relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:shadow-sm ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/40 dark:border-rose-500/30 dark:bg-rose-950/15' : ''}`}
                                     >
-                                        <div class="relative">
-                                            <div
-                                                class="mb-2 flex items-start justify-between gap-2"
-                                            >
-                                                <p
-                                                    class="inline-flex min-w-0 items-center gap-1.5 text-[11px] font-medium text-muted-foreground"
-                                                >
-                                                    <CalendarDays
-                                                        class="h-3.5 w-3.5 shrink-0"
-                                                    />
-                                                    <span class="truncate"
-                                                        >{formatGroupDateLabel(
-                                                            group.tanggal,
-                                                        )}</span
-                                                    >
-                                                </p>
-                                                <div
-                                                    class="flex shrink-0 items-center gap-1"
-                                                >
+                                        <!-- Top Row: Time, Unit, Badges, Menu -->
+                                        <div class="flex items-start justify-between gap-2 border-b border-border/60 pb-3">
+                                            <div class="space-y-1">
+                                                <div class="flex items-center gap-2">
+                                                    <span class="inline-flex items-center gap-1.5 font-bold text-foreground text-base tabular-nums">
+                                                        <Clock3 class="h-4 w-4 text-primary" />
+                                                        {formatGroupTimeLabel(group.jam)}
+                                                    </span>
+                                                    <Badge variant="outline" class="rounded px-1.5 py-0 text-[10px] font-medium border-border/80 bg-background text-muted-foreground">
+                                                        Slot {group.unit}
+                                                    </Badge>
                                                     {#if isCanceledDeparture(group)}
-                                                        <Badge
-                                                            variant="destructive"
-                                                            class="rounded-full px-2 py-0.5 text-[10px]"
-                                                        >
+                                                        <Badge variant="destructive" class="rounded px-1.5 py-0 text-[10px]">
                                                             Batal
                                                         </Badge>
                                                     {:else if isDepartedDeparture(group)}
-                                                        <Badge
-                                                            variant="secondary"
-                                                            class="rounded-full border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/25 dark:text-amber-200"
-                                                        >
+                                                        <Badge variant="outline" class="rounded border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200">
                                                             Berangkat
                                                         </Badge>
                                                     {:else if isArrivedDeparture(group)}
-                                                        <Badge
-                                                            variant="secondary"
-                                                            class="rounded-full border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700 dark:border-emerald-500/30 dark:bg-emerald-950/25 dark:text-emerald-200"
-                                                        >
+                                                        <Badge variant="outline" class="rounded border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200">
                                                             Tiba
                                                         </Badge>
                                                     {:else if isManifestClosed(group)}
-                                                        <Badge
-                                                            variant="secondary"
-                                                            class="rounded-full border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] text-slate-700 dark:border-slate-500/30 dark:bg-slate-950/25 dark:text-slate-200"
-                                                        >
+                                                        <Badge variant="outline" class="rounded border-slate-300 bg-slate-50 px-1.5 py-0 text-[10px] font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
                                                             Manifest Close
                                                         </Badge>
                                                     {/if}
-                                                    <Badge
-                                                        variant="secondary"
-                                                        class="rounded-full px-2 py-0.5 text-[10px]"
-                                                        >Slot {group.unit}</Badge
-                                                    >
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
+                                                </div>
+                                                <p class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                    <CalendarDays class="h-3.5 w-3.5 shrink-0" />
+                                                    <span>{formatGroupDateLabel(group.tanggal)}</span>
+                                                    <span>•</span>
+                                                    <span class="font-mono text-[11px] uppercase tracking-wider">{group.departure_code}</span>
+                                                </p>
+                                            </div>
+
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    {#snippet children(props)}
+                                                        <Button
+                                                            type="button"
+                                                            size="icon"
+                                                            variant="ghost"
+                                                            class="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground"
+                                                            onclick={props.onclick}
+                                                            aria-expanded={props['aria-expanded']}
+                                                            data-state={props['data-state']}
                                                         >
-                                                            {#snippet children(
-                                                                props,
-                                                            )}
-                                                                <Button
-                                                                    type="button"
-                                                                    size="icon"
-                                                                    variant="outline"
-                                                                    class="h-7 w-7 rounded-full bg-background/90"
-                                                                    onclick={props.onclick}
-                                                                    aria-expanded={props[
-                                                                        'aria-expanded'
-                                                                    ]}
-                                                                    data-state={props[
-                                                                        'data-state'
-                                                                    ]}
-                                                                >
-                                                                    <MoreHorizontal
-                                                                        class="h-3.5 w-3.5"
-                                                                    />
-                                                                </Button>
-                                                            {/snippet}
-                                                        </DropdownMenuTrigger>
+                                                            <MoreHorizontal class="h-4 w-4" />
+                                                        </Button>
+                                                    {/snippet}
+                                                </DropdownMenuTrigger>
                                                         <DropdownMenuContent
                                                             align="end"
                                                             side="top"
@@ -11299,142 +11014,110 @@
                                                             {/if}
                                                         </DropdownMenuContent>
                                                     </DropdownMenu>
-                                                </div>
+                                        </div>
+
+                                        <!-- Route -->
+                                        <div class="my-3">
+                                            <p class="font-semibold text-foreground text-sm leading-snug line-clamp-2">
+                                                {group.rute}
+                                            </p>
+                                        </div>
+
+                                        <!-- Crew & Armada Assignment -->
+                                        <div class="space-y-1.5 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-xs">
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span class="inline-flex items-center gap-1.5 text-muted-foreground">
+                                                    <UserRound class="h-3.5 w-3.5 shrink-0" />
+                                                    Driver
+                                                </span>
+                                                <span class={`font-medium truncate ${bookingAssignmentMissing(group.driver_name) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}>
+                                                    {bookingAssignmentText(group.driver_name, 'Belum ditugaskan')}
+                                                </span>
                                             </div>
-
-                                            <div class="space-y-2.5">
-                                                <div class="space-y-2">
-                                                    <div
-                                                        class="flex items-center justify-between gap-3"
-                                                    >
-                                                        <div class="min-w-0">
-                                                            <p
-                                                                class="line-clamp-2 text-sm font-semibold leading-snug text-foreground"
-                                                            >
-                                                                {group.rute}
-                                                            </p>
-                                                        </div>
-                                                        <div
-                                                            class="shrink-0 rounded-lg border border-border/70 bg-muted/30 px-2.5 py-1.5 text-center"
-                                                        >
-                                                            <p
-                                                                class="inline-flex items-center justify-center gap-1.5 text-sm font-semibold leading-none tracking-tight text-foreground"
-                                                            >
-                                                                <Clock3
-                                                                    class="h-3.5 w-3.5 text-primary"
-                                                                />
-                                                                <span
-                                                                    >{formatGroupTimeLabel(
-                                                                        group.jam,
-                                                                    )}</span
-                                                                >
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    <div
-                                                        class="grid gap-1 text-xs text-muted-foreground sm:grid-cols-3"
-                                                    >
-                                                        <p
-                                                            class={`inline-flex min-w-0 items-center gap-1.5 ${bookingAssignmentMissing(group.driver_name) ? 'text-amber-700 dark:text-amber-200' : ''}`}
-                                                        >
-                                                            <UserRound
-                                                                class="h-3.5 w-3.5 shrink-0 text-primary"
-                                                            />
-                                                            <span
-                                                                class="truncate"
-                                                                >Driver:
-                                                                {bookingAssignmentText(
-                                                                    group.driver_name,
-                                                                    'Belum ditugaskan',
-                                                                )}</span
-                                                            >
-                                                        </p>
-                                                        <p
-                                                            class={`inline-flex min-w-0 items-center gap-1.5 ${bookingAssignmentMissing(group.armada_nopol) ? 'text-amber-700 dark:text-amber-200' : ''}`}
-                                                        >
-                                                            <CarFront
-                                                                class="h-3.5 w-3.5 shrink-0 text-primary"
-                                                            />
-                                                            <span
-                                                                class="truncate"
-                                                                >Nopol:
-                                                                {bookingAssignmentText(
-                                                                    group.armada_nopol,
-                                                                    'Belum ditugaskan',
-                                                                )}</span
-                                                            >
-                                                        </p>
-                                                    </div>
+                                            <div class="flex items-center justify-between gap-2">
+                                                <span class="inline-flex items-center gap-1.5 text-muted-foreground">
+                                                    <CarFront class="h-3.5 w-3.5 shrink-0" />
+                                                    Armada
+                                                </span>
+                                                <span class={`font-medium truncate ${bookingAssignmentMissing(group.armada_nopol) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}>
+                                                    {bookingAssignmentText(group.armada_nopol, 'Belum ditugaskan')}
+                                                </span>
+                                            </div>
+                                            {#if !consoleOnly && Number(group.bop || 0) > 0}
+                                                <div class="flex items-center justify-between gap-2 pt-1 border-t border-border/40 text-[11px]">
+                                                    <span class="text-muted-foreground">BOP Operasional</span>
+                                                    <span class="font-medium text-foreground">{formatCurrency(Number(group.bop || 0))}</span>
                                                 </div>
+                                            {/if}
+                                        </div>
 
-                                                <div
-                                                    class="border-t border-border/70 pt-2"
-                                                >
-                                                    <div
-                                                        class="grid grid-cols-3 gap-1.5 text-[11px]"
-                                                    >
-                                                        <span
-                                                            class="inline-flex items-center justify-center rounded-md border border-border/70 bg-muted/45 px-1.5 py-1 font-medium text-foreground"
-                                                            >Aktif
-                                                            {group.active}</span
-                                                        >
-                                                        <span
-                                                            class="inline-flex items-center justify-center rounded-md border border-rose-300/70 bg-rose-50 px-1.5 py-1 font-medium text-rose-700 dark:border-rose-500/40 dark:bg-rose-950/30 dark:text-rose-300"
-                                                            >Cancel
-                                                            {canceledGroupCount(
-                                                                group,
-                                                            )}</span
-                                                        >
-                                                        <span
-                                                            class="inline-flex items-center justify-center rounded-md border border-amber-300/70 bg-amber-50 px-1.5 py-1 font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300"
-                                                            >Belum
-                                                            {group.belum_lunas}</span
-                                                        >
-                                                    </div>
-                                                    <details
-                                                        class="mt-2 border-t border-border/60 pt-2"
-                                                    >
-                                                        <summary
-                                                            class="cursor-pointer list-none text-xs font-medium text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                                        >
-                                                            Rincian
-                                                        </summary>
-                                                        <div
-                                                            class="mt-2 grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground sm:grid-cols-3"
-                                                        >
-                                                            <span
-                                                                >Total {group.total}</span
-                                                            >
-                                                            <span
-                                                                >Lunas {group.lunas}</span
-                                                            >
-                                                            <span
-                                                                >Refund {group.refund}</span
-                                                            >
-                                                            {#if !consoleOnly}
-                                                                <span
-                                                                    >BOP {formatCurrency(
-                                                                        Number(
-                                                                            group.bop ||
-                                                                                0,
-                                                                        ),
-                                                                    )}</span
-                                                                >
-                                                            {/if}
-                                                        </div>
-                                                    </details>
-                                                    {#if unpaidAmount > 0}
-                                                        <div
-                                                            class="mt-2 rounded-xl border border-amber-200/80 bg-amber-50/80 px-2.5 py-2 text-[11px] text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
-                                                        >
-                                                            Nilai belum lunas
-                                                            {formatCurrency(
-                                                                unpaidAmount,
-                                                            )}
-                                                        </div>
+                                        <!-- Passenger & Payment Metrics -->
+                                        <div class="my-3 space-y-2">
+                                            <div class="flex items-center justify-between text-xs">
+                                                <span class="text-muted-foreground">Penumpang</span>
+                                                <div class="flex items-center gap-2">
+                                                    <span class="font-semibold text-foreground">{group.active} / {group.total} pax</span>
+                                                    {#if canceledGroupCount(group) > 0}
+                                                        <span class="text-rose-600 dark:text-rose-400 font-medium text-[11px]">({canceledGroupCount(group)} batal)</span>
                                                     {/if}
                                                 </div>
                                             </div>
+
+                                            {#if unpaidAmount > 0}
+                                                <div class="flex items-center justify-between rounded-md border border-amber-200/80 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-800 dark:border-amber-500/25 dark:bg-amber-950/20 dark:text-amber-200">
+                                                    <span>Belum Lunas ({group.belum_lunas} pax)</span>
+                                                    <span class="font-semibold tabular-nums">{formatCurrency(unpaidAmount)}</span>
+                                                </div>
+                                            {:else}
+                                                <div class="flex items-center justify-between rounded-md border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-950/20 dark:text-emerald-200">
+                                                    <span>Semua Lunas ({group.lunas} pax)</span>
+                                                    <span class="font-semibold tabular-nums">{formatCurrency(bookingGroupPaidAmount(group))}</span>
+                                                </div>
+                                            {/if}
+                                        </div>
+
+                                        <!-- Footer Actions -->
+                                        <div class="flex items-center gap-2 pt-2 border-t border-border/60">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                class="flex-1 text-xs h-8 font-medium"
+                                                onclick={() => navigateToGroupDetail(group)}
+                                            >
+                                                Buka Detail
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="outline"
+                                                class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                                                onclick={() => openManifestPrint(group)}
+                                                title="Print Manifest"
+                                            >
+                                                <Printer class="h-3.5 w-3.5" />
+                                            </Button>
+                                            {#if canMarkDepartureDeparted(group)}
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    class="h-8 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white shrink-0 font-medium"
+                                                    onclick={() => void markDepartureDeparted(group)}
+                                                    disabled={cancelingDepartureKey === group.key}
+                                                >
+                                                    {cancelingDepartureKey === group.key ? '...' : 'Berangkat'}
+                                                </Button>
+                                            {:else if canMarkDepartureArrived(group)}
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    class="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 font-medium"
+                                                    onclick={() => void markDepartureArrived(group)}
+                                                    disabled={cancelingDepartureKey === group.key}
+                                                >
+                                                    {cancelingDepartureKey === group.key ? '...' : 'Tiba'}
+                                                </Button>
+                                            {/if}
                                         </div>
                                     </div>
                                 {/each}

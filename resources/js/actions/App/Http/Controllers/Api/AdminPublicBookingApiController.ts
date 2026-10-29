@@ -1,5 +1,83 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../../wayfinder'
 /**
+* @see \App\Http\Controllers\Api\AdminPublicBookingApiController::pendingCount
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @route '/api/admin/public-booking-requests/count'
+ */
+export const pendingCount = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: pendingCount.url(options),
+    method: 'get',
+})
+
+pendingCount.definition = {
+    methods: ["get","head"],
+    url: '/api/admin/public-booking-requests/count',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\AdminPublicBookingApiController::pendingCount
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @route '/api/admin/public-booking-requests/count'
+ */
+pendingCount.url = (options?: RouteQueryOptions) => {
+    return pendingCount.definition.url + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\AdminPublicBookingApiController::pendingCount
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @route '/api/admin/public-booking-requests/count'
+ */
+pendingCount.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: pendingCount.url(options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\AdminPublicBookingApiController::pendingCount
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @route '/api/admin/public-booking-requests/count'
+ */
+pendingCount.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: pendingCount.url(options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\AdminPublicBookingApiController::pendingCount
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @route '/api/admin/public-booking-requests/count'
+ */
+    const pendingCountForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: pendingCount.url(options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminPublicBookingApiController::pendingCount
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @route '/api/admin/public-booking-requests/count'
+ */
+        pendingCountForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: pendingCount.url(options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminPublicBookingApiController::pendingCount
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @route '/api/admin/public-booking-requests/count'
+ */
+        pendingCountForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: pendingCount.url({
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    pendingCount.form = pendingCountForm
+/**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::index
  * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:14
  * @route '/api/admin/public-booking-requests'
@@ -79,7 +157,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::approve
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:30
  * @route '/api/admin/public-booking-requests/{id}/approve'
  */
 export const approve = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +172,7 @@ approve.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::approve
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:30
  * @route '/api/admin/public-booking-requests/{id}/approve'
  */
 approve.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -122,7 +200,7 @@ approve.url = (args: { id: string | number } | [id: string | number ] | string |
 
 /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::approve
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:30
  * @route '/api/admin/public-booking-requests/{id}/approve'
  */
 approve.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -132,7 +210,7 @@ approve.post = (args: { id: string | number } | [id: string | number ] | string 
 
     /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::approve
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:30
  * @route '/api/admin/public-booking-requests/{id}/approve'
  */
     const approveForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -142,7 +220,7 @@ approve.post = (args: { id: string | number } | [id: string | number ] | string 
 
             /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::approve
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:22
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:30
  * @route '/api/admin/public-booking-requests/{id}/approve'
  */
         approveForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -153,7 +231,7 @@ approve.post = (args: { id: string | number } | [id: string | number ] | string 
     approve.form = approveForm
 /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::reject
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:31
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:39
  * @route '/api/admin/public-booking-requests/{id}/reject'
  */
 export const reject = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -168,7 +246,7 @@ reject.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::reject
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:31
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:39
  * @route '/api/admin/public-booking-requests/{id}/reject'
  */
 reject.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -196,7 +274,7 @@ reject.url = (args: { id: string | number } | [id: string | number ] | string | 
 
 /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::reject
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:31
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:39
  * @route '/api/admin/public-booking-requests/{id}/reject'
  */
 reject.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -206,7 +284,7 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
 
     /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::reject
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:31
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:39
  * @route '/api/admin/public-booking-requests/{id}/reject'
  */
     const rejectForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -216,7 +294,7 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
 
             /**
 * @see \App\Http\Controllers\Api\AdminPublicBookingApiController::reject
- * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:31
+ * @see app/Http/Controllers/Api/AdminPublicBookingApiController.php:39
  * @route '/api/admin/public-booking-requests/{id}/reject'
  */
         rejectForm.post = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -225,6 +303,6 @@ reject.post = (args: { id: string | number } | [id: string | number ] | string |
         })
     
     reject.form = rejectForm
-const AdminPublicBookingApiController = { index, approve, reject }
+const AdminPublicBookingApiController = { pendingCount, index, approve, reject }
 
 export default AdminPublicBookingApiController

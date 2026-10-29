@@ -79,7 +79,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
     index.form = indexForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:757
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:777
  * @route '/api/admin/drivers'
  */
 export const save = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -94,7 +94,7 @@ save.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:757
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:777
  * @route '/api/admin/drivers'
  */
 save.url = (options?: RouteQueryOptions) => {
@@ -103,7 +103,7 @@ save.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:757
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:777
  * @route '/api/admin/drivers'
  */
 save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -113,7 +113,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:757
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:777
  * @route '/api/admin/drivers'
  */
     const saveForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -123,7 +123,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::save
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:757
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:777
  * @route '/api/admin/drivers'
  */
         saveForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -134,7 +134,7 @@ save.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
     save.form = saveForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:867
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:887
  * @route '/api/admin/drivers/{id}'
  */
 export const deleteMethod = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -149,7 +149,7 @@ deleteMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:867
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:887
  * @route '/api/admin/drivers/{id}'
  */
 deleteMethod.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
@@ -177,7 +177,7 @@ deleteMethod.url = (args: { id: string | number } | [id: string | number ] | str
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:867
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:887
  * @route '/api/admin/drivers/{id}'
  */
 deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'delete'> => ({
@@ -187,7 +187,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:867
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:887
  * @route '/api/admin/drivers/{id}'
  */
     const deleteMethodForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -202,7 +202,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::deleteMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:867
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:887
  * @route '/api/admin/drivers/{id}'
  */
         deleteMethodForm.delete = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -218,7 +218,7 @@ deleteMethod.delete = (args: { id: string | number } | [id: string | number ] | 
     deleteMethod.form = deleteMethodForm
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:714
  * @route '/api/admin/drivers/export'
  */
 export const exportMethod = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -233,7 +233,7 @@ exportMethod.definition = {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:714
  * @route '/api/admin/drivers/export'
  */
 exportMethod.url = (options?: RouteQueryOptions) => {
@@ -242,7 +242,7 @@ exportMethod.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:714
  * @route '/api/admin/drivers/export'
  */
 exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -251,7 +251,7 @@ exportMethod.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:714
  * @route '/api/admin/drivers/export'
  */
 exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -261,7 +261,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
     /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:714
  * @route '/api/admin/drivers/export'
  */
     const exportMethodForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -271,7 +271,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:714
  * @route '/api/admin/drivers/export'
  */
         exportMethodForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -280,7 +280,7 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
             /**
 * @see \App\Http\Controllers\Api\AdminOpsApiController::exportMethod
- * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:714
  * @route '/api/admin/drivers/export'
  */
         exportMethodForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -294,11 +294,109 @@ exportMethod.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
         })
     
     exportMethod.form = exportMethodForm
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::show
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @route '/api/admin/drivers/{id}'
+ */
+export const show = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: show.url(args, options),
+    method: 'get',
+})
+
+show.definition = {
+    methods: ["get","head"],
+    url: '/api/admin/drivers/{id}',
+} satisfies RouteDefinition<["get","head"]>
+
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::show
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @route '/api/admin/drivers/{id}'
+ */
+show.url = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { id: args }
+    }
+
+    
+    if (Array.isArray(args)) {
+        args = {
+                    id: args[0],
+                }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+                        id: args.id,
+                }
+
+    return show.definition.url
+            .replace('{id}', parsedArgs.id.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::show
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @route '/api/admin/drivers/{id}'
+ */
+show.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
+    url: show.url(args, options),
+    method: 'get',
+})
+/**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::show
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @route '/api/admin/drivers/{id}'
+ */
+show.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
+    url: show.url(args, options),
+    method: 'head',
+})
+
+    /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::show
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @route '/api/admin/drivers/{id}'
+ */
+    const showForm = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+        action: show.url(args, options),
+        method: 'get',
+    })
+
+            /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::show
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @route '/api/admin/drivers/{id}'
+ */
+        showForm.get = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, options),
+            method: 'get',
+        })
+            /**
+* @see \App\Http\Controllers\Api\AdminOpsApiController::show
+ * @see app/Http/Controllers/Api/AdminOpsApiController.php:694
+ * @route '/api/admin/drivers/{id}'
+ */
+        showForm.head = (args: { id: string | number } | [id: string | number ] | string | number, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
+            action: show.url(args, {
+                        [options?.mergeQuery ? 'mergeQuery' : 'query']: {
+                            _method: 'HEAD',
+                            ...(options?.query ?? options?.mergeQuery ?? {}),
+                        }
+                    }),
+            method: 'get',
+        })
+    
+    show.form = showForm
 const drivers = {
     index: Object.assign(index, index),
 save: Object.assign(save, save),
 delete: Object.assign(deleteMethod, deleteMethod),
 export: Object.assign(exportMethod, exportMethod),
+show: Object.assign(show, show),
 }
 
 export default drivers
