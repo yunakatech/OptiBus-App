@@ -27,7 +27,7 @@
 
 {#if status}
     <div
-        class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-xs font-medium text-emerald-700"
+        class="border-l-2 border-[#174b43] bg-[#e5ebe3] px-4 py-3 text-sm font-medium text-[#173a34]"
     >
         {status}
     </div>
@@ -36,18 +36,18 @@
 <Form
     {...store.form()}
     resetOnSuccess={['password']}
-    class="overflow-hidden rounded-xl border border-[#d7dfd5] bg-white/92 shadow-[0_20px_56px_-38px_rgba(16,61,58,0.82)] backdrop-blur"
+    class="overflow-hidden border-y border-[#c9c2b3] bg-[#f7f4ec]"
 >
     {#snippet children({ errors, processing })}
-        <div class="grid gap-3.5 p-4">
+        <div class="grid gap-5 px-4 py-5 sm:px-6 sm:py-6">
             <a
                 href="/auth/google/redirect"
-                class="group block rounded-xl border border-[#d9ded4] bg-[#fbfcf8] p-2.5 shadow-sm transition hover:-translate-y-0.5 hover:border-[#0d7066]/45 hover:shadow-[0_14px_32px_-26px_rgba(16,61,58,0.8)]"
+                class="group block border border-[#c9c2b3] bg-transparent p-3 transition-colors hover:border-[#174b43] hover:bg-[#eee9dd] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
             >
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-2.5">
                         <span
-                            class="grid h-9 w-9 place-items-center rounded-full bg-white shadow-sm ring-1 ring-black/5"
+                            class="grid h-10 w-10 place-items-center border border-[#d2cabb] bg-white"
                         >
                             <svg class="h-4 w-4" viewBox="0 0 24 24"
                                 ><path
@@ -66,35 +66,35 @@
                             >
                         </span>
                         <div>
-                            <p class="text-[13px] font-semibold text-[#17201f]">
+                            <p class="text-sm font-semibold text-[#213a34]">
                                 Masuk dengan Google
                             </p>
-                            <p class="mt-0.5 text-[11px] text-[#687470]">
+                            <p class="mt-0.5 text-xs text-[#68736c]">
                                 Paling cepat untuk pemilik dan admin pool.
                             </p>
                         </div>
                     </div>
                     <ArrowRight
-                        class="h-4 w-4 text-[#0d7066] transition group-hover:translate-x-0.5"
+                        class="h-4 w-4 text-[#174b43] transition-transform group-hover:translate-x-0.5"
                     />
                 </div>
             </a>
 
             <div class="relative">
                 <div class="absolute inset-0 flex items-center">
-                    <span class="w-full border-t border-[#d9ded4]"></span>
+                    <span class="w-full border-t border-[#c9c2b3]"></span>
                 </div>
-                <div class="relative flex justify-center text-[11px] uppercase tracking-wide">
-                    <span class="bg-white px-2 text-[#687470]">
-                        Atau masuk manual
+                <div class="relative flex justify-center text-[10px] font-semibold uppercase tracking-[0.16em]">
+                    <span class="bg-[#f7f4ec] px-3 text-[#68736c]">
+                        Masuk dengan email
                     </span>
                 </div>
             </div>
 
-            <div class="grid gap-3">
-                <div class="grid gap-1.5">
-                    <Label for="email" class="flex items-center gap-1.5 text-xs">
-                        <Mail class="h-3.5 w-3.5 text-[#0d7066]" />
+            <div class="grid gap-4">
+                <div class="grid gap-2">
+                    <Label for="email" class="flex items-center gap-2 text-sm font-medium text-[#33433d]">
+                        <Mail class="h-4 w-4 text-[#174b43]" aria-hidden="true" />
                         Email
                     </Label>
                     <Input
@@ -104,17 +104,17 @@
                         required
                         autocomplete="email"
                         placeholder="email@example.com"
-                        class="h-8 rounded-lg px-2.5 text-[13px]"
+                        class="h-11 rounded-none border-[#bdb6a8] bg-white px-3 text-sm focus-visible:ring-[#174b43]"
                     />
                     <InputError message={errors.email} />
                 </div>
 
-                <div class="grid gap-1.5">
+                <div class="grid gap-2">
                     <Label
                         for="password"
-                        class="flex items-center gap-1.5 text-xs"
+                        class="flex items-center gap-2 text-sm font-medium text-[#33433d]"
                     >
-                        <LockKeyhole class="h-3.5 w-3.5 text-[#0d7066]" />
+                        <LockKeyhole class="h-4 w-4 text-[#174b43]" aria-hidden="true" />
                         Kata sandi
                     </Label>
                     <PasswordInput
@@ -123,7 +123,7 @@
                         required
                         autocomplete="current-password"
                         placeholder="Masukkan kata sandi"
-                        class="h-8 rounded-lg px-2.5 text-[13px]"
+                        class="h-11 rounded-none border-[#bdb6a8] bg-white px-3 text-sm focus-visible:ring-[#174b43]"
                     />
                     <InputError message={errors.password} />
                 </div>
@@ -131,19 +131,19 @@
                 <div class="flex items-center justify-between gap-2 sm:gap-3">
                     <Label
                         for="remember"
-                        class="flex min-h-10 min-w-0 flex-1 items-center gap-2.5 rounded-lg px-1 py-1 text-left touch-manipulation sm:min-h-0 sm:flex-none sm:px-0 sm:py-0"
+                    class="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 px-1 py-1 text-left touch-manipulation sm:flex-none sm:px-0 sm:py-0"
                     >
                         <Checkbox
                             id="remember"
                             name="remember"
                             aria-label="Ingat saya"
-                            class="inline-flex h-5 max-h-5 min-h-5 w-5 max-w-5 min-w-5 shrink-0 aspect-square items-center justify-center rounded-md border-[#aebbb5] p-0 leading-none shadow-none data-[state=checked]:border-[#0d7066] data-[state=checked]:bg-[#0d7066] focus-visible:ring-[#0d7066]/35 sm:h-4 sm:max-h-4 sm:min-h-4 sm:w-4 sm:max-w-4 sm:min-w-4"
+                            class="inline-flex h-5 max-h-5 min-h-5 w-5 max-w-5 min-w-5 shrink-0 aspect-square items-center justify-center rounded-none border-[#aebbb5] p-0 leading-none shadow-none data-[state=checked]:border-[#174b43] data-[state=checked]:bg-[#174b43] focus-visible:ring-[#174b43]/35 sm:h-4 sm:max-h-4 sm:min-h-4 sm:w-4 sm:max-w-4 sm:min-w-4"
                         />
-                        <span class="truncate text-xs text-[#53615d]">Ingat saya</span>
+                        <span class="truncate text-sm text-[#53615b]">Ingat saya</span>
                     </Label>
                     <TextLink
                         href="/forgot-password"
-                        class="text-xs font-semibold text-[#0d7066] underline-offset-4 hover:underline"
+                        class="text-sm font-semibold text-[#174b43] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
                     >
                         Lupa kata sandi?
                     </TextLink>
@@ -151,7 +151,7 @@
 
                 <Button
                     type="submit"
-                    class="h-9 w-full rounded-lg bg-[#103d3a] text-[13px] text-white hover:bg-[#0b2f2c]"
+                    class="h-12 w-full rounded-none bg-[#174b43] text-sm text-white hover:bg-[#103a34] focus-visible:ring-2 focus-visible:ring-[#a94e28] focus-visible:ring-offset-2"
                     disabled={processing}
                     data-test="login-button"
                 >
@@ -161,11 +161,11 @@
                 </Button>
             </div>
 
-            <div class="text-center text-xs text-muted-foreground">
+            <div class="text-center text-sm text-[#68736c]">
                 Belum punya akun?
                 <TextLink
                     href={register()}
-                    class="font-semibold text-[#0d7066] underline underline-offset-4"
+                    class="font-semibold text-[#174b43] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
                 >
                     Mulai uji coba atau pilih paket
                 </TextLink>
