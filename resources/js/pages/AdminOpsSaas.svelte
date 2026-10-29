@@ -163,11 +163,11 @@
     let payMessage = $state('');
 
     const shellClass =
-        'rounded-lg border border-slate-200/70 bg-white/90 shadow-[0_28px_90px_-55px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/80';
+        'overflow-hidden rounded-xl border border-[#d7d1c3] bg-[#fbfaf6] dark:border-slate-700 dark:bg-slate-950';
     const panelClass =
-        'rounded-lg border border-slate-200/70 bg-white/90 shadow-sm dark:border-slate-800 dark:bg-slate-950/70';
+        'rounded-lg border border-[#d7d1c3] bg-[#fbfaf6] dark:border-slate-700 dark:bg-slate-950';
     const tableShellClass =
-        'overflow-hidden rounded-lg border border-slate-200/70 bg-white/95 shadow-sm dark:border-slate-800 dark:bg-slate-950/70';
+        'overflow-hidden rounded-lg border border-[#d7d1c3] bg-white dark:border-slate-700 dark:bg-slate-950';
 
     async function loadPaymentSettings() {
         payBusy = true;
@@ -768,7 +768,7 @@
 <AppHead title="SaaS Management" />
 
 <div
-    class="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,rgba(59,130,246,0.08),transparent_28%),linear-gradient(180deg,rgba(248,250,252,0.94)_0%,rgba(255,255,255,1)_34%,rgba(248,250,252,0.96)_100%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(56,189,248,0.08),transparent_24%),linear-gradient(180deg,#020617_0%,#0f172a_45%,#020617_100%)]"
+    class="min-h-screen overflow-x-hidden bg-[#f1eee5] dark:bg-slate-950"
 >
     <div
         class="mx-auto w-full max-w-[1600px] space-y-4 px-3 py-4 sm:space-y-6 sm:px-6 sm:py-6 lg:px-8"
@@ -810,64 +810,39 @@
 
             <!-- Header -->
             <section class={shellClass}>
-                <div class="relative isolate overflow-hidden rounded-lg">
-                    <div
-                        class="absolute inset-0 bg-[linear-gradient(135deg,rgba(15,23,42,0.03),transparent_35%,rgba(59,130,246,0.07))] dark:bg-[linear-gradient(135deg,rgba(148,163,184,0.08),transparent_35%,rgba(56,189,248,0.12))]"
-                    ></div>
+                <div class="relative isolate overflow-hidden rounded-xl bg-[#173a34] text-white dark:bg-[#101f1c]">
                     <div
                         class="relative grid gap-5 p-4 sm:gap-6 sm:p-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-end"
                     >
                         <div class="space-y-4">
                             <div
-                                class="inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-950/60 dark:text-slate-400"
+                                class="inline-flex items-center gap-2 border-l-2 border-[#d9a477] pl-2 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f0c59f]"
                             >
                                 <ShieldCheck class="h-3.5 w-3.5 text-sky-500" />
-                                SaaS Command Center
+                                Administrasi SaaS
                             </div>
                             <div class="space-y-2">
                                 <h1
-                                    class="text-2xl font-semibold tracking-tight text-foreground sm:text-4xl"
+                                    class="font-serif text-2xl font-semibold tracking-tight text-white sm:text-4xl"
                                 >
-                                    SaaS Management
+                                    Tenant, paket, dan tagihan.
                                 </h1>
                                 <p
-                                    class="hidden max-w-2xl text-sm text-muted-foreground sm:block sm:text-base"
+                                    class="hidden max-w-2xl text-sm leading-6 text-white/75 sm:block sm:text-base"
                                 >
-                                    Panel operasional untuk tenant,
-                                    subscription, plan, billing, dan payment.
-                                    Semua state kebaca, semua kerjaan kepegang
-                                    dari satu layar.
+                                    Kelola akun pelanggan, masa langganan,
+                                    paket, dan pembayaran dari satu tempat.
                                 </p>
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
-                                {#if summary}
-                                    <Badge variant="outline"
-                                        >{summary.tenant_count} tenants</Badge
-                                    >
-                                    <Badge variant="secondary"
-                                        >{summary.active_subscription_count} active</Badge
-                                    >
-                                    <Badge variant="outline"
-                                        >{summary.plan_count} plans</Badge
-                                    >
-                                    <Badge variant="outline"
-                                        >{summary.invoice_pending_count ?? 0} pending</Badge
-                                    >
-                                    <Badge
-                                        variant={(summary.invoice_overdue_count ??
-                                            0) > 0
-                                            ? 'destructive'
-                                            : 'outline'}
-                                        >{summary.invoice_overdue_count ?? 0} overdue</Badge
-                                    >
-                                {/if}
                                 <Badge
                                     variant={saasTablesReady
                                         ? 'default'
                                         : 'outline'}
+                                    class="border-white/25 bg-white/10 text-white hover:bg-white/10"
                                     >{saasTablesReady
-                                        ? 'tables ready'
-                                        : 'migrasi needed'}</Badge
+                                        ? 'Database siap'
+                                        : 'Migrasi diperlukan'}</Badge
                                 >
                             </div>
                         </div>
@@ -875,21 +850,21 @@
                         <div
                             class="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3"
                         >
-                            {#each [{ label: 'Tenants', value: summary?.tenant_count ?? 0, note: 'Registry aktif', icon: Building2, tone: 'border-sky-200 bg-sky-50/80 text-sky-700 dark:border-sky-500/20 dark:bg-sky-500/10 dark:text-sky-300' }, { label: 'Active Subscriptions', value: summary?.active_subscription_count ?? 0, note: 'Tenant jalan', icon: CreditCard, tone: 'border-emerald-200 bg-emerald-50/80 text-emerald-700 dark:border-emerald-500/20 dark:bg-emerald-500/10 dark:text-emerald-300' }, { label: 'Plans', value: summary?.plan_count ?? 0, note: 'Skema paket', icon: Package, tone: 'border-violet-200 bg-violet-50/80 text-violet-700 dark:border-violet-500/20 dark:bg-violet-500/10 dark:text-violet-300' }, { label: 'Pending Invoice', value: summary?.invoice_pending_count ?? 0, note: 'Antrian bayar', icon: FileText, tone: 'border-amber-200 bg-amber-50/80 text-amber-700 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300' }, { label: 'Overdue', value: summary?.invoice_overdue_count ?? 0, note: 'Perlu follow up', icon: AlertTriangle, tone: 'border-red-200 bg-red-50/80 text-red-700 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-300' }, { label: 'Paid This Month', value: summary?.invoice_paid_month_count ?? 0, note: 'Arus sehat', icon: TrendingUp, tone: 'border-rose-200 bg-rose-50/80 text-rose-700 dark:border-rose-500/20 dark:bg-rose-500/10 dark:text-rose-300' }] as item}
+                            {#each [{ label: 'Tenant', value: summary?.tenant_count ?? 0, note: 'Terdaftar', icon: Building2, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Langganan aktif', value: summary?.active_subscription_count ?? 0, note: 'Berjalan', icon: CreditCard, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Paket', value: summary?.plan_count ?? 0, note: 'Tersedia', icon: Package, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Tagihan tertunda', value: summary?.invoice_pending_count ?? 0, note: 'Menunggu pembayaran', icon: FileText, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Lewat jatuh tempo', value: summary?.invoice_overdue_count ?? 0, note: 'Perlu ditindaklanjuti', icon: AlertTriangle, tone: 'border-[#d9b7a5] bg-[#f7eee8] text-[#873d24] dark:border-red-900 dark:bg-red-950/40 dark:text-red-200' }, { label: 'Lunas bulan ini', value: summary?.invoice_paid_month_count ?? 0, note: 'Pembayaran tercatat', icon: TrendingUp, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }] as item}
                                 <div
-                                    class="rounded-xl border border-slate-200/70 bg-white/80 p-3 shadow-sm backdrop-blur dark:border-slate-800 dark:bg-slate-950/65 sm:rounded-lg sm:p-4"
+                                    class="border-t border-[#d7d1c3] bg-[#fbfaf6] p-3 dark:border-slate-700 dark:bg-slate-950 sm:p-4"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
                                     >
                                         <div>
                                             <p
-                                                class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                                            class="text-[11px] font-semibold tracking-wide text-muted-foreground"
                                             >
                                                 {item.label}
                                             </p>
                                             <p
-                                                class="mt-2 text-2xl font-semibold tracking-tight text-foreground"
+                                                class="mt-2 text-2xl font-semibold tracking-tight text-[#173a34] dark:text-slate-100"
                                             >
                                                 {item.value}
                                             </p>
@@ -899,9 +874,7 @@
                                                 {item.note}
                                             </p>
                                         </div>
-                                        <div
-                                            class={`rounded-lg border p-2 ${item.tone}`}
-                                        >
+                                        <div class={`border-l-2 p-2 ${item.tone}`}>
                                             <item.icon class="h-4 w-4" />
                                         </div>
                                     </div>
@@ -914,12 +887,12 @@
 
             <nav class="z-20 md:sticky md:top-4">
                 <div
-                    class="rounded-lg border border-slate-200/70 bg-white/86 p-2 shadow-[0_18px_60px_-40px_rgba(15,23,42,0.55)] backdrop-blur dark:border-slate-800 dark:bg-slate-950/82"
+                    class="rounded-lg border border-[#d7d1c3] bg-[#fbfaf6] p-2 dark:border-slate-700 dark:bg-slate-950"
                 >
                     <div
                         class="flex gap-2 overflow-x-auto overscroll-x-contain pb-1"
                     >
-                        {#each [{ key: 'tenants', label: 'Tenants', icon: Building2, meta: summary?.tenant_count ?? 0 }, { key: 'subscriptions', label: 'Subscriptions', icon: CreditCard, meta: summary?.active_subscription_count ?? 0 }, { key: 'plans', label: 'Plans', icon: Package, meta: summary?.plan_count ?? 0 }, { key: 'billing', label: 'Billing', icon: FileText, meta: summary?.invoice_pending_count ?? 0 }, { key: 'payment', label: 'Payment Gateway', icon: CreditCard, meta: 'Mayar' }] as tab}
+                        {#each [{ key: 'tenants', label: 'Tenant', icon: Building2, meta: summary?.tenant_count ?? 0 }, { key: 'subscriptions', label: 'Langganan', icon: CreditCard, meta: summary?.active_subscription_count ?? 0 }, { key: 'plans', label: 'Paket', icon: Package, meta: summary?.plan_count ?? 0 }, { key: 'billing', label: 'Tagihan', icon: FileText, meta: summary?.invoice_pending_count ?? 0 }, { key: 'payment', label: 'Pembayaran', icon: CreditCard, meta: 'Mayar' }] as tab}
                             <button
                                 onclick={() => switchTab(tab.key as TabName)}
                                 aria-current={activeTab === tab.key
@@ -928,12 +901,12 @@
                                 class={`group flex min-w-[7.75rem] items-center gap-2 rounded-full border px-3 py-2.5 text-xs font-medium transition sm:min-w-[150px] sm:gap-3 sm:px-4 sm:py-3 sm:text-sm
                                 ${
                                     activeTab === tab.key
-                                        ? 'border-slate-900 bg-slate-900 text-white shadow-[0_12px_30px_-16px_rgba(15,23,42,0.7)] dark:border-slate-100 dark:bg-slate-100 dark:text-slate-950'
-                                        : 'border-slate-200 bg-white/80 text-muted-foreground hover:border-slate-300 hover:text-foreground dark:border-slate-800 dark:bg-slate-950/60 dark:hover:border-slate-700'
+                                        ? 'border-[#173a34] bg-[#173a34] text-white dark:border-emerald-100 dark:bg-emerald-100 dark:text-slate-950'
+                                        : 'border-[#d7d1c3] bg-white text-muted-foreground hover:border-[#9da99e] hover:text-foreground dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600'
                                 }`}
                             >
                                 <tab.icon
-                                    class={`h-4 w-4 shrink-0 ${activeTab === tab.key ? 'text-white dark:text-slate-950' : 'text-sky-500'}`}
+                                    class={`h-4 w-4 shrink-0 ${activeTab === tab.key ? 'text-white dark:text-slate-950' : 'text-[#176b60] dark:text-emerald-300'}`}
                                 />
                                 <span class="truncate">{tab.label}</span>
                                 <span

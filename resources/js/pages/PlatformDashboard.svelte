@@ -246,40 +246,34 @@
     class="mx-auto min-w-0 max-w-[1500px] space-y-3 overflow-x-hidden p-2 pb-8 sm:space-y-4 sm:p-3 md:space-y-5 md:p-5"
 >
     <header
-        class="relative min-w-0 overflow-hidden rounded-2xl border border-emerald-900/10 bg-[linear-gradient(135deg,#103d3a,#0d7066_54%,#f7f0dc)] p-4 text-white shadow-[0_22px_70px_-40px_rgba(16,61,58,0.85)] dark:border-slate-800/80 dark:bg-[linear-gradient(135deg,rgba(2,6,23,0.98),rgba(15,23,42,0.94)_54%,rgba(8,47,73,0.62))] sm:p-5 md:p-6"
+        class="relative min-w-0 overflow-hidden rounded-xl border border-[#173a34] bg-[#173a34] p-4 text-white sm:p-5 md:p-6 dark:border-slate-700 dark:bg-slate-950"
     >
         <div
-            class="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full border border-white/15 sm:-right-16 sm:-top-20 sm:h-64 sm:w-64"
-        ></div>
-        <div
-            class="pointer-events-none absolute bottom-0 right-0 h-16 w-44 rounded-t-full bg-white/10 blur-2xl sm:right-10 sm:h-20 sm:w-72"
-        ></div>
-        <div
-            class="relative flex min-w-0 flex-col gap-4 md:flex-row md:items-end md:justify-between"
+            class="relative flex min-w-0 flex-col gap-5 md:flex-row md:items-end md:justify-between"
         >
             <div class="min-w-0 max-w-3xl">
                 <p
-                    class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-50/75"
+                    class="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#d9a477]"
                 >
                     Ringkasan Platform
                 </p>
                 <h1
                     class="mt-2 text-xl font-semibold leading-tight tracking-[-0.04em] sm:text-2xl md:text-4xl"
                 >
-                    Pantau kesehatan bisnis OptiBus.
+                    Kondisi platform, sekilas.
                 </h1>
                 <p
-                    class="mt-2 hidden text-sm leading-6 text-emerald-50/86 sm:block"
+                    class="mt-2 hidden text-sm leading-6 text-white/75 sm:block"
                 >
-                    Pendapatan, tenant aktif, tagihan, dan paket hampir
-                    berakhir.
+                    Pendapatan berulang, akun tenant, dan hal yang perlu
+                    ditindaklanjuti.
                 </p>
             </div>
             <div class="grid gap-2 sm:flex sm:flex-wrap">
                 <a class="w-full sm:w-auto" href="/platform/saas/invoices">
                     <Button
                         size="sm"
-                        class="w-full justify-center rounded-full bg-white text-[#103d3a] hover:bg-emerald-50 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200 sm:w-auto"
+                        class="w-full justify-center rounded-md bg-[#f2e7d6] text-[#173a34] hover:bg-white dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white sm:w-auto"
                         ><Receipt class="mr-1 h-4 w-4" /> Tagihan</Button
                     >
                 </a>
@@ -290,7 +284,7 @@
                     <Button
                         variant="outline"
                         size="sm"
-                        class="w-full justify-center rounded-full border-white/35 bg-white/10 text-white hover:bg-white/18 hover:text-white dark:border-slate-700/80 dark:bg-slate-900/65 dark:text-slate-100 dark:hover:bg-slate-800/90 sm:w-auto"
+                        class="w-full justify-center rounded-md border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white dark:border-slate-700 dark:bg-transparent dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto"
                         ><CreditCard class="mr-1 h-4 w-4" /> Langganan</Button
                     >
                 </a>
@@ -298,7 +292,7 @@
                     <Button
                         variant="outline"
                         size="sm"
-                        class="w-full justify-center rounded-full border-white/35 bg-white/10 text-white hover:bg-white/18 hover:text-white dark:border-slate-700/80 dark:bg-slate-900/65 dark:text-slate-100 dark:hover:bg-slate-800/90 sm:w-auto"
+                        class="w-full justify-center rounded-md border-white/30 bg-transparent text-white hover:bg-white/10 hover:text-white dark:border-slate-700 dark:bg-transparent dark:text-slate-100 dark:hover:bg-slate-800 sm:w-auto"
                         ><Building2 class="mr-1 h-4 w-4" /> Tenant</Button
                     >
                 </a>
@@ -307,11 +301,11 @@
     </header>
 
     <section
-        class="min-w-0 overflow-hidden rounded-2xl border border-[#d7dfd5] bg-white shadow-sm dark:border-slate-800/80 dark:bg-slate-950"
+        class="min-w-0 overflow-hidden rounded-xl border border-[#d7dfd5] bg-white dark:border-slate-800/80 dark:bg-slate-950"
     >
         <div class="grid gap-0 xl:grid-cols-[1.05fr_1.25fr]">
             <div
-                class="min-w-0 border-b border-[#d7dfd5] bg-[#f8faf4] p-4 dark:border-slate-800 dark:bg-slate-900/80 sm:p-5 xl:border-b-0 xl:border-r"
+                class="min-w-0 border-b border-[#d7dfd5] bg-[#f5f2e9] p-4 dark:border-slate-800 dark:bg-slate-900/80 sm:p-5 xl:border-b-0 xl:border-r"
             >
                 <p
                     class="text-xs font-semibold uppercase tracking-[0.18em] text-[#697570] dark:text-slate-400"
@@ -319,7 +313,7 @@
                     {metrics.month_label}
                 </p>
                 <h2
-                    class="mt-3 break-words text-2xl font-bold leading-tight tracking-[-0.05em] text-[#103d3a] sm:text-3xl md:text-4xl"
+                class="mt-3 break-words font-serif text-2xl font-semibold leading-tight tracking-[-0.04em] text-[#173a34] sm:text-3xl md:text-4xl"
                 >
                     {formatRupiah(metrics.mrr)}
                 </h2>
@@ -349,7 +343,7 @@
                         class="min-w-0 border-b border-[#d7dfd5] p-3 last:border-b-0 sm:p-4 md:odd:border-r md:[&:nth-last-child(-n+2)]:border-b-0 dark:border-slate-800"
                     >
                         <div
-                            class="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-[#eef7ef] text-[#103d3a] dark:bg-slate-800/80 dark:text-emerald-200"
+                        class="mb-3 flex h-9 w-9 items-center justify-center border-l-2 border-[#a94e28] bg-[#f5f2e9] text-[#173a34] dark:bg-slate-800/80 dark:text-emerald-200"
                         >
                             <Icon class="h-4 w-4" />
                         </div>
@@ -375,7 +369,7 @@
     <section class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {#each operationalMetrics as metric, index (`operational-${index}-${metric.label}`)}
             <div
-                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800/80 dark:bg-slate-900/70 sm:p-4"
+                class="min-w-0 border-t-2 border-[#c8d2c7] bg-white p-3 transition-colors hover:bg-[#faf9f4] dark:border-slate-700 dark:bg-slate-900/70 dark:hover:bg-slate-900 sm:p-4"
             >
                 <p class="text-xs font-semibold text-[#697570] dark:text-slate-400">
                     {metric.label}
@@ -396,7 +390,7 @@
 
     {#if mrrTrend.length > 0}
         <section
-            class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
+                    class="min-w-0 rounded-xl border border-[#d7dfd5] bg-white p-3 dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
         >
             <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -428,7 +422,7 @@
                             class="flex h-full min-w-0 flex-col justify-end gap-1"
                         >
                             <div
-                                class="rounded-t-lg bg-[linear-gradient(180deg,#0d7066,#b96c20)] shadow-sm"
+                                class="rounded-t-sm bg-[#176b60]"
                                 style={`height:${height}%`}
                                 title={`${item.name}: ${formatRupiah(item.value)}`}
                             ></div>
@@ -445,7 +439,7 @@
 
     <div class="grid gap-4 xl:grid-cols-[1.45fr_0.85fr]">
         <section
-            class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
+            class="min-w-0 rounded-xl border border-[#d7dfd5] bg-white p-3 dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
         >
             <div
                 class="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
