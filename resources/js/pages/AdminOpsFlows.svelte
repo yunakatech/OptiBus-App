@@ -417,6 +417,9 @@
         from: '',
         to: '',
         query: '',
+        status: '',
+        condition: '',
+        unitId: 0,
     });
     let charterFilterUnitId = $state(0);
     let charterFilterUnitSearch = $state('');
@@ -464,7 +467,7 @@
         { key: luggageReceivedStatus, label: luggageReceivedStatus },
         { key: luggagePickedUpStatus, label: luggagePickedUpStatus },
         { key: luggageArrivedStatus, label: luggageArrivedStatus },
-        { key: 'canceled', label: 'Canceled' },
+        { key: 'canceled', label: 'Dibatalkan' },
     ];
     const luggageConditionOptions = [
         { key: '', label: 'Semua kondisi' },
@@ -638,7 +641,7 @@
         }
 
         if (tab === 'assignments') {
-            return 'Driver Assignments';
+            return 'Penugasan driver';
         }
 
         return 'Export CSV';
@@ -1490,14 +1493,14 @@
         const normalized = String(status ?? 'active').toLowerCase();
 
         if (normalized === 'canceled') {
-            return 'Canceled';
+            return 'Dibatalkan';
         }
 
         if (normalized === 'done') {
             return 'Selesai';
         }
 
-        return 'Active';
+        return 'Aktif';
     };
 
     const isPaymentLunas = (paymentStatus: string | null | undefined) => {
@@ -2074,7 +2077,7 @@
     const luggageStatusLabel = (status: string | null | undefined) => {
         const normalized = normalizeLuggageStatus(status);
 
-        return normalized === 'canceled' ? 'Canceled' : normalized;
+        return normalized === 'canceled' ? 'Dibatalkan' : normalized;
     };
 
     const luggageStatusClass = (status: string | null | undefined) => {
@@ -2903,6 +2906,9 @@
             from: filterFrom,
             to: filterTo,
             query: filterQuery,
+            status: luggageStatusFilter,
+            condition: luggageConditionFilter,
+            unitId: charterFilterUnitId,
         };
     };
 
@@ -2910,15 +2916,42 @@
         filterFrom = flowFilterDraft.from;
         filterTo = flowFilterDraft.to;
         filterQuery = flowFilterDraft.query;
+        if (activeTab === 'luggages') {
+            luggageStatusFilter = flowFilterDraft.status;
+            luggageConditionFilter = flowFilterDraft.condition;
+        } else if (
+            activeTab === 'charters' &&
+            Number(flowFilterDraft.unitId) !== charterFilterUnitId
+        ) {
+            charterFilterUnitId = Number(flowFilterDraft.unitId || 0);
+            charterFilterArmadaId = 0;
+            charterFilterArmadaSearch = '';
+            syncCharterFilterLookups();
+        }
         await applyFilters();
     };
 
     const resetFlowFilterDraft = () => {
-        flowFilterDraft = { from: '', to: '', query: '' };
+        flowFilterDraft = {
+            from: '',
+            to: '',
+            query: '',
+            status: '',
+            condition: '',
+            unitId: 0,
+        };
     };
 
     const flowFilterActiveCount = $derived(
-        [filterFrom || filterTo, filterQuery.trim()].filter(Boolean).length,
+        [
+            filterFrom || filterTo,
+            filterQuery.trim(),
+            ...(activeTab === 'luggages'
+                ? [luggageStatusFilter, luggageConditionFilter]
+                : activeTab === 'charters'
+                  ? [charterFilterUnitId > 0 ? 'unit' : '']
+                  : []),
+        ].filter(Boolean).length,
     );
     const flowFilterSummary = $derived.by(() => {
         const date =
@@ -2930,6 +2963,36 @@
             [date, filterQuery.trim()].filter(Boolean).join(' · ') ||
             'Semua data'
         );
+    });
+
+    const luggageMobileFilterSummary = $derived.by(() => {
+        const details = [flowFilterSummary];
+
+        if (luggageStatusFilter) {
+            details.push(luggageStatusLabel(luggageStatusFilter));
+        }
+        if (luggageConditionFilter) {
+            details.push(luggageConditionLabel(luggageConditionFilter));
+        }
+
+        return details.filter(Boolean).join(' · ');
+    });
+
+    const charterMobileFilterSummary = $derived.by(() => {
+        const date =
+            filterFrom && filterTo && filterFrom !== filterTo
+                ? `${filterFrom} - ${filterTo}`
+                : filterFrom || filterTo;
+        const selectedUnit = units.find(
+            (unit) => unit.id === charterFilterUnitId,
+        );
+        const details = [
+            date,
+            filterQuery.trim(),
+            selectedUnit ? charterUnitLabel(selectedUnit) : '',
+        ];
+
+        return details.filter(Boolean).join(' · ') || 'Semua data';
     });
 
     const resetCharterFilters = async () => {
@@ -4140,10 +4203,19 @@
                                   ? 'Carter'
                                   : 'Data'}
                             activeCount={flowFilterActiveCount}
-                            summary={flowFilterSummary}
+                            summary={activeTab === 'luggages'
+                                ? luggageMobileFilterSummary
+                                : charterMobileFilterSummary}
                             onOpen={beginFlowFilterDraft}
                             onApply={() => void applyFlowFilterDraft()}
-                            onReset={resetFlowFilterDraft}
+                            onReset={() => {
+                                resetFlowFilterDraft();
+                                if (activeTab === 'luggages') {
+                                    void resetLuggageFilters();
+                                } else {
+                                    void resetCharterFilters();
+                                }
+                            }}
                             onCancel={beginFlowFilterDraft}
                         >
                             {#snippet primary()}
@@ -4177,6 +4249,61 @@
                                             bind:value={flowFilterDraft.query}
                                         />
                                     </label>
+                                    {#if activeTab === 'luggages'}
+                                        <label
+                                            class="grid gap-1.5 text-sm font-medium"
+                                        >
+                                            Status pengiriman
+                                            <select
+                                                class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                                bind:value={flowFilterDraft.status}
+                                            >
+                                                {#each luggageStatusTabs() as tab (tab.key)}
+                                                    <option value={tab.key}
+                                                        >{tab.key === ''
+                                                            ? 'Semua status'
+                                                            : tab.label}</option
+                                                    >
+                                                {/each}
+                                            </select>
+                                        </label>
+                                        <label
+                                            class="grid gap-1.5 text-sm font-medium"
+                                        >
+                                            Kondisi barang
+                                            <select
+                                                class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                                bind:value={flowFilterDraft.condition}
+                                            >
+                                                {#each luggageConditionOptions as condition (condition.key)}
+                                                    <option value={condition.key}
+                                                        >{condition.label}</option
+                                                    >
+                                                {/each}
+                                            </select>
+                                        </label>
+                                    {:else if activeTab === 'charters'}
+                                        <label
+                                            class="grid gap-1.5 text-sm font-medium"
+                                        >
+                                            Kategori armada
+                                            <select
+                                                class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
+                                                bind:value={flowFilterDraft.unitId}
+                                            >
+                                                <option value={0}
+                                                    >Semua kategori</option
+                                                >
+                                                {#each units as unit (unit.id)}
+                                                    <option value={unit.id}
+                                                        >{charterUnitLabel(
+                                                            unit,
+                                                        )}</option
+                                                    >
+                                                {/each}
+                                            </select>
+                                        </label>
+                                    {/if}
                                 </div>
                             {/snippet}
                         </ResponsiveFilterBar>
@@ -4353,7 +4480,7 @@
                                 <Button
                                     type="button"
                                     onclick={() => void applyFilters()}
-                                    >Apply Filters</Button
+                                    >Terapkan Filter</Button
                                 >
                                 <Button
                                     type="button"
@@ -4364,7 +4491,7 @@
                             </div>
                         {:else if activeTab === 'luggages'}
                             <div
-                                class="rounded-2xl border border-border/70 bg-muted/10 p-4"
+                                class="border border-[#d7d1c3] bg-[#f5f2e9] p-4 dark:border-slate-700 dark:bg-slate-900"
                             >
                                 <div
                                     class="flex flex-wrap items-start justify-between gap-3"
@@ -4555,7 +4682,7 @@
                                 <Button
                                     type="button"
                                     onclick={() => void applyFilters()}
-                                    >Apply Filters</Button
+                                    >Terapkan Filter</Button
                                 >
                             </div>
                         {/if}
@@ -4570,7 +4697,7 @@
                                 ? 'default'
                                 : 'outline'}
                             onclick={() => void setTab('charters')}
-                            >Charters</Button
+                            >Carter</Button
                         >
                         <Button
                             type="button"
@@ -4578,7 +4705,7 @@
                                 ? 'default'
                                 : 'outline'}
                             onclick={() => void setTab('luggages')}
-                            >Luggages</Button
+                            >Bagasi</Button
                         >
                         <Button
                             type="button"
@@ -4586,7 +4713,7 @@
                                 ? 'default'
                                 : 'outline'}
                             onclick={() => void setTab('assignments')}
-                            >Driver Assignments</Button
+                            >Penugasan driver</Button
                         >
                         <Button
                             type="button"
