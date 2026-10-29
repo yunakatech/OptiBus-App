@@ -151,53 +151,51 @@
 </script>
 
 <svelte:head>
-    <title>OptiBus - Sistem Operasional Travel</title>
+    <title>OptiBus — Kendali Operasional Travel</title>
     <meta
         name="description"
-        content="OptiBus membantu travel mengelola pemesanan kursi, carter, bagasi, pembayaran, pool, dan laporan pendapatan dalam satu sistem."
+        content="Kelola pemesanan kursi, carter, bagasi, pembayaran, pool, dan laporan perjalanan dalam satu alur kerja dengan OptiBus."
     />
 </svelte:head>
 
-<div class="min-h-screen overflow-x-hidden bg-[#f7f8f4] text-[#17201f]">
+<div class="min-h-screen overflow-x-hidden bg-[#f1eee5] text-[#1a2825]">
     <nav
-        class="sticky top-0 z-40 bg-[#f7f8f4]/86 py-1.5 backdrop-blur-xl sm:py-2"
+        class="sticky top-0 z-40 border-b border-[#d6d0c2] bg-[#f1eee5]/95 py-2 backdrop-blur sm:py-3"
     >
         <div
-            class="mx-auto flex max-w-6xl items-center justify-between gap-2 px-2.5 sm:px-5 lg:px-6"
+            class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-10"
         >
             <a
                 href="/"
-                class="flex h-9 max-w-[44vw] items-center overflow-hidden rounded-full border border-[#d9ded4]/80 bg-white/86 px-2 shadow-[0_10px_28px_-24px_rgba(23,32,31,0.9)] transition hover:border-[#b9c5bd] hover:bg-white sm:h-10 sm:max-w-none sm:px-2.5"
+                class="flex h-10 max-w-[44vw] items-center overflow-hidden px-1 transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532] sm:max-w-none"
                 aria-label="OptiBus"
             >
                 <AppLogo />
             </a>
             <div
-                class="hidden items-center gap-1 rounded-full border border-[#d9ded4]/90 bg-white/72 p-1 text-xs font-semibold text-[#4b5a56] shadow-[0_14px_38px_-30px_rgba(23,32,31,0.88)] ring-1 ring-white/70 md:flex"
+                class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-[#52615b] md:flex"
             >
                 <a
                     href="#workflow"
-                    class="rounded-full px-3 py-1.5 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                    class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
                     >Alur Kerja</a
                 >
                 <a
                     href="#fitur"
-                    class="rounded-full px-3 py-1.5 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                    class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
                     >Fitur</a
                 >
                 <a
                     href="/pricing"
-                    class="rounded-full px-3 py-1.5 transition hover:bg-[#eef2eb] hover:text-[#17201f]"
+                    class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
                     >Harga</a
                 >
             </div>
-            <div
-                class="flex shrink-0 items-center gap-1 rounded-full border border-[#d9ded4]/90 bg-white/80 p-1 shadow-[0_14px_38px_-30px_rgba(23,32,31,0.88)] ring-1 ring-white/70"
-            >
+            <div class="flex shrink-0 items-center gap-2">
                 {#if !isAuthenticated}
                     <a
                         href="/login"
-                        class="inline-flex h-8 items-center justify-center rounded-full px-2.5 text-xs font-semibold text-[#4b5a56] transition hover:bg-[#eef2eb] hover:text-[#17201f] sm:h-9 sm:px-3"
+                        class="inline-flex h-10 items-center justify-center px-2 text-xs font-semibold text-[#42514c] transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532] sm:px-3"
                         >Masuk</a
                     >
                 {/if}
@@ -205,7 +203,7 @@
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-8 items-center justify-center rounded-full bg-[#103d3a] px-3 text-xs font-semibold text-white shadow-[0_12px_26px_-18px_rgba(16,61,58,0.9)] transition hover:-translate-y-0.5 hover:bg-[#0b2f2c] sm:h-9 sm:px-4"
+                    class="inline-flex h-10 items-center justify-center bg-[#174b43] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#103a34] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
                 >
                     {isAuthenticated ? 'Dasbor' : 'Mulai'}
                 </a>
@@ -214,40 +212,38 @@
     </nav>
 
     <main>
-        <section class="relative overflow-hidden border-b border-[#d9ded4]">
+        <section class="relative overflow-hidden border-b border-[#c9c2b3]">
             <div
-                class="pointer-events-none absolute inset-y-0 left-1/2 w-full max-w-6xl -translate-x-1/2 opacity-[0.32]"
-                style="background-image: linear-gradient(#cad4ca 1px, transparent 1px), linear-gradient(90deg, #cad4ca 1px, transparent 1px); background-size: 44px 44px;"
+                class="pointer-events-none absolute inset-y-0 left-1/2 hidden w-full max-w-7xl -translate-x-1/2 opacity-40 lg:block"
+                style="background-image: linear-gradient(#d2cabb 1px, transparent 1px), linear-gradient(90deg, #d2cabb 1px, transparent 1px); background-size: 52px 52px;"
             ></div>
             <div
-                class="relative mx-auto grid max-w-6xl gap-5 px-4 py-7 sm:px-5 md:py-11 lg:grid-cols-[minmax(0,0.92fr)_minmax(460px,0.95fr)] lg:px-6 lg:py-14"
+                class="relative mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,0.94fr)_minmax(420px,1.06fr)] lg:items-center lg:gap-12 lg:px-10 lg:py-20"
             >
-                <div class="flex flex-col justify-center">
+                <div class="relative z-10 flex flex-col justify-center">
                     <div
-                        class="mb-3 inline-flex w-fit items-center gap-2 rounded-full border border-[#cfd8cf] bg-white px-3 py-1 text-[11px] font-semibold uppercase text-[#53615d] sm:mb-4"
+                        class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#bc6738] pl-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#596660] sm:mb-6"
                     >
-                        <Clock3 class="h-3.5 w-3.5 text-[#b96c20]" />
-                        Uji coba 14 hari - pengaturan cepat
+                        <Clock3 class="h-4 w-4 text-[#a94e28]" />
+                        14 hari untuk mencoba alur kerja
                     </div>
                     <h1
-                        class="max-w-3xl text-[1.9rem] font-semibold leading-[1.03] tracking-normal text-[#152321] sm:text-4xl lg:text-5xl"
+                        class="max-w-3xl font-serif text-[2.45rem] font-medium leading-[0.98] tracking-[-0.04em] text-[#173a34] sm:text-5xl lg:text-[4.25rem]"
                     >
-                        Operasional travel yang rapi dari pemesanan sampai
-                        laporan.
+                        Setiap perjalanan, dari loket sampai laporan.
                     </h1>
                     <p
-                        class="mt-3 max-w-2xl text-[14px] leading-6 text-[#4b5a56] sm:mt-4 sm:text-base sm:leading-7"
+                        class="mt-5 max-w-xl text-[15px] leading-7 text-[#4e5b55] sm:mt-6 sm:text-base sm:leading-8"
                     >
-                        OptiBus menyatukan pemesanan kursi, carter, bagasi,
-                        pembayaran, pool, rute, dan target pendapatan dalam
-                        dasbor yang siap dipakai tim lapangan.
+                        Catat pesanan, atur keberangkatan, pantau pembayaran,
+                        dan tutup hari dengan laporan yang sama-sama dibaca tim.
                     </p>
-                    <div class="mt-5 flex flex-col gap-2.5 sm:mt-6 sm:flex-row">
+                    <div class="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
                         <a
                             href={isAuthenticated
                                 ? appHref
                                 : '/register?plan=starter&intent=trial'}
-                            class="inline-flex h-10 items-center justify-center rounded-xl bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm hover:bg-[#0b2f2c] sm:h-9 sm:rounded-md"
+                            class="inline-flex h-12 items-center justify-center bg-[#174b43] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#103a34] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
                         >
                             {isAuthenticated
                                 ? 'Buka dasbor'
@@ -256,46 +252,46 @@
                         </a>
                         <a
                             href="/pricing"
-                            class="inline-flex h-10 items-center justify-center rounded-xl border border-[#bac5bd] bg-white px-4 text-sm font-semibold text-[#17201f] hover:bg-[#eef2eb] sm:h-9 sm:rounded-md"
+                            class="inline-flex h-12 items-center justify-center border border-[#aaa494] bg-transparent px-5 text-sm font-semibold text-[#243a34] transition-colors hover:bg-[#e6e0d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
                         >
                             Bandingkan paket
                         </a>
                     </div>
                     <dl
-                        class="mt-5 grid max-w-xl grid-cols-1 gap-3 border-y border-[#d9ded4] py-3 min-[390px]:grid-cols-3 sm:mt-6 sm:py-4"
+                        class="mt-8 grid max-w-xl grid-cols-3 gap-2 border-y border-[#c9c2b3] py-4 sm:mt-10 sm:gap-5 sm:py-5"
                     >
                         <div>
                             <dt
-                                class="text-xs font-medium uppercase text-[#687470]"
+                                class="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
                             >
                                 Transaksi
                             </dt>
                             <dd
-                                class="mt-1 text-base font-semibold text-[#17201f] sm:text-lg"
+                                class="mt-1 text-sm font-semibold text-[#173a34] sm:text-base"
                             >
                                 3 jalur
                             </dd>
                         </div>
                         <div>
                             <dt
-                                class="text-xs font-medium uppercase text-[#687470]"
+                                class="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
                             >
                                 Cakupan
                             </dt>
                             <dd
-                                class="mt-1 text-base font-semibold text-[#17201f] sm:text-lg"
+                                class="mt-1 text-sm font-semibold text-[#173a34] sm:text-base"
                             >
                                 Multi-pool
                             </dd>
                         </div>
                         <div>
                             <dt
-                                class="text-xs font-medium uppercase text-[#687470]"
+                                class="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
                             >
                                 Audit
                             </dt>
                             <dd
-                                class="mt-1 text-base font-semibold text-[#17201f] sm:text-lg"
+                                class="mt-1 text-sm font-semibold text-[#173a34] sm:text-base"
                             >
                                 Per tenant
                             </dd>
@@ -304,10 +300,16 @@
                 </div>
 
                 <div
-                    class="relative -mt-2 flex items-center justify-center sm:mt-0"
+                    class="relative -mx-2 flex items-center justify-center bg-[#e8e2d7] px-4 py-3 sm:mx-0 sm:px-8 sm:py-6 lg:min-h-[550px]"
                 >
                     <div
-                        class="relative mx-auto w-full max-w-[300px] sm:max-w-[500px] lg:max-w-[460px] xl:max-w-[500px]"
+                        class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#cec6b7] px-4 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#5d6962] sm:px-6"
+                    >
+                        <span>Ruang kendali / 01</span>
+                        <span>OptiBus</span>
+                    </div>
+                    <div
+                        class="relative mx-auto mt-7 w-full max-w-[290px] sm:mt-8 sm:max-w-[470px] lg:max-w-[500px]"
                     >
                         <img
                             src="/landing/iPhone 12 Pro (Wooden Hands).webp"
@@ -326,148 +328,178 @@
 
         <section
             id="workflow"
-            class="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-10 lg:px-6"
+            class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
         >
-            <div class="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-                <div>
-                    <p class="text-sm font-semibold uppercase text-[#b96c20]">
-                        Alur kerja harian
+            <div class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
+                <div class="lg:pt-2">
+                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]">
+                        Dari loket ke garasi
                     </p>
                     <h2
-                        class="mt-2 text-xl font-semibold tracking-normal text-[#17201f] sm:text-2xl"
+                        class="mt-3 max-w-sm font-serif text-3xl font-medium leading-tight tracking-[-0.03em] text-[#173a34] sm:text-4xl"
                     >
-                        Satu alur untuk transaksi lapangan.
+                        Satu catatan untuk seluruh perjalanan.
                     </h2>
-                    <p class="mt-4 text-[#53615d]">
-                        Tim pemesanan, admin pool, pengemudi, dan pemilik
-                        membaca data yang sama tanpa lembar kerja terpisah.
+                    <p class="mt-4 max-w-md leading-7 text-[#53615b]">
+                        Pesanan yang masuk menjadi dasar manifest, status
+                        pembayaran, dan laporan harian. Informasi tetap
+                        tersambung saat berpindah dari meja reservasi ke
+                        operasional pool.
                     </p>
                 </div>
-                <div class="grid gap-3 sm:grid-cols-2">
-                    {#each workflow as item}
+                <ol class="divide-y divide-[#c9c2b3] border-y border-[#c9c2b3]">
+                    {#each workflow as item, index}
                         {@const Icon = item.icon}
-                        <div
-                            class="rounded-2xl border border-[#d9ded4] bg-white p-3 shadow-[0_16px_40px_-32px_rgba(23,32,31,0.9)] sm:rounded-lg sm:p-4"
+                        <li
+                            class="grid grid-cols-[2.5rem_2rem_1fr] items-center gap-3 py-4 sm:grid-cols-[3rem_2.5rem_1fr] sm:gap-4 sm:py-5"
                         >
-                            <Icon class="h-6 w-6 text-[#0d7066]" />
-                            <h3 class="mt-4 text-base font-semibold">
-                                {item.label}
-                            </h3>
-                            <p class="mt-1 text-sm text-[#53615d]">
-                                {item.value}
-                            </p>
-                        </div>
+                            <span class="font-serif text-lg text-[#a94e28]">
+                                0{index + 1}
+                            </span>
+                            <Icon
+                                class="h-5 w-5 text-[#174b43]"
+                                aria-hidden="true"
+                            />
+                            <div
+                                class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-5"
+                            >
+                                <h3 class="text-base font-semibold text-[#213a34]">
+                                    {item.label}
+                                </h3>
+                                <p class="text-sm text-[#59665f]">
+                                    {item.value}
+                                </p>
+                            </div>
+                        </li>
                     {/each}
-                </div>
+                </ol>
             </div>
         </section>
 
-        <section id="fitur" class="border-y border-[#d9ded4] bg-white">
-            <div class="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-10 lg:px-6">
+        <section id="fitur" class="border-y border-[#c9c2b3] bg-[#e8e2d7]">
+            <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
                 <div
                     class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end"
                 >
                     <div>
                         <p
-                            class="text-sm font-semibold uppercase text-[#b96c20]"
+                            class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
                         >
-                            Fitur inti
+                            Yang tercatat
                         </p>
                         <h2
-                            class="mt-2 text-xl font-semibold tracking-normal sm:text-2xl"
+                            class="mt-3 font-serif text-3xl font-medium leading-tight tracking-[-0.03em] text-[#173a34] sm:text-4xl"
                         >
-                            Didesain untuk travel, bukan POS umum.
+                            Rincian yang dibutuhkan saat hari berjalan.
                         </h2>
                     </div>
                     <a
                         href="/pricing"
-                        class="inline-flex items-center text-sm font-semibold text-[#0d7066] hover:text-[#094e47]"
+                        class="inline-flex min-h-10 items-center text-sm font-semibold text-[#174b43] underline decoration-[#af7655] underline-offset-4 hover:text-[#a94e28] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
                     >
                         Lihat semua paket <ArrowRight class="ml-1 h-4 w-4" />
                     </a>
                 </div>
-                <div
-                    class="grid gap-3 overflow-hidden rounded-2xl md:gap-px md:border md:border-[#d9ded4] md:bg-[#d9ded4] md:grid-cols-2 lg:grid-cols-4"
-                >
-                    {#each capabilities as item}
+                <div class="grid border-y border-[#c9c2b3] sm:grid-cols-2 lg:grid-cols-4">
+                    {#each capabilities as item, index}
                         {@const Icon = item.icon}
-                        <div
-                            class="rounded-2xl border border-[#d9ded4] bg-[#fbfcf8] p-3 md:rounded-none md:border-0 md:p-4"
+                        <article
+                            class="border-b border-[#c9c2b3] py-5 sm:px-5 sm:py-6 lg:border-b-0 lg:border-r lg:px-5 lg:first:pl-0 lg:last:border-r-0"
                         >
-                            <Icon class="h-6 w-6 text-[#0d7066]" />
-                            <h3 class="mt-4 text-base font-semibold">
+                            <div class="flex items-center justify-between gap-4">
+                                <span class="font-serif text-sm text-[#a94e28]">
+                                    0{index + 1}
+                                </span>
+                                <Icon
+                                    class="h-5 w-5 text-[#174b43]"
+                                    aria-hidden="true"
+                                />
+                            </div>
+                            <h3
+                                class="mt-5 text-base font-semibold text-[#213a34]"
+                            >
                                 {item.title}
                             </h3>
-                            <p class="mt-2 text-sm leading-6 text-[#53615d]">
+                            <p class="mt-2 text-sm leading-6 text-[#53615b]">
                                 {item.body}
                             </p>
-                        </div>
+                        </article>
                     {/each}
                 </div>
             </div>
         </section>
 
-        <section class="mx-auto max-w-6xl px-4 py-8 sm:px-5 sm:py-10 lg:px-6">
+        <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
             <div
                 class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end"
             >
                 <div>
-                    <p class="text-sm font-semibold uppercase text-[#b96c20]">
-                        Paket
+                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]">
+                        Pilih skala
                     </p>
                     <h2
-                        class="mt-2 text-xl font-semibold tracking-normal sm:text-2xl"
+                        class="mt-3 font-serif text-3xl font-medium leading-tight tracking-[-0.03em] text-[#173a34] sm:text-4xl"
                     >
-                        Mulai kecil, naik saat armada bertambah.
+                        Mulai dari kebutuhan hari ini.
                     </h2>
                 </div>
                 <a
                     href="/pricing"
-                    class="inline-flex h-10 items-center justify-center rounded-xl border border-[#bac5bd] bg-white px-4 text-sm font-semibold text-[#17201f] hover:bg-[#eef2eb] sm:h-9 sm:rounded-md"
+                    class="inline-flex min-h-11 items-center justify-center border border-[#aaa494] px-4 text-sm font-semibold text-[#243a34] transition-colors hover:bg-[#e6e0d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
                 >
                     Buka harga lengkap
                 </a>
             </div>
-            <div class="grid gap-4 md:grid-cols-3">
+            <div
+                class="grid gap-0 border-y border-[#c9c2b3] md:grid-cols-3 md:divide-x md:divide-[#c9c2b3]"
+            >
                 {#each featuredPlans as plan}
                     <article
-                        class={`rounded-2xl border bg-white p-3 shadow-[0_18px_44px_-36px_rgba(23,32,31,0.95)] sm:p-4 ${plan.slug === 'pro' ? 'border-[#0d7066] shadow-[#0d7066]/10' : 'border-[#d9ded4]'}`}
+                        class={`relative border-b border-[#c9c2b3] bg-transparent px-1 py-6 sm:px-5 sm:py-7 md:border-b-0 ${plan.slug === 'pro' ? 'bg-[#e8e2d7] md:-my-px md:border-y-2 md:border-y-[#174b43]' : ''}`}
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h3 class="text-lg font-semibold">
+                                <h3
+                                    class="font-serif text-2xl font-medium text-[#173a34]"
+                                >
                                     {plan.name}
                                 </h3>
                                 <p
-                                    class="mt-2 min-h-10 text-sm leading-6 text-[#53615d]"
+                                    class="mt-2 min-h-10 text-sm leading-6 text-[#53615b]"
                                 >
                                     {plan.description}
                                 </p>
                             </div>
                             {#if plan.slug === 'pro'}
                                 <span
-                                    class="rounded-full bg-[#eaf6f2] px-2.5 py-1 text-xs font-semibold text-[#0d7066]"
+                                    class="border border-[#9eb5a8] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#174b43]"
                                     >Populer</span
                                 >
                             {/if}
                         </div>
                         <div class="mt-4">
-                            <span class="text-2xl font-semibold"
+                            <span
+                                class="font-serif text-3xl font-medium text-[#173a34]"
                                 >{formatRupiah(plan.price_monthly)}</span
                             >
-                            <span class="text-sm text-[#53615d]">/bulan</span>
+                            <span
+                                class="text-xs uppercase tracking-[0.08em] text-[#53615b]"
+                                >/ bulan</span
+                            >
                         </div>
-                        <div class="mt-4 space-y-1.5 text-sm text-[#33403d]">
+                        <div
+                            class="mt-5 space-y-3 border-t border-[#c9c2b3] pt-4 text-sm text-[#33433d]"
+                        >
                             <div class="flex items-center gap-2">
-                                <BusFront class="h-4 w-4 text-[#0d7066]" />
+                                <BusFront class="h-4 w-4 text-[#a94e28]" />
                                 {limitLabel(plan.max_armadas, 'armada')}
                             </div>
                             <div class="flex items-center gap-2">
-                                <Route class="h-4 w-4 text-[#0d7066]" />
+                                <Route class="h-4 w-4 text-[#a94e28]" />
                                 {limitLabel(plan.max_routes, 'rute')}
                             </div>
                             <div class="flex items-center gap-2">
-                                <UsersRound class="h-4 w-4 text-[#0d7066]" />
+                                <UsersRound class="h-4 w-4 text-[#a94e28]" />
                                 {limitLabel(plan.max_users, 'pengguna')}
                             </div>
                         </div>
@@ -475,7 +507,7 @@
                             href={isAuthenticated
                                 ? subscriptionHref
                                 : `/register?plan=${plan.slug}&intent=paid`}
-                            class={`mt-5 inline-flex h-10 w-full items-center justify-center rounded-xl text-sm font-semibold sm:h-9 sm:rounded-md ${plan.slug === 'pro' ? 'bg-[#103d3a] text-white hover:bg-[#0b2f2c]' : 'border border-[#bac5bd] text-[#17201f] hover:bg-[#eef2eb]'}`}
+                            class={`mt-6 inline-flex h-11 w-full items-center justify-center text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] ${plan.slug === 'pro' ? 'bg-[#174b43] text-white hover:bg-[#103a34]' : 'border border-[#aaa494] text-[#243a34] hover:bg-[#e6e0d4]'}`}
                         >
                             {isAuthenticated
                                 ? 'Kelola paket'
@@ -486,25 +518,25 @@
             </div>
         </section>
 
-        <section class="border-t border-[#d9ded4] bg-[#103d3a]">
+        <section class="border-t border-[#173a34] bg-[#173a34] text-[#f1eee5]">
             <div
-                class="mx-auto grid max-w-6xl gap-5 px-4 py-8 text-white sm:px-5 sm:py-10 md:grid-cols-[1fr_auto] md:items-center lg:px-6"
+                class="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-[1fr_auto] md:items-center lg:px-10 lg:py-16"
             >
                 <div>
-                    <p class="text-sm font-semibold uppercase text-[#a8dccd]">
-                        Siap dipakai tim operasional
+                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9a27d]">
+                        Langkah berikutnya
                     </p>
                     <h2
-                        class="mt-2 text-xl font-semibold tracking-normal text-white sm:text-2xl"
+                        class="mt-3 max-w-3xl font-serif text-3xl font-medium leading-tight tracking-[-0.03em] text-[#f8f4eb] sm:text-4xl"
                     >
-                        Rapikan pemesanan, pembayaran, dan laporan minggu ini.
+                        Lihat bagaimana alur perjalanan Anda bekerja di OptiBus.
                     </h2>
                 </div>
                 <a
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-10 items-center justify-center rounded-xl bg-white px-4 text-sm font-semibold text-[#103d3a] hover:bg-[#eef2eb] sm:h-9 sm:rounded-md"
+                    class="inline-flex h-12 items-center justify-center bg-[#f1eee5] px-5 text-sm font-semibold text-[#173a34] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d9a27d]"
                 >
                     {isAuthenticated ? 'Buka dasbor' : 'Mulai uji coba'}
                     <ArrowRight class="ml-2 h-4 w-4" />
@@ -513,23 +545,43 @@
         </section>
     </main>
 
-    <footer class="border-t border-[#d9ded4] bg-[#f7f8f4]">
+    <footer class="border-t border-[#c9c2b3] bg-[#f1eee5]">
         <div
-            class="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-6 text-sm text-[#53615d] sm:px-5 md:flex-row md:items-center md:justify-between lg:px-6"
+            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-[#53615b] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-10"
         >
-            <span>OptiBus - Sistem operasional travel.</span>
+            <span class="font-serif text-base text-[#173a34]">
+                OptiBus
+                <span class="font-sans text-xs text-[#68736c]">
+                    / operasional perjalanan
+                </span>
+            </span>
             <div class="flex flex-wrap gap-x-5 gap-y-2">
-                <a href="/pricing" class="hover:text-[#17201f]">Harga</a>
+                <a
+                    href="/pricing"
+                    class="inline-flex min-h-10 items-center hover:text-[#a94e28] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                    >Harga</a
+                >
                 {#if isAuthenticated}
-                    <a href={appHref} class="hover:text-[#17201f]">Dasbor</a>
-                    <a href={subscriptionHref} class="hover:text-[#17201f]"
+                    <a
+                        href={appHref}
+                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        >Dasbor</a
+                    >
+                    <a
+                        href={subscriptionHref}
+                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
                         >Langganan</a
                     >
                 {:else}
-                    <a href="/login" class="hover:text-[#17201f]">Masuk</a>
+                    <a
+                        href="/login"
+                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        >Masuk</a
+                    >
                     <a
                         href="/register?plan=starter&intent=trial"
-                        class="hover:text-[#17201f]">Daftar</a
+                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        >Daftar</a
                     >
                 {/if}
             </div>
