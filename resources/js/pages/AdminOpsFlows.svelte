@@ -17,12 +17,7 @@
     import FilterDateInput from '@/components/FilterDateInput.svelte';
     import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Button } from '@/components/ui/button';
-    import {
-        Card,
-        CardContent,
-        CardHeader,
-        CardTitle,
-    } from '@/components/ui/card';
+    import { Card, CardContent } from '@/components/ui/card';
     import {
         DropdownMenu,
         DropdownMenuContent,
@@ -4181,18 +4176,11 @@
     {/if}
 
     <Card
-        class="rounded-xl border-[#d7d1c3] bg-[#fbfaf6] shadow-none dark:border-slate-700 dark:bg-slate-950"
+        class="rounded-xl border-border bg-background shadow-none dark:border-slate-700 dark:bg-slate-950"
     >
-        <CardHeader
-            class="space-y-3 border-b border-[#d7d1c3] pb-4 dark:border-slate-700"
-        >
-            <div class="flex flex-wrap items-start justify-between gap-3">
-                <CardTitle class="font-serif text-xl">{tabTitle(activeTab)}</CardTitle>
-            </div>
-        </CardHeader>
-        <CardContent class="space-y-4">
+        <CardContent class="space-y-4 pt-6">
             <div
-                class="sticky top-0 z-10 space-y-3 border-b border-[#d7d1c3] bg-[#fbfaf6] pb-3 dark:border-slate-700 dark:bg-slate-950"
+                class="sticky top-0 z-10 space-y-3 border-b border-border bg-background pb-3 dark:border-slate-700 dark:bg-slate-950"
             >
                 {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view'))}
                     {#if activeTab === 'charters' || activeTab === 'luggages'}
@@ -4491,7 +4479,7 @@
                             </div>
                         {:else if activeTab === 'luggages'}
                             <div
-                                class="border border-[#d7d1c3] bg-[#f5f2e9] p-4 dark:border-slate-700 dark:bg-slate-900"
+                                class="rounded-lg border border-border bg-muted/40 p-4 dark:border-slate-700 dark:bg-slate-900"
                             >
                                 <div
                                     class="flex flex-wrap items-start justify-between gap-3"
@@ -4854,7 +4842,7 @@
                     {/if}
                 {:else}
                     <div
-                        class="flex flex-wrap items-center justify-between gap-3 border-b border-[#d7d1c3] px-1 py-3 dark:border-slate-700"
+                        class="flex flex-wrap items-center justify-between gap-3 border-b border-border px-1 py-3 dark:border-slate-700"
                     >
                         {#if canCharterCreate}<Button
                                 type="button"
@@ -4892,7 +4880,7 @@
                     </div>
                     <div class="space-y-3">
                         <div
-                            class="flex flex-wrap items-center justify-between gap-2 bg-[#f5f2e9] px-3 py-2.5 dark:bg-slate-900"
+                            class="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/40 px-3 py-2.5 dark:bg-slate-900"
                         >
                             <p
                                 class="text-xs font-medium text-muted-foreground"
@@ -4940,7 +4928,7 @@
                             >
                                 {#each charters as row (row.id)}
                                     <article
-                                        class="group relative overflow-hidden rounded-lg border border-[#d7d1c3] bg-white p-3 transition-colors hover:border-[#9da99e] hover:bg-[#faf9f4] dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-900/80"
+                                        class="group relative overflow-hidden rounded-lg border border-border/70 bg-white p-3 transition-colors hover:border-border hover:bg-muted/20 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-900/80"
                                     >
                                         <div
                                             class="mb-2 flex items-start justify-between gap-2"
@@ -6558,7 +6546,7 @@
                                     luggageArrivedStatus,
                                 ].includes(normalizedLuggageStatus)}
                                 <article
-                                    class="rounded-lg border border-[#d7d1c3] bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900"
+                                    class="rounded-lg border border-border/70 bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-2.5"
@@ -6922,6 +6910,10 @@
                                 <tr>
                                     <th
                                         class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                        >Aksi</th
+                                    >
+                                    <th
+                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Pengirim</th
                                     >
                                     <th
@@ -6964,10 +6956,6 @@
                                         class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
                                         >Biaya</th
                                     >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Aksi</th
-                                    >
                                 </tr>
                             </thead>
                             <tbody>
@@ -6996,6 +6984,161 @@
                                         <tr
                                             class="border-b border-border/60 align-top transition-colors hover:bg-muted/20 last:border-b-0"
                                         >
+                                            <td class="px-2.5 py-2 align-top">
+                                                <div
+                                                    class="flex items-center gap-1"
+                                                >
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
+                                                        >
+                                                            {#snippet children(
+                                                                props,
+                                                            )}
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    class="h-7 rounded-md px-2"
+                                                                    onclick={props.onclick}
+                                                                    aria-expanded={props[
+                                                                        'aria-expanded'
+                                                                    ]}
+                                                                    data-state={props[
+                                                                        'data-state'
+                                                                    ]}
+                                                                >
+                                                                    <MoreHorizontal
+                                                                        class="h-3.5 w-3.5"
+                                                                    />
+                                                                </Button>
+                                                            {/snippet}
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="start"
+                                                            side="bottom"
+                                                            sideOffset={8}
+                                                            class="w-52"
+                                                        >
+                                                            {@const lockedLuggageActions =
+                                                                [
+                                                                    luggagePickedUpStatus,
+                                                                    luggageArrivedStatus,
+                                                                ].includes(
+                                                                    normalizedLuggageStatus,
+                                                                )}
+                                                            {#if canLuggageUpdate && !lockedLuggageActions}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openLuggageEditor(
+                                                                            row,
+                                                                        )}
+                                                                >
+                                                                    Edit Data
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
+                                                                <DropdownMenuItem
+                                                                    disabled={pendingLuggageActionKey ===
+                                                                        `action-${row.id}-active`}
+                                                                    onclick={() =>
+                                                                        void luggageAction(
+                                                                            row,
+                                                                            'active',
+                                                                        )}
+                                                                >
+                                                                    {pendingLuggageActionKey ===
+                                                                    `action-${row.id}-active`
+                                                                        ? 'Memproses...'
+                                                                        : 'Tandai Dalam Perjalanan'}
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
+                                                                <DropdownMenuItem
+                                                                    disabled={pendingLuggageActionKey ===
+                                                                        `action-${row.id}-paid`}
+                                                                    onclick={() =>
+                                                                        void luggageAction(
+                                                                            row,
+                                                                            'paid',
+                                                                        )}
+                                                                >
+                                                                    {pendingLuggageActionKey ===
+                                                                    `action-${row.id}-paid`
+                                                                        ? 'Memproses...'
+                                                                        : 'Tandai Lunas'}
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggagePrint}<DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openLuggagePrint(
+                                                                            row.id,
+                                                                        )}
+                                                                >
+                                                                    Print Resi
+                                                                </DropdownMenuItem>{/if}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void loadLuggageIncidents(
+                                                                        row,
+                                                                        'history',
+                                                                    )}
+                                                            >
+                                                                Lihat Insiden
+                                                            </DropdownMenuItem>
+                                                            {#if canLuggageIncident && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openLuggageIncidentReport(
+                                                                            row,
+                                                                            'damaged',
+                                                                        )}
+                                                                >
+                                                                    Laporkan
+                                                                    Rusak
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openLuggageIncidentReport(
+                                                                            row,
+                                                                            'lost',
+                                                                        )}
+                                                                >
+                                                                    Laporkan
+                                                                    Hilang
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggageClaim && normalizedLuggageCondition !== 'normal' && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void loadLuggageIncidents(
+                                                                            row,
+                                                                            'history',
+                                                                        )}
+                                                                >
+                                                                    Proses Klaim
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            {#if canLuggageUpdate && !lockedLuggageActions}
+                                                                <DropdownMenuItem
+                                                                    disabled={pendingLuggageActionKey ===
+                                                                        `action-${row.id}-canceled`}
+                                                                    onclick={() =>
+                                                                        void luggageAction(
+                                                                            row,
+                                                                            'canceled',
+                                                                        )}
+                                                                >
+                                                                    {pendingLuggageActionKey ===
+                                                                    `action-${row.id}-canceled`
+                                                                        ? 'Memproses...'
+                                                                        : 'Batalkan Pengiriman'}
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            </td>
                                             <td class="px-2.5 py-2 align-top">
                                                 <span
                                                     class="block text-[9px] font-medium text-foreground"
@@ -7153,161 +7296,6 @@
                                                     row.price,
                                                 ).toLocaleString('id-ID')}</td
                                             >
-                                            <td class="px-2.5 py-2 align-top">
-                                                <div
-                                                    class="flex items-center justify-end gap-1"
-                                                >
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
-                                                        >
-                                                            {#snippet children(
-                                                                props,
-                                                            )}
-                                                                <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    class="h-7 rounded-md px-2"
-                                                                    onclick={props.onclick}
-                                                                    aria-expanded={props[
-                                                                        'aria-expanded'
-                                                                    ]}
-                                                                    data-state={props[
-                                                                        'data-state'
-                                                                    ]}
-                                                                >
-                                                                    <MoreHorizontal
-                                                                        class="h-3.5 w-3.5"
-                                                                    />
-                                                                </Button>
-                                                            {/snippet}
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            side="top"
-                                                            sideOffset={8}
-                                                            class="w-52"
-                                                        >
-                                                            {@const lockedLuggageActions =
-                                                                [
-                                                                    luggagePickedUpStatus,
-                                                                    luggageArrivedStatus,
-                                                                ].includes(
-                                                                    normalizedLuggageStatus,
-                                                                )}
-                                                            {#if canLuggageUpdate && !lockedLuggageActions}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        openLuggageEditor(
-                                                                            row,
-                                                                        )}
-                                                                >
-                                                                    Edit Data
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
-                                                                <DropdownMenuItem
-                                                                    disabled={pendingLuggageActionKey ===
-                                                                        `action-${row.id}-active`}
-                                                                    onclick={() =>
-                                                                        void luggageAction(
-                                                                            row,
-                                                                            'active',
-                                                                        )}
-                                                                >
-                                                                    {pendingLuggageActionKey ===
-                                                                    `action-${row.id}-active`
-                                                                        ? 'Memproses...'
-                                                                        : 'Tandai Dalam Perjalanan'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
-                                                                <DropdownMenuItem
-                                                                    disabled={pendingLuggageActionKey ===
-                                                                        `action-${row.id}-paid`}
-                                                                    onclick={() =>
-                                                                        void luggageAction(
-                                                                            row,
-                                                                            'paid',
-                                                                        )}
-                                                                >
-                                                                    {pendingLuggageActionKey ===
-                                                                    `action-${row.id}-paid`
-                                                                        ? 'Memproses...'
-                                                                        : 'Tandai Lunas'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggagePrint}<DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        openLuggagePrint(
-                                                                            row.id,
-                                                                        )}
-                                                                >
-                                                                    Print Resi
-                                                                </DropdownMenuItem>{/if}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void loadLuggageIncidents(
-                                                                        row,
-                                                                        'history',
-                                                                    )}
-                                                            >
-                                                                Lihat Insiden
-                                                            </DropdownMenuItem>
-                                                            {#if canLuggageIncident && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        openLuggageIncidentReport(
-                                                                            row,
-                                                                            'damaged',
-                                                                        )}
-                                                                >
-                                                                    Laporkan
-                                                                    Rusak
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        openLuggageIncidentReport(
-                                                                            row,
-                                                                            'lost',
-                                                                        )}
-                                                                >
-                                                                    Laporkan
-                                                                    Hilang
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggageClaim && normalizedLuggageCondition !== 'normal' && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void loadLuggageIncidents(
-                                                                            row,
-                                                                            'history',
-                                                                        )}
-                                                                >
-                                                                    Proses Klaim
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggageUpdate && !lockedLuggageActions}
-                                                                <DropdownMenuItem
-                                                                    disabled={pendingLuggageActionKey ===
-                                                                        `action-${row.id}-canceled`}
-                                                                    onclick={() =>
-                                                                        void luggageAction(
-                                                                            row,
-                                                                            'canceled',
-                                                                        )}
-                                                                >
-                                                                    {pendingLuggageActionKey ===
-                                                                    `action-${row.id}-canceled`
-                                                                        ? 'Memproses...'
-                                                                        : 'Batalkan Pengiriman'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </td>
                                         </tr>
                                     {/each}
                                 {/if}
