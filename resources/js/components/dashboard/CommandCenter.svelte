@@ -33,6 +33,11 @@
     });
     let dismissedTooltipKey = $state('');
     let activeTooltipSignature = $state('');
+    let showAllMonths = $state(false);
+    const recentMonths = $derived([...monthlyTrend].reverse());
+    const visibleMonths = $derived(
+        showAllMonths ? recentMonths : recentMonths.slice(0, 4),
+    );
     const { resolvedAppearance } = themeState();
     const isDark = $derived(resolvedAppearance() === 'dark');
 
@@ -296,25 +301,26 @@
 </script>
 
 <div
-    class={`flex w-full flex-col rounded-lg border p-4 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm sm:p-5 ${chartTheme().panelClass}`}
+    class={`flex min-w-0 w-full flex-col rounded-lg border p-3 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm sm:p-5 ${chartTheme().panelClass}`}
 >
     <!-- Header dan Legend Horisontal -->
     <div
-        class="mb-4 flex flex-wrap items-start justify-between gap-y-3 gap-x-4"
+        class="mb-3 flex flex-col items-start gap-2 sm:mb-4 sm:flex-row sm:justify-between sm:gap-4"
     >
         <div class="min-w-0">
             <p class="text-[13px] font-semibold text-muted-foreground">
-                Perbandingan <span class={`font-bold ${chartTheme().titleClass}`}
+                Perbandingan <span
+                    class={`font-bold ${chartTheme().titleClass}`}
                     >Target vs Revenue</span
                 >
             </p>
-            <p class={`mt-0.5 text-[11px] ${chartTheme().subtitleClass}`}>
+            <p class={`mt-0.5 text-xs ${chartTheme().subtitleClass}`}>
                 Pemantauan target omset bulanan terhadap pencapaian aktual
             </p>
         </div>
 
         <!-- Legend -->
-        <div class="flex shrink-0 items-center gap-3 pt-0.5">
+        <div class="flex flex-wrap items-center gap-3 pt-0.5">
             <div class="flex items-center gap-1.5">
                 <div
                     class={`h-2 w-2 rounded-sm border ${isDark ? 'border-slate-500 bg-slate-700' : 'border-slate-300 bg-slate-100'}`}
@@ -335,7 +341,7 @@
     </div>
 
     <!-- Chart Container -->
-    <div class="w-full pb-1">
+    <div class="hidden w-full min-w-0 pb-1 sm:block">
         <div class="relative w-full" style="height: 250px;">
             {#if tooltipData.visible}
                 <div
@@ -344,7 +350,9 @@
                         10}px;"
                 >
                     <div class="flex items-start justify-between gap-2">
-                        <p class={`text-sm font-semibold ${chartTheme().chartTitleClass}`}>
+                        <p
+                            class={`text-sm font-semibold ${chartTheme().chartTitleClass}`}
+                        >
                             {tooltipData.title}
                         </p>
                         <button
@@ -361,7 +369,9 @@
                             <div
                                 class="flex items-center justify-between gap-3"
                             >
-                                <span class={`flex items-center gap-1.5 ${chartTheme().chartBodyClass}`}>
+                                <span
+                                    class={`flex items-center gap-1.5 ${chartTheme().chartBodyClass}`}
+                                >
                                     <span
                                         class="h-1.5 w-1.5 rounded-full"
                                         style={`background-color:${item.color}`}
@@ -381,5 +391,69 @@
             {/if}
             <canvas bind:this={chartCanvas}></canvas>
         </div>
+    </div>
+    <div class="space-y-2 sm:hidden">
+        {#if recentMonths.length === 0}
+            <p
+                class="rounded-lg border border-dashed p-3 text-sm text-muted-foreground"
+            >
+                Belum ada data pendapatan bulanan.
+            </p>
+        {:else}
+            {#each visibleMonths as month (month.month_key || month.label)}
+                {@const target = Number(month.target_revenue || 0)}
+                {@const revenue = Number(month.revenue || 0)}
+                <div
+                    class="min-w-0 rounded-lg border border-border/70 bg-background/70 p-3 dark:bg-slate-900/70"
+                >
+                    <div class="flex items-center justify-between gap-2">
+                        <p class="min-w-0 truncate text-sm font-semibold">
+                            {month.label || month.month_key}
+                        </p>
+                        <span
+                            class="shrink-0 text-xs tabular-nums text-muted-foreground"
+                            >{target > 0
+                                ? `${Math.round((revenue / target) * 100)}%`
+                                : '—'}</span
+                        >
+                    </div>
+                    <div
+                        class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+                    >
+                        <div
+                            class="h-full rounded-full bg-sky-500"
+                            style={`width:${target > 0 ? Math.min(100, Math.round((revenue / target) * 100)) : 0}%`}
+                        ></div>
+                    </div>
+                    <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+                        <p class="min-w-0">
+                            <span class="block text-muted-foreground"
+                                >Revenue</span
+                            ><strong class="block break-words tabular-nums"
+                                >{toCurrency(revenue)}</strong
+                            >
+                        </p>
+                        <p class="min-w-0">
+                            <span class="block text-muted-foreground"
+                                >Target</span
+                            ><strong class="block break-words tabular-nums"
+                                >{toCurrency(target)}</strong
+                            >
+                        </p>
+                    </div>
+                </div>
+            {/each}
+            {#if recentMonths.length > 4}
+                <button
+                    type="button"
+                    class="min-h-10 w-full rounded-lg border border-border/70 text-sm font-medium text-foreground"
+                    onclick={() => (showAllMonths = !showAllMonths)}
+                >
+                    {showAllMonths
+                        ? 'Tampilkan lebih sedikit'
+                        : `Lihat semua ${recentMonths.length} bulan`}
+                </button>
+            {/if}
+        {/if}
     </div>
 </div>

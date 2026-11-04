@@ -39,11 +39,15 @@
 </script>
 
 <div
-    class={`rounded-lg border p-3 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm sm:rounded-lg sm:p-5 ${isDark ? 'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))]' : 'border-border/80 bg-gradient-to-br from-background via-card to-amber-50/20'}`}
+    class={`min-w-0 rounded-lg border p-3 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm sm:p-5 ${isDark ? 'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))]' : 'border-border/80 bg-gradient-to-br from-background via-card to-amber-50/20'}`}
 >
-    <div class="mb-3 flex items-start justify-between gap-3 sm:mb-4">
-        <div>
-            <p class="text-[13px] font-semibold text-muted-foreground sm:text-sm">
+    <div
+        class="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-start sm:justify-between"
+    >
+        <div class="min-w-0">
+            <p
+                class="text-[13px] font-semibold text-muted-foreground sm:text-sm"
+            >
                 Peringkat <span class="font-bold text-foreground"
                     >Performa Driver</span
                 >
@@ -54,16 +58,18 @@
         </div>
         <a
             href="/settings/driver"
-            class="shrink-0 rounded-full border border-border/70 bg-muted/40 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground transition hover:border-border hover:bg-background hover:text-foreground dark:border-slate-700/80 dark:bg-slate-900/70 dark:hover:bg-slate-800/90 dark:hover:text-foreground"
+            class="inline-flex min-h-9 w-fit items-center rounded-full border border-border/70 bg-muted/40 px-3 py-1 text-xs font-semibold text-muted-foreground transition hover:border-border hover:bg-background hover:text-foreground dark:border-slate-700/80 dark:bg-slate-900/70 dark:hover:bg-slate-800/90 dark:hover:text-foreground"
         >
             Lihat Detail →
         </a>
     </div>
 
-    <div class="mb-3 flex rounded-lg bg-muted/70 p-1 dark:bg-slate-950/75">
+    <div
+        class="mb-3 grid grid-cols-3 gap-1 rounded-lg bg-muted/70 p-1 dark:bg-slate-950/75"
+    >
         {#each Object.keys(categories) as cat}
             <button
-                class={`flex-1 rounded-md px-3 py-1.5 text-[11px] font-semibold transition ${selectedCategory === cat ? 'bg-background text-foreground shadow-sm dark:bg-slate-900/95' : 'text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:bg-slate-900/60 dark:hover:text-slate-100'}`}
+                class={`min-w-0 rounded-md px-1 py-2 text-xs font-semibold transition sm:px-3 ${selectedCategory === cat ? 'bg-background text-foreground shadow-sm dark:bg-slate-900/95' : 'text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:bg-slate-900/60 dark:hover:text-slate-100'}`}
                 onclick={() => (selectedCategory = cat)}
             >
                 {cat}
@@ -107,7 +113,9 @@
                                     </span>
                                 {/if}
                             </span>
-                            <p class="truncate text-[12px] font-semibold text-foreground">
+                            <p
+                                class="min-w-0 break-words text-sm font-semibold text-foreground"
+                            >
                                 {driver.name}
                             </p>
                         </div>
@@ -125,12 +133,16 @@
                         ></div>
                     </div>
 
-                    <p class="mt-1 text-[10px] font-bold text-foreground">
+                    <p
+                        class="mt-2 break-words text-sm font-bold tabular-nums text-foreground"
+                    >
                         {toCurrency(driver.revenue)}
                     </p>
 
                     {#if driver.route}
-                        <p class="mt-0.5 truncate text-[9px] text-muted-foreground">
+                        <p
+                            class="mt-0.5 break-words text-xs text-muted-foreground"
+                        >
                             Rute: {driver.route}
                         </p>
                     {/if}
