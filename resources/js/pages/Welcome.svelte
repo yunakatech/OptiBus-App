@@ -4,6 +4,7 @@
     import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page } from '@inertiajs/svelte';
+    import { onMount } from 'svelte';
     import {
         ArrowRight,
         BusFront,
@@ -96,6 +97,64 @@
     const isAuthenticated = $derived(Boolean(page.props.auth?.user));
     const appHref = '/dashboard';
     const subscriptionHref = '/subscription';
+    let landingRoot: HTMLDivElement;
+
+    onMount(() => {
+        const root = landingRoot;
+        const preference = window.matchMedia(
+            '(prefers-reduced-motion: reduce)',
+        );
+        if (preference.matches || !('IntersectionObserver' in window)) return;
+
+        const targets = Array.from(
+            root.querySelectorAll<HTMLElement>('[data-reveal]'),
+        );
+        const observer = new IntersectionObserver(
+            (entries) => {
+                for (const entry of entries) {
+                    if (!entry.isIntersecting) continue;
+                    entry.target.classList.remove('motion-pending');
+                    observer.unobserve(entry.target);
+                }
+            },
+            { threshold: 0.12, rootMargin: '0px 0px -24px 0px' },
+        );
+
+        // Enhance only offscreen content; the first screen is always readable.
+        for (const target of targets) {
+            if (target.getBoundingClientRect().top < window.innerHeight - 24)
+                continue;
+            target.classList.add('motion-pending');
+            observer.observe(target);
+        }
+        const revealFocused = (event: FocusEvent) => {
+            const target =
+                event.target instanceof Element
+                    ? event.target.closest('[data-reveal]')
+                    : null;
+            if (target) {
+                target.classList.remove('motion-pending');
+                observer.unobserve(target);
+            }
+        };
+        const revealAll = () => {
+            if (!preference.matches) return;
+            observer.disconnect();
+            targets.forEach((target) =>
+                target.classList.remove('motion-pending'),
+            );
+        };
+        root.addEventListener('focusin', revealFocused);
+        preference.addEventListener('change', revealAll);
+        return () => {
+            observer.disconnect();
+            root.removeEventListener('focusin', revealFocused);
+            preference.removeEventListener('change', revealAll);
+            targets.forEach((target) =>
+                target.classList.remove('motion-pending'),
+            );
+        };
+    });
 
     const workflow = [
         {
@@ -165,6 +224,7 @@
 </svelte:head>
 
 <div
+    bind:this={landingRoot}
     class:mobile-page={true}
     class="min-h-screen overflow-x-hidden bg-[#f1eee5] text-[#1a2825]"
 >
@@ -233,7 +293,9 @@
             <div
                 class="relative mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,0.94fr)_minmax(420px,1.06fr)] lg:items-center lg:gap-12 lg:px-10 lg:py-20"
             >
-                <div class="relative z-10 flex flex-col justify-center">
+                <div
+                    class="hero-copy relative z-10 flex flex-col justify-center"
+                >
                     <div
                         class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#bc6738] pl-3 text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-[#596660] sm:mb-6"
                     >
@@ -256,16 +318,16 @@
                             href={isAuthenticated
                                 ? appHref
                                 : '/register?plan=starter&intent=trial'}
-                            class="inline-flex h-12 items-center justify-center bg-[#174b43] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#103a34] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
+                            class="motion-button inline-flex h-12 items-center justify-center bg-[#174b43] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#103a34] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
                         >
                             {isAuthenticated
                                 ? 'Buka dasbor'
                                 : 'Mulai uji coba gratis'}
-                            <ArrowRight class="ml-2 h-4 w-4" />
+                            <ArrowRight class="motion-arrow ml-2 h-4 w-4" />
                         </a>
                         <a
                             href="/pricing"
-                            class="inline-flex h-12 items-center justify-center border border-[#aaa494] bg-transparent px-5 text-sm font-semibold text-[#243a34] transition-colors hover:bg-[#e6e0d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
+                            class="motion-button inline-flex h-12 items-center justify-center border border-[#aaa494] bg-transparent px-5 text-sm font-semibold text-[#243a34] transition-colors hover:bg-[#e6e0d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
                         >
                             Bandingkan paket
                         </a>
@@ -322,7 +384,7 @@
                         <span>OptiBus</span>
                     </div>
                     <div
-                        class="relative mx-auto mt-7 w-full max-w-[290px] sm:mt-8 sm:max-w-[470px] lg:max-w-[500px]"
+                        class="hero-product relative mx-auto mt-7 w-full max-w-[290px] sm:mt-8 sm:max-w-[470px] lg:max-w-[500px]"
                     >
                         <img
                             src="/landing/iPhone 12 Pro (Wooden Hands).webp"
@@ -332,7 +394,7 @@
                             loading="eager"
                             decoding="async"
                             fetchpriority="high"
-                            class="relative z-10 h-auto w-full object-contain"
+                            class="product-shot relative z-10 h-auto w-full object-contain"
                         />
                     </div>
                 </div>
@@ -344,7 +406,7 @@
             class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
         >
             <div class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
-                <div class="lg:pt-2">
+                <div data-reveal class="lg:pt-2">
                     <p
                         class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
                     >
@@ -366,6 +428,8 @@
                     {#each workflow as item, index}
                         {@const Icon = item.icon}
                         <li
+                            data-reveal
+                            style:--reveal-delay={`${index * 55}ms`}
                             class="grid grid-cols-[2.5rem_2rem_1fr] items-center gap-3 py-4 sm:grid-cols-[3rem_2.5rem_1fr] sm:gap-4 sm:py-5"
                         >
                             <span class="font-serif text-lg text-[#a94e28]">
@@ -398,6 +462,7 @@
                 class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
             >
                 <div
+                    data-reveal
                     class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end"
                 >
                     <div>
@@ -425,6 +490,8 @@
                     {#each capabilities as item, index}
                         {@const Icon = item.icon}
                         <article
+                            data-reveal
+                            style:--reveal-delay={`${index * 55}ms`}
                             class="border-b border-[#c9c2b3] py-5 sm:px-5 sm:py-6 lg:border-b-0 lg:border-r lg:px-5 lg:first:pl-0 lg:last:border-r-0"
                         >
                             <div
@@ -456,6 +523,7 @@
             class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
         >
             <div
+                data-reveal
                 class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end"
             >
                 <div>
@@ -480,9 +548,11 @@
             <div
                 class="grid gap-0 border-y border-[#c9c2b3] md:grid-cols-3 md:divide-x md:divide-[#c9c2b3]"
             >
-                {#each featuredPlans as plan}
+                {#each featuredPlans as plan, index}
                     <article
-                        class={`relative border-b border-[#c9c2b3] bg-transparent px-1 py-6 sm:px-5 sm:py-7 md:border-b-0 ${plan.slug === 'pro' ? 'bg-[#e8e2d7] md:-my-px md:border-y-2 md:border-y-[#174b43]' : ''}`}
+                        data-reveal
+                        style:--reveal-delay={`${index * 65}ms`}
+                        class={`plan-panel relative border-b border-[#c9c2b3] bg-transparent px-1 py-6 sm:px-5 sm:py-7 md:border-b-0 ${plan.slug === 'pro' ? 'bg-[#e8e2d7] md:-my-px md:border-y-2 md:border-y-[#174b43]' : ''}`}
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
@@ -534,7 +604,7 @@
                             href={isAuthenticated
                                 ? subscriptionHref
                                 : `/register?plan=${plan.slug}&intent=paid`}
-                            class={`mt-6 inline-flex h-11 w-full items-center justify-center text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] ${plan.slug === 'pro' ? 'bg-[#174b43] text-white hover:bg-[#103a34]' : 'border border-[#aaa494] text-[#243a34] hover:bg-[#e6e0d4]'}`}
+                            class={`motion-button mt-6 inline-flex h-11 w-full items-center justify-center text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] ${plan.slug === 'pro' ? 'bg-[#174b43] text-white hover:bg-[#103a34]' : 'border border-[#aaa494] text-[#243a34] hover:bg-[#e6e0d4]'}`}
                         >
                             {isAuthenticated
                                 ? 'Kelola paket'
@@ -547,6 +617,7 @@
 
         <section class="border-t border-[#173a34] bg-[#173a34] text-[#f1eee5]">
             <div
+                data-reveal
                 class="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-[1fr_auto] md:items-center lg:px-10 lg:py-16"
             >
                 <div>
@@ -565,10 +636,10 @@
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-12 items-center justify-center bg-[#f1eee5] px-5 text-sm font-semibold text-[#173a34] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d9a27d]"
+                    class="motion-button inline-flex h-12 items-center justify-center bg-[#f1eee5] px-5 text-sm font-semibold text-[#173a34] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d9a27d]"
                 >
                     {isAuthenticated ? 'Buka dasbor' : 'Mulai uji coba'}
-                    <ArrowRight class="ml-2 h-4 w-4" />
+                    <ArrowRight class="motion-arrow ml-2 h-4 w-4" />
                 </a>
             </div>
         </section>
@@ -617,3 +688,101 @@
         </div>
     </footer>
 </div>
+
+<style>
+    section[id] {
+        scroll-margin-top: 6rem;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+        .hero-copy > * {
+            animation: hero-arrive 560ms cubic-bezier(0.22, 1, 0.36, 1)
+                backwards;
+        }
+        .hero-copy > :nth-child(2) {
+            animation-delay: 55ms;
+        }
+        .hero-copy > :nth-child(3) {
+            animation-delay: 110ms;
+        }
+        .hero-copy > :nth-child(4) {
+            animation-delay: 165ms;
+        }
+        .hero-copy > :nth-child(5) {
+            animation-delay: 220ms;
+        }
+        .hero-product {
+            animation: product-arrive 740ms cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        [data-reveal] {
+            transition:
+                opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+                transform 520ms cubic-bezier(0.22, 1, 0.36, 1),
+                background-color 180ms ease;
+            transition-delay:
+                var(--reveal-delay, 0ms), var(--reveal-delay, 0ms), 0ms;
+        }
+        [data-reveal]:global(.motion-pending) {
+            opacity: 0;
+            transform: translateY(18px);
+        }
+        [data-reveal]:focus-within {
+            opacity: 1;
+            transform: none;
+            transition: none;
+        }
+        .motion-button {
+            transition:
+                transform 180ms ease,
+                background-color 180ms ease;
+        }
+        .motion-button:active {
+            transform: translateY(1px);
+        }
+        .motion-button :global(.motion-arrow) {
+            transition: transform 180ms ease;
+        }
+        .motion-button:focus-visible :global(.motion-arrow) {
+            transform: translateX(3px);
+        }
+        .product-shot {
+            transition: transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .motion-button:hover {
+                transform: translateY(-2px);
+            }
+            .motion-button:hover :global(.motion-arrow) {
+                transform: translateX(3px);
+            }
+            .hero-product:hover .product-shot {
+                transform: scale(1.025) rotate(-0.5deg);
+            }
+            .plan-panel:hover,
+            .plan-panel:focus-within {
+                background-color: #e8e2d7;
+            }
+        }
+    }
+
+    @keyframes hero-arrive {
+        from {
+            opacity: 0.55;
+            transform: translateY(14px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+    @keyframes product-arrive {
+        from {
+            opacity: 0.65;
+            transform: translate(18px, 8px) rotate(1deg);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+</style>
