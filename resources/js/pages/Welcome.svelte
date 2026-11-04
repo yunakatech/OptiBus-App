@@ -765,6 +765,14 @@
         }
     }
 
+    @media (prefers-reduced-motion: reduce) {
+        [data-reveal] {
+            opacity: 1 !important;
+            transform: none !important;
+            transition: none !important;
+        }
+    }
+
     @keyframes hero-arrive {
         from {
             opacity: 0.55;
