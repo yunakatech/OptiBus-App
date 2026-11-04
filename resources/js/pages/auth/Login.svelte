@@ -84,7 +84,9 @@
                 <div class="absolute inset-0 flex items-center">
                     <span class="w-full border-t border-[#c9c2b3]"></span>
                 </div>
-                <div class="relative flex justify-center text-[10px] font-semibold uppercase tracking-[0.16em]">
+                <div
+                    class="relative flex justify-center text-xs md:text-[10px] font-semibold uppercase tracking-[0.16em]"
+                >
                     <span class="bg-[#f7f4ec] px-3 text-[#68736c]">
                         Masuk dengan email
                     </span>
@@ -93,8 +95,14 @@
 
             <div class="grid gap-4">
                 <div class="grid gap-2">
-                    <Label for="email" class="flex items-center gap-2 text-sm font-medium text-[#33433d]">
-                        <Mail class="h-4 w-4 text-[#174b43]" aria-hidden="true" />
+                    <Label
+                        for="email"
+                        class="flex items-center gap-2 text-sm font-medium text-[#33433d]"
+                    >
+                        <Mail
+                            class="h-4 w-4 text-[#174b43]"
+                            aria-hidden="true"
+                        />
                         Email
                     </Label>
                     <Input
@@ -114,7 +122,10 @@
                         for="password"
                         class="flex items-center gap-2 text-sm font-medium text-[#33433d]"
                     >
-                        <LockKeyhole class="h-4 w-4 text-[#174b43]" aria-hidden="true" />
+                        <LockKeyhole
+                            class="h-4 w-4 text-[#174b43]"
+                            aria-hidden="true"
+                        />
                         Kata sandi
                     </Label>
                     <PasswordInput
@@ -131,7 +142,7 @@
                 <div class="flex items-center justify-between gap-2 sm:gap-3">
                     <Label
                         for="remember"
-                    class="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 px-1 py-1 text-left touch-manipulation sm:flex-none sm:px-0 sm:py-0"
+                        class="flex min-h-11 min-w-0 flex-1 items-center gap-2.5 px-1 py-1 text-left touch-manipulation sm:flex-none sm:px-0 sm:py-0"
                     >
                         <Checkbox
                             id="remember"
@@ -139,7 +150,9 @@
                             aria-label="Ingat saya"
                             class="inline-flex h-5 max-h-5 min-h-5 w-5 max-w-5 min-w-5 shrink-0 aspect-square items-center justify-center rounded-none border-[#aebbb5] p-0 leading-none shadow-none data-[state=checked]:border-[#174b43] data-[state=checked]:bg-[#174b43] focus-visible:ring-[#174b43]/35 sm:h-4 sm:max-h-4 sm:min-h-4 sm:w-4 sm:max-w-4 sm:min-w-4"
                         />
-                        <span class="truncate text-sm text-[#53615b]">Ingat saya</span>
+                        <span class="truncate text-sm text-[#53615b]"
+                            >Ingat saya</span
+                        >
                     </Label>
                     <TextLink
                         href="/forgot-password"

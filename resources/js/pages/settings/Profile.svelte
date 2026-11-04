@@ -77,7 +77,7 @@
 
 <h1 class="sr-only">Profile settings</h1>
 
-<div class="flex flex-col space-y-6">
+<div class:mobile-page={true} class="flex flex-col space-y-6">
     <Heading
         variant="small"
         title="Profile information"
@@ -90,10 +90,17 @@
         options={{ preserveScroll: true }}
     >
         {#snippet children({ errors, processing })}
-            <div class="flex items-start gap-4 rounded-2xl border border-border/70 bg-muted/20 p-4">
+            <div
+                class="flex items-start gap-4 rounded-2xl border border-border/70 bg-muted/20 p-4"
+            >
                 <Avatar class="h-20 w-20 rounded-2xl">
-                    <AvatarImage src={avatarPreviewUrl || avatarUrl} alt={user.name} />
-                    <AvatarFallback class="rounded-2xl bg-slate-200 text-slate-800 dark:bg-slate-200 dark:text-slate-800">
+                    <AvatarImage
+                        src={avatarPreviewUrl || avatarUrl}
+                        alt={user.name}
+                    />
+                    <AvatarFallback
+                        class="rounded-2xl bg-slate-200 text-slate-800 dark:bg-slate-200 dark:text-slate-800"
+                    >
                         {getInitials(user.name)}
                     </AvatarFallback>
                 </Avatar>
@@ -174,7 +181,7 @@
                 <Button
                     type="submit"
                     disabled={processing}
-                    data-test="update-profile-button">Save</Button
+                    data-test="update-profile-button">Simpan</Button
                 >
             </div>
         {/snippet}

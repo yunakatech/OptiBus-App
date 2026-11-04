@@ -2,7 +2,7 @@
     export const layout = {
         breadcrumbs: [
             {
-                title: 'Logs',
+                title: 'Log',
                 href: '/settings/logs',
             },
         ],

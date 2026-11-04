@@ -10,6 +10,8 @@
 </script>
 
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { page } from '@inertiajs/svelte';
     import {
         ArrowRight,
@@ -243,6 +245,7 @@
 <AppHead title="Platform Dashboard" />
 
 <div
+    class:mobile-page={true}
     class="mx-auto min-w-0 max-w-[1500px] space-y-3 overflow-x-hidden p-2 pb-8 sm:space-y-4 sm:p-3 md:space-y-5 md:p-5"
 >
     <header
@@ -253,7 +256,7 @@
         >
             <div class="min-w-0 max-w-3xl">
                 <p
-                    class="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#d9a477]"
+                    class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#d9a477]"
                 >
                     Ringkasan Platform
                 </p>
@@ -262,9 +265,7 @@
                 >
                     Kondisi platform, sekilas.
                 </h1>
-                <p
-                    class="mt-2 hidden text-sm leading-6 text-white/75 sm:block"
-                >
+                <p class="mt-2 hidden text-sm leading-6 text-white/75 sm:block">
                     Pendapatan berulang, akun tenant, dan hal yang perlu
                     ditindaklanjuti.
                 </p>
@@ -277,10 +278,7 @@
                         ><Receipt class="mr-1 h-4 w-4" /> Tagihan</Button
                     >
                 </a>
-                <a
-                    class="w-full sm:w-auto"
-                    href="/platform/saas/subscriptions"
-                >
+                <a class="w-full sm:w-auto" href="/platform/saas/subscriptions">
                     <Button
                         variant="outline"
                         size="sm"
@@ -313,7 +311,7 @@
                     {metrics.month_label}
                 </p>
                 <h2
-                class="mt-3 break-words font-serif text-2xl font-semibold leading-tight tracking-[-0.04em] text-[#173a34] sm:text-3xl md:text-4xl"
+                    class="mt-3 break-words font-serif text-2xl font-semibold leading-tight tracking-[-0.04em] text-[#173a34] sm:text-3xl md:text-4xl"
                 >
                     {formatRupiah(metrics.mrr)}
                 </h2>
@@ -323,7 +321,9 @@
                     >
                         {percentDelta(metrics.mrr, metrics.previous_mrr)}
                     </span>
-                    <span class="text-xs text-muted-foreground dark:text-slate-400">
+                    <span
+                        class="text-xs text-muted-foreground dark:text-slate-400"
+                    >
                         dibanding {metrics.previous_month_label ?? 'bulan lalu'}
                     </span>
                 </div>
@@ -343,11 +343,13 @@
                         class="min-w-0 border-b border-[#d7dfd5] p-3 last:border-b-0 sm:p-4 md:odd:border-r md:[&:nth-last-child(-n+2)]:border-b-0 dark:border-slate-800"
                     >
                         <div
-                        class="mb-3 flex h-9 w-9 items-center justify-center border-l-2 border-[#a94e28] bg-[#f5f2e9] text-[#173a34] dark:bg-slate-800/80 dark:text-emerald-200"
+                            class="mb-3 flex h-9 w-9 items-center justify-center border-l-2 border-[#a94e28] bg-[#f5f2e9] text-[#173a34] dark:bg-slate-800/80 dark:text-emerald-200"
                         >
                             <Icon class="h-4 w-4" />
                         </div>
-                        <p class="text-xs font-semibold text-[#697570] dark:text-slate-400">
+                        <p
+                            class="text-xs font-semibold text-[#697570] dark:text-slate-400"
+                        >
                             {metric.label}
                         </p>
                         <p
@@ -371,7 +373,9 @@
             <div
                 class="min-w-0 border-t-2 border-[#c8d2c7] bg-white p-3 transition-colors hover:bg-[#faf9f4] dark:border-slate-700 dark:bg-slate-900/70 dark:hover:bg-slate-900 sm:p-4"
             >
-                <p class="text-xs font-semibold text-[#697570] dark:text-slate-400">
+                <p
+                    class="text-xs font-semibold text-[#697570] dark:text-slate-400"
+                >
                     {metric.label}
                 </p>
                 <p
@@ -390,7 +394,7 @@
 
     {#if mrrTrend.length > 0}
         <section
-                    class="min-w-0 rounded-xl border border-[#d7dfd5] bg-white p-3 dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
+            class="min-w-0 rounded-xl border border-[#d7dfd5] bg-white p-3 dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
         >
             <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -427,7 +431,7 @@
                                 title={`${item.name}: ${formatRupiah(item.value)}`}
                             ></div>
                             <span
-                                class="truncate text-center text-[10px] text-muted-foreground"
+                                class="truncate text-center text-xs md:text-[10px] text-muted-foreground"
                                 >{item.label}</span
                             >
                         </div>
@@ -462,155 +466,173 @@
                 </a>
             </div>
             {#if tenants.length > 0}
-                <div class="space-y-3 md:hidden">
-                    {#each tenants as tenant, index (`tenant-mobile-${index}-${tenant.id}-${tenant.slug}`)}
-                        <article
-                            class="rounded-xl border border-[#d7dfd5] bg-[#fbfcf8] p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70"
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
-                                    <a
-                                        href="/platform/saas/tenants"
-                                        class="block truncate font-semibold text-foreground hover:text-primary"
-                                    >
-                                        {tenant.name}
-                                    </a>
-                                    <p
-                                        class="mt-0.5 truncate text-xs text-muted-foreground"
-                                    >
-                                        {tenant.slug}
-                                    </p>
-                                </div>
-                                <Badge
-                                    variant={statusVariant(
-                                        tenant.subscription_status,
-                                    )}
-                                    class="shrink-0 rounded-full"
-                                >
-                                    {statusLabel(tenant.subscription_status)}
-                                </Badge>
-                            </div>
-
-                            <div
-                                class="mt-3 grid min-w-0 grid-cols-2 gap-2 text-xs"
+                <ViewportOnly minWidth={0} maxWidth={767}
+                    ><div class="space-y-3 md:hidden">
+                        {#each tenants as tenant, index (`tenant-mobile-${index}-${tenant.id}-${tenant.slug}`)}
+                            <article
+                                class="rounded-xl border border-[#d7dfd5] bg-[#fbfcf8] p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70"
                             >
                                 <div
-                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
+                                    class="flex items-start justify-between gap-3"
                                 >
-                                    <p class="text-muted-foreground">Paket</p>
-                                    <p
-                                        class="mt-1 truncate font-semibold text-[#103d3a] dark:text-emerald-100"
-                                    >
-                                        {tenant.plan_name}
-                                    </p>
-                                </div>
-                                <div
-                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
-                                >
-                                    <p class="text-muted-foreground">
-                                        Berakhir
-                                    </p>
-                                    <p
-                                        class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
-                                    >
-                                        {formatDate(tenant.ends_at)}
-                                    </p>
-                                </div>
-                                <div
-                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
-                                >
-                                    <p class="text-muted-foreground">User</p>
-                                    <p
-                                        class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
-                                    >
-                                        {tenant.user_count}
-                                    </p>
-                                </div>
-                                <div
-                                    class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
-                                >
-                                    <p class="text-muted-foreground">Pool</p>
-                                    <p
-                                        class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
-                                    >
-                                        {tenant.pool_count}
-                                    </p>
-                                </div>
-                            </div>
-                        </article>
-                    {/each}
-                </div>
-
-                <div class="hidden overflow-x-auto md:block">
-                    <table class="w-full min-w-[760px] text-sm">
-                        <thead>
-                            <tr
-                                class="border-b text-left text-xs text-muted-foreground"
-                            >
-                                <th class="pb-2 font-medium">Tenant</th>
-                                <th class="pb-2 font-medium">Paket</th>
-                                <th class="pb-2 font-medium">Status Bayar</th>
-                                <th class="pb-2 text-right font-medium">User</th
-                                >
-                                <th class="pb-2 text-right font-medium">Pool</th
-                                >
-                                <th class="pb-2 text-right font-medium">
-                                    Berakhir
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {#each tenants as tenant, index (`tenant-table-${index}-${tenant.id}-${tenant.slug}`)}
-                                <tr
-                                    class="border-b last:border-0 hover:bg-[#f8faf4] dark:hover:bg-slate-900/55"
-                                >
-                                    <td class="py-3 pr-3">
+                                    <div class="min-w-0">
                                         <a
                                             href="/platform/saas/tenants"
-                                            class="font-semibold text-foreground hover:text-primary"
-                                            >{tenant.name}</a
+                                            class="block truncate font-semibold text-foreground hover:text-primary"
                                         >
-                                        <div
-                                            class="text-xs text-muted-foreground"
+                                            {tenant.name}
+                                        </a>
+                                        <p
+                                            class="mt-0.5 truncate text-xs text-muted-foreground"
                                         >
                                             {tenant.slug}
-                                        </div>
-                                    </td>
-                                    <td class="py-3 pr-3">
-                                        <Badge
-                                            variant="outline"
-                                            class="rounded-full"
-                                            >{tenant.plan_name}</Badge
-                                        >
-                                    </td>
-                                    <td class="py-3 pr-3">
-                                        <Badge
-                                            variant={statusVariant(
-                                                tenant.subscription_status,
-                                            )}
-                                            class="rounded-full"
-                                        >
-                                            {statusLabel(
-                                                tenant.subscription_status,
-                                            )}
-                                        </Badge>
-                                    </td>
-                                    <td class="py-3 text-right">
-                                        {tenant.user_count}
-                                    </td>
-                                    <td class="py-3 text-right">
-                                        {tenant.pool_count}
-                                    </td>
-                                    <td
-                                        class="py-3 text-right text-xs text-muted-foreground"
+                                        </p>
+                                    </div>
+                                    <Badge
+                                        variant={statusVariant(
+                                            tenant.subscription_status,
+                                        )}
+                                        class="shrink-0 rounded-full"
                                     >
-                                        {formatDate(tenant.ends_at)}
-                                    </td>
+                                        {statusLabel(
+                                            tenant.subscription_status,
+                                        )}
+                                    </Badge>
+                                </div>
+
+                                <div
+                                    class="mt-3 grid min-w-0 grid-cols-2 gap-2 text-xs"
+                                >
+                                    <div
+                                        class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
+                                    >
+                                        <p class="text-muted-foreground">
+                                            Paket
+                                        </p>
+                                        <p
+                                            class="mt-1 truncate font-semibold text-[#103d3a] dark:text-emerald-100"
+                                        >
+                                            {tenant.plan_name}
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
+                                    >
+                                        <p class="text-muted-foreground">
+                                            Berakhir
+                                        </p>
+                                        <p
+                                            class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                        >
+                                            {formatDate(tenant.ends_at)}
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
+                                    >
+                                        <p class="text-muted-foreground">
+                                            User
+                                        </p>
+                                        <p
+                                            class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                        >
+                                            {tenant.user_count}
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="min-w-0 rounded-lg border border-slate-200 bg-white p-2 dark:border-slate-800/80 dark:bg-slate-950"
+                                    >
+                                        <p class="text-muted-foreground">
+                                            Pool
+                                        </p>
+                                        <p
+                                            class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                        >
+                                            {tenant.pool_count}
+                                        </p>
+                                    </div>
+                                </div>
+                            </article>
+                        {/each}
+                    </div></ViewportOnly
+                >
+
+                <ViewportOnly minWidth={768}
+                    ><div class="hidden overflow-x-auto md:block">
+                        <table class="w-full min-w-[760px] text-sm">
+                            <thead>
+                                <tr
+                                    class="border-b text-left text-xs text-muted-foreground"
+                                >
+                                    <th class="pb-2 font-medium">Tenant</th>
+                                    <th class="pb-2 font-medium">Paket</th>
+                                    <th class="pb-2 font-medium"
+                                        >Status Bayar</th
+                                    >
+                                    <th class="pb-2 text-right font-medium"
+                                        >User</th
+                                    >
+                                    <th class="pb-2 text-right font-medium"
+                                        >Pool</th
+                                    >
+                                    <th class="pb-2 text-right font-medium">
+                                        Berakhir
+                                    </th>
                                 </tr>
-                            {/each}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {#each tenants as tenant, index (`tenant-table-${index}-${tenant.id}-${tenant.slug}`)}
+                                    <tr
+                                        class="border-b last:border-0 hover:bg-[#f8faf4] dark:hover:bg-slate-900/55"
+                                    >
+                                        <td class="py-3 pr-3">
+                                            <a
+                                                href="/platform/saas/tenants"
+                                                class="font-semibold text-foreground hover:text-primary"
+                                                >{tenant.name}</a
+                                            >
+                                            <div
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                {tenant.slug}
+                                            </div>
+                                        </td>
+                                        <td class="py-3 pr-3">
+                                            <Badge
+                                                variant="outline"
+                                                class="rounded-full"
+                                                >{tenant.plan_name}</Badge
+                                            >
+                                        </td>
+                                        <td class="py-3 pr-3">
+                                            <Badge
+                                                variant={statusVariant(
+                                                    tenant.subscription_status,
+                                                )}
+                                                class="rounded-full"
+                                            >
+                                                {statusLabel(
+                                                    tenant.subscription_status,
+                                                )}
+                                            </Badge>
+                                        </td>
+                                        <td class="py-3 text-right">
+                                            {tenant.user_count}
+                                        </td>
+                                        <td class="py-3 text-right">
+                                            {tenant.pool_count}
+                                        </td>
+                                        <td
+                                            class="py-3 text-right text-xs text-muted-foreground"
+                                        >
+                                            {formatDate(tenant.ends_at)}
+                                        </td>
+                                    </tr>
+                                {/each}
+                            </tbody>
+                        </table>
+                    </div></ViewportOnly
+                >
             {:else}
                 <div
                     class="rounded-xl border border-dashed p-6 text-center text-sm text-muted-foreground"

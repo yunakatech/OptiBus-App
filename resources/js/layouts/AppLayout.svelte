@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import AppLayout from '@/layouts/app/AppSidebarLayout.svelte';
+    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
     import type { BreadcrumbItem } from '@/types';
 
     let {
@@ -13,5 +14,6 @@
 </script>
 
 <AppLayout {breadcrumbs}>
+    <NavigationMetrics />
     {@render children?.()}
 </AppLayout>

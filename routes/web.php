@@ -250,6 +250,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::post('subscription/checkout', [SubscriptionPaymentController::class, 'checkout'])->middleware('subscription.active')->name('subscription.checkout');
 
     Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
+        Route::get('groups/{groupKey}', [BookingController::class, 'groupDetails'])->middleware('permission:booking.view')->where('groupKey', '[a-f0-9]{32}')->name('groups.show');
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');
         Route::get('schedules', [BookingApiController::class, 'schedules'])->middleware('permission:booking.view')->name('schedules');
         Route::get('seats-detail', [BookingApiController::class, 'bookedSeatsDetail'])->middleware('permission:booking.view')->name('seats-detail');

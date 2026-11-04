@@ -33,9 +33,7 @@
         hasPermission(auth?.permissions, 'booking.view') &&
             Boolean(auth?.active_tenant),
     );
-    const activeTenantId = $derived(
-        Number(auth?.active_tenant?.id ?? 0),
-    );
+    const activeTenantId = $derived(Number(auth?.active_tenant?.id ?? 0));
     const isBookingConsolePage = $derived(
         url.isCurrentUrl('/booking-console', url.currentUrl),
     );
@@ -52,10 +50,7 @@
 
         let disposed = false;
         const refreshInboxNudge = async () => {
-            if (
-                disposed ||
-                document.visibilityState === 'hidden'
-            ) {
+            if (disposed || document.visibilityState === 'hidden') {
                 return;
             }
 
@@ -63,10 +58,7 @@
         };
 
         void refreshInboxNudge();
-        const interval = window.setInterval(
-            refreshInboxNudge,
-            30_000,
-        );
+        const interval = window.setInterval(refreshInboxNudge, 30_000);
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 void refreshInboxNudge();
@@ -87,10 +79,7 @@
 
 <AppShell variant="sidebar">
     <AppSidebar />
-    <AppContent
-        variant="sidebar"
-        class="mobile-app-content overflow-x-clip md:pb-0"
-    >
+    <AppContent variant="sidebar" class="mobile-app-content md:pb-0">
         <AppSidebarHeader {breadcrumbs} />
         {#if !isBookingConsolePage}
             <div

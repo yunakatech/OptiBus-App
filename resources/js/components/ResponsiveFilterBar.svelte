@@ -23,6 +23,9 @@
         onApply,
         onReset,
         onCancel,
+        query = $bindable(''),
+        onSearch,
+        searchPlaceholder = 'Cari data',
         class: className = '',
     }: {
         label?: string;
@@ -35,6 +38,9 @@
         onApply?: () => void;
         onReset?: () => void;
         onCancel?: () => void;
+        query?: string;
+        onSearch?: () => void;
+        searchPlaceholder?: string;
         class?: string;
     } = $props();
 
@@ -78,6 +84,26 @@
 </script>
 
 <div class={cn('responsive-filter-bar', className)}>
+    {#if onSearch}
+        <form
+            class="responsive-filter-search"
+            onsubmit={(event) => {
+                event.preventDefault();
+                onSearch?.();
+            }}
+        >
+            <label class="grid min-w-0 flex-1 gap-1.5 text-sm font-medium">
+                <span>Pencarian</span>
+                <input
+                    type="search"
+                    bind:value={query}
+                    placeholder={searchPlaceholder}
+                    class="h-11 w-full rounded-lg border border-input bg-background px-3 text-base"
+                />
+            </label>
+            <Button type="submit" variant="outline" class="h-11">Cari</Button>
+        </form>
+    {/if}
     <div class="responsive-filter-primary">
         {@render primary?.()}
     </div>
@@ -176,6 +202,13 @@
         gap: 0.75rem;
     }
 
+    .responsive-filter-search {
+        display: flex;
+        min-width: 0;
+        align-items: end;
+        gap: 0.5rem;
+    }
+
     .responsive-filter-primary {
         display: none;
         min-width: 0;
@@ -206,13 +239,11 @@
     }
 
     .responsive-filter-summary-value {
-        overflow: hidden;
         color: var(--foreground);
         font-size: 0.8125rem;
         font-weight: 600;
         line-height: 1.125rem;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        overflow-wrap: break-word;
     }
 
     .responsive-filter-active-count {
@@ -262,28 +293,24 @@
         flex: 1 1 auto;
         min-height: 0;
         overflow-y: auto;
-        padding-bottom: calc(
-            8.5rem + env(safe-area-inset-bottom) +
-                var(--mobile-keyboard-offset, 0px)
-        );
+        padding-bottom: 1rem;
         -webkit-overflow-scrolling: touch;
         overscroll-behavior: contain;
     }
 
     :global(.responsive-filter-sheet-footer) {
         display: grid;
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 0.5rem;
-        position: fixed;
-        right: 0;
-        bottom: var(--mobile-keyboard-offset, 0px);
-        left: 0;
         z-index: 1;
         padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
         box-shadow: 0 -8px 20px rgb(15 23 42 / 0.06);
     }
 
     @media (min-width: 768px) {
+        .responsive-filter-search {
+            display: none;
+        }
         .responsive-filter-bar {
             display: block;
         }

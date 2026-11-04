@@ -241,10 +241,10 @@
             <section class="rounded-xl border border-border/70 bg-muted/10 p-4">
                 <div class="mb-3 flex items-center justify-between gap-2">
                     <p class="text-sm font-semibold text-foreground">
-                        Customer
+                        Pelanggan
                     </p>
                     <span
-                        class="rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] text-muted-foreground"
+                        class="rounded-full border border-border/70 bg-background px-2 py-0.5 text-xs md:text-[11px] text-muted-foreground"
                         >{charterForm.payment_status || 'Belum Lunas'}</span
                     >
                 </div>
@@ -253,12 +253,12 @@
                         <label
                             for="charter-customer-lookup"
                             class="text-xs font-medium text-muted-foreground"
-                            >Cari Customer Lama</label
+                            >Cari Pelanggan Lama</label
                         >
                         <Input
                             id="charter-customer-lookup"
                             class="rounded-lg"
-                            placeholder="Cari nama customer atau nomor HP"
+                            placeholder="Cari nama pelanggan atau nomor HP"
                             value={charterCustomerQuery}
                             oninput={(event) =>
                                 onCharterCustomerQueryInput(
@@ -267,8 +267,10 @@
                                 )}
                         />
                         {#if charterCustomerBusy}
-                            <p class="text-[11px] text-muted-foreground">
-                                Mencari customer...
+                            <p
+                                class="text-xs md:text-[11px] text-muted-foreground"
+                            >
+                                Mencari pelanggan...
                             </p>
                         {/if}
                         {#if charterCustomerLookupOpen && charterCustomerResults.length > 0}
@@ -300,8 +302,10 @@
                                 {/each}
                             </div>
                         {:else if charterCustomerLookupOpen && !charterCustomerBusy}
-                            <p class="text-[11px] text-muted-foreground">
-                                Customer tidak ditemukan.
+                            <p
+                                class="text-xs md:text-[11px] text-muted-foreground"
+                            >
+                                Pelanggan tidak ditemukan.
                             </p>
                         {/if}
                     </div>
@@ -314,7 +318,7 @@
                         <Input
                             id="charter-name"
                             class="rounded-lg"
-                            placeholder="Nama customer / PIC"
+                            placeholder="Nama pelanggan / PIC"
                             bind:value={charterForm.name}
                             oninput={(event) =>
                                 onCharterCustomerQueryInput(
@@ -346,7 +350,7 @@
                         <label
                             for="charter-company"
                             class="text-xs font-medium text-muted-foreground"
-                            >Company</label
+                            >Perusahaan</label
                         >
                         <Input
                             id="charter-company"
@@ -482,14 +486,14 @@
                                                         )}</span
                                                     >
                                                     <span
-                                                        class="block truncate text-[11px] text-muted-foreground"
+                                                        class="block truncate text-xs md:text-[11px] text-muted-foreground"
                                                         >{charterRouteMeta(
                                                             route,
                                                         )}</span
                                                     >
                                                 </span>
                                                 <span
-                                                    class="shrink-0 rounded-full border border-cyan-200/70 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/40 dark:text-cyan-100"
+                                                    class="shrink-0 rounded-full border border-cyan-200/70 bg-cyan-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-cyan-700 dark:border-cyan-500/30 dark:bg-cyan-950/40 dark:text-cyan-100"
                                                 >
                                                     Pakai
                                                 </span>
@@ -606,7 +610,7 @@
                                                         ) || unit.nopol}</span
                                                     >
                                                     <span
-                                                        class="block text-[11px] text-muted-foreground"
+                                                        class="block text-xs md:text-[11px] text-muted-foreground"
                                                         >{charterUnitMeta(
                                                             unit,
                                                         )}</span
@@ -688,7 +692,7 @@
                                                         >{armada.nopol}</span
                                                     >
                                                     <span
-                                                        class="block text-[11px] text-muted-foreground"
+                                                        class="block text-xs md:text-[11px] text-muted-foreground"
                                                         >{[
                                                             armada.kategori,
                                                             armada.merk,
@@ -752,14 +756,14 @@
                                                         >{driver.nama}</span
                                                     >
                                                     <span
-                                                        class="block text-[11px] text-muted-foreground"
+                                                        class="block text-xs md:text-[11px] text-muted-foreground"
                                                         >{driver.phone ||
                                                             'Driver aktif'}</span
                                                     >
                                                 </span>
                                                 {#if selectedCharterDriver()?.id === driver.id}
                                                     <span
-                                                        class="text-[11px] font-medium text-cyan-700"
+                                                        class="text-xs md:text-[11px] font-medium text-cyan-700"
                                                         >Terpilih</span
                                                     >
                                                 {/if}
@@ -989,7 +993,7 @@
                     <div class="grid grid-cols-2 gap-px bg-border/70">
                         <div class="bg-background px-4 py-3">
                             <p
-                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
                             >
                                 Harga
                             </p>
@@ -999,7 +1003,7 @@
                         </div>
                         <div class="bg-background px-4 py-3">
                             <p
-                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
                             >
                                 BOP
                             </p>
@@ -1009,7 +1013,7 @@
                         </div>
                         <div class="bg-background px-4 py-3">
                             <p
-                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
                             >
                                 Margin
                             </p>
@@ -1024,7 +1028,7 @@
                         </div>
                         <div class="bg-background px-4 py-3">
                             <p
-                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
                             >
                                 DP
                             </p>

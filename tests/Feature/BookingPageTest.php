@@ -68,7 +68,7 @@ class BookingPageTest extends TestCase
             'created_at' => now(),
         ]);
 
-        $this->get(route('bookings.index'))
+        $this->get(route('bookings.index', ['from' => '2026-05-15', 'to' => '2026-05-15']))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Bookings')
                 ->missing('bookingGroups')
@@ -144,7 +144,7 @@ class BookingPageTest extends TestCase
             ],
         ]);
 
-        $this->get(route('bookings.index'))
+        $this->get(route('bookings.index', ['from' => '2026-05-16', 'to' => '2026-05-16']))
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Bookings')
                 ->missingAll(['bookingRouteOptions', 'bookingGroups'])
@@ -276,7 +276,85 @@ class BookingPageTest extends TestCase
                 ->component('Bookings')
                 ->where('groupDetailPage', true)
                 ->where('groupDetailKey', $groupKey)
-                ->has('bookingGroups', 2));
+                ->has('bookingGroups', 1));
+    }
+
+    public function test_server_pages_whole_groups_without_sending_passenger_details(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        DB::table('routes')->insert(['tenant_id' => $tenantId, 'name' => 'A - B', 'created_at' => now()]);
+        $rows = [];
+        for ($unit = 1; $unit <= 3; $unit++) {
+            for ($seat = 1; $seat <= 3; $seat++) {
+                $rows[] = ['tenant_id' => $tenantId, 'rute' => 'A - B', 'tanggal' => '2026-11-04',
+                    'jam' => '09:00:00', 'unit' => $unit, 'seat' => (string) $seat,
+                    'name' => 'Penumpang '.$seat, 'phone' => '0812000'.$unit.$seat,
+                    'status' => 'active', 'pembayaran' => 'Belum Lunas', 'price' => 100000,
+                    'discount' => 10000, 'created_at' => now()];
+            }
+        }
+        DB::table('bookings')->insert($rows);
+        $url = route('bookings.index', ['from' => '2026-11-04', 'per_page' => 2]);
+        $this->get($url)->assertInertia(fn (Assert $page) => $page
+            ->loadDeferredProps('booking-list', fn (Assert $data) => $data
+                ->has('bookingGroups', 2)->where('bookingPagination.total', 3)
+                ->where('bookingPagination.last_page', 2)
+                ->where('bookingGroups.0.total', 3)
+                ->where('bookingGroups.0.unpaid_amount', 270000)
+                ->where('bookingGroups.0.bookings', [])
+                ->where('bookingGroups.0.detail_loaded', false)
+                ->where('bookingListSummary.activePassengers', 9)));
+        $this->get($url.'&page=2')->assertInertia(fn (Assert $page) => $page
+            ->loadDeferredProps('booking-list', fn (Assert $data) => $data
+                ->has('bookingGroups', 1)->where('bookingGroups.0.unit', 3)));
+        $key = md5('A TO B|2026-11-04|09:00|3');
+        $this->getJson('/api/bookings/groups/'.$key)->assertOk()
+            ->assertJsonCount(3, 'group.bookings')->assertJsonPath('group.detail_loaded', true);
+    }
+
+    public function test_group_details_do_not_return_another_tenants_passengers_or_maps(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $otherTenant = DB::table('tenants')->insertGetId(['name' => 'Other', 'slug' => 'other-mobile', 'status' => 'active', 'created_at' => now()]);
+        foreach ([$tenantId, $otherTenant] as $tenant) {
+            DB::table('routes')->insert(['tenant_id' => $tenant, 'name' => 'A - B', 'created_at' => now()]);
+            DB::table('bookings')->insert(['tenant_id' => $tenant, 'rute' => 'A - B',
+                'tanggal' => '2026-11-04', 'jam' => '09:00:00', 'unit' => 1,
+                'seat' => '1', 'name' => $tenant === $tenantId ? 'Own' : 'Foreign',
+                'phone' => '0812345', 'status' => 'active', 'pembayaran' => 'Lunas', 'created_at' => now()]);
+        }
+        DB::table('customers')->insert(['tenant_id' => $otherTenant, 'name' => 'Foreign', 'phone' => '0812345', 'gmaps' => 'foreign-maps', 'created_at' => now()]);
+        $key = md5('A TO B|2026-11-04|09:00|1');
+        $this->getJson('/api/bookings/groups/'.$key)->assertOk()
+            ->assertJsonCount(1, 'group.bookings')->assertJsonPath('group.bookings.0.name', 'Own')
+            ->assertJsonPath('group.bookings.0.gmaps', '');
+        $this->getJson('/api/bookings/groups/'.str_repeat('f', 32))->assertNotFound();
+        auth()->logout();
+        $this->getJson('/api/bookings/groups/'.$key)->assertUnauthorized();
+    }
+
+    public function test_a_large_group_is_not_cut_at_the_old_booking_row_limit(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenant = $this->defaultTenantId();
+        DB::table('routes')->insert(['tenant_id' => $tenant, 'name' => 'A - B', 'created_at' => now()]);
+        $rows = [];
+        for ($seat = 1; $seat <= 2001; $seat++) {
+            $rows[] = ['tenant_id' => $tenant, 'rute' => 'A - B', 'tanggal' => '2026-11-04',
+                'jam' => '09:00:00', 'unit' => 1, 'seat' => (string) $seat,
+                'name' => 'Penumpang '.$seat, 'phone' => '0812000'.$seat,
+                'status' => 'active', 'pembayaran' => 'Lunas', 'created_at' => now()];
+        }
+        foreach (array_chunk($rows, 50) as $chunk) {
+            DB::table('bookings')->insert($chunk);
+        }
+        $this->get(route('bookings.index', ['from' => '2026-11-04', 'per_page' => 1]))
+            ->assertInertia(fn (Assert $page) => $page->loadDeferredProps('booking-list', fn (Assert $data) => $data
+                ->where('bookingGroups.0.total', 2001)->where('bookingGroups.0.bookings', [])));
+        $this->getJson('/api/bookings/groups/'.md5('A TO B|2026-11-04|09:00|1'))
+            ->assertOk()->assertJsonCount(2001, 'group.bookings');
     }
 
     private function createPool(int $tenantId, string $name, string $code): int

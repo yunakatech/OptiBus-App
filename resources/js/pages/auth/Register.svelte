@@ -132,7 +132,7 @@
                     >
                         <div class="flex items-center gap-2.5">
                             <span
-                            class="grid h-10 w-10 shrink-0 place-items-center border border-[#d2cabb] bg-white"
+                                class="grid h-10 w-10 shrink-0 place-items-center border border-[#d2cabb] bg-white"
                             >
                                 <svg class="h-4 w-4" viewBox="0 0 24 24"
                                     ><path
@@ -168,7 +168,9 @@
                     <div class="absolute inset-0 flex items-center">
                         <span class="w-full border-t border-[#c9c2b3]"></span>
                     </div>
-                    <div class="relative flex justify-center text-[10px] font-semibold uppercase tracking-[0.16em]">
+                    <div
+                        class="relative flex justify-center text-xs md:text-[10px] font-semibold uppercase tracking-[0.16em]"
+                    >
                         <span class="bg-[#f7f4ec] px-3 text-[#68736c]">
                             Isi data akun
                         </span>
@@ -176,7 +178,9 @@
                 </div>
 
                 <div class="grid gap-2">
-                    <Label class="text-sm font-medium text-[#33433d]">Pilih cara memulai</Label>
+                    <Label class="text-sm font-medium text-[#33433d]"
+                        >Pilih cara memulai</Label
+                    >
                     <div class="grid grid-cols-2 gap-2">
                         <button
                             type="button"
@@ -207,7 +211,9 @@
 
                 {#if isPaymentFlow}
                     <div class="grid gap-2">
-                        <Label class="text-sm font-medium text-[#33433d]">Pilih paket langganan</Label>
+                        <Label class="text-sm font-medium text-[#33433d]"
+                            >Pilih paket langganan</Label
+                        >
                         <div class="grid gap-2 sm:grid-cols-3">
                             {#each plans as plan}
                                 <button
@@ -256,9 +262,7 @@
                         class="min-h-14 w-full border border-[#9eb5a8] bg-[#e8eee7] px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
                         onclick={chooseTrial}
                     >
-                        <span class="block text-sm font-semibold"
-                            >Starter</span
-                        >
+                        <span class="block text-sm font-semibold">Starter</span>
                         <span class="text-xs text-muted-foreground"
                             >Uji coba 14 hari</span
                         >
@@ -272,9 +276,7 @@
                 />
             </div>
 
-            <section
-                class="grid gap-4 border-y border-[#c9c2b3] py-4"
-            >
+            <section class="grid gap-4 border-y border-[#c9c2b3] py-4">
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div class="grid gap-1.5">
                         <Label for="name"
@@ -323,8 +325,8 @@
                     </div>
                     <div class="grid gap-1.5">
                         <Label for="password_confirmation"
-                            >Konfirmasi Kata Sandi <span class="text-destructive"
-                                >*</span
+                            >Konfirmasi Kata Sandi <span
+                                class="text-destructive">*</span
                             ></Label
                         >
                         <PasswordInput
@@ -352,7 +354,9 @@
 
             <div class="text-center text-sm text-[#68736c]">
                 Sudah punya akun?
-                <TextLink href={login()} class="font-semibold text-[#174b43] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                <TextLink
+                    href={login()}
+                    class="font-semibold text-[#174b43] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
                     >Masuk</TextLink
                 >
             </div>

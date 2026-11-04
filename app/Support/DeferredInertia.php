@@ -10,17 +10,20 @@ final class DeferredInertia
             return true;
         }
 
-        $override = filter_var(
-            env('OPS_INERTIA_DEFERRED'),
-            FILTER_VALIDATE_BOOL,
-            FILTER_NULL_ON_FAILURE,
-        );
+        return self::resolve(config('ui.ops_deferred'), self::runningOnVercel());
+    }
 
-        if ($override !== null) {
-            return $override;
+    public static function resolve(mixed $value, bool $onVercel): bool
+    {
+        if ($value === null || (is_string($value) && trim($value) === '')) {
+            return ! $onVercel;
         }
 
-        return ! self::runningOnVercel();
+        return filter_var(
+            is_string($value) ? trim($value) : $value,
+            FILTER_VALIDATE_BOOL,
+            FILTER_NULL_ON_FAILURE,
+        ) ?? ! $onVercel;
     }
 
     public static function runningOnVercel(): bool

@@ -10,6 +10,8 @@
 </script>
 
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { page, router } from '@inertiajs/svelte';
     import {
         Armchair,
@@ -118,6 +120,9 @@
         bop: number;
         departure_status?: string;
         departure_can_arrive?: boolean;
+        detail_loaded?: boolean;
+        paid_amount?: number;
+        unpaid_amount?: number;
         bookings: Array<{
             id: number;
             ticket_code: string;
@@ -307,6 +312,9 @@
         bookingGroups = [],
         bookingRouteOptions = [],
         bookingListReady = false,
+        bookingPagination = { page: 1, per_page: 24, total: 0, last_page: 1 },
+        bookingListSummary: serverBookingListSummary,
+        bookingQuery,
         migrationChecklist,
         consoleOnly = false,
         listOnly = false,
@@ -319,6 +327,19 @@
         bookingGroups?: BookingGroup[];
         bookingRouteOptions?: string[];
         bookingListReady?: boolean;
+        bookingPagination?: {
+            page: number;
+            per_page: number;
+            total: number;
+            last_page: number;
+        };
+        bookingListSummary?: BookingListSummary;
+        bookingQuery?: {
+            from: string;
+            to: string;
+            route: string;
+            payment: 'all' | 'lunas' | 'belum_lunas';
+        };
         migrationChecklist: string[];
         consoleOnly?: boolean;
         listOnly?: boolean;
@@ -395,7 +416,7 @@
     })();
     const initialUiPreferences = readUiPreferences();
     const isIsoDateKey = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
-    const initialBookingListDate = today;
+    const initialBookingListDate = untrack(() => bookingQuery?.from) || today;
     const initialBookingListDesktopView =
         initialUiPreferences.defaultViewMode === 'cards' ? 'cards' : 'sheet';
     const paymentOptions = [
@@ -438,15 +459,20 @@
         }
     });
 
-    let bookingListRoute = $state('all');
+    let bookingListRoute = $state(untrack(() => bookingQuery?.route) || 'all');
     let bookingListDateFrom = $state(initialBookingListDate);
-    let bookingListDateTo = $state(initialBookingListDate);
-    let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>('all');
+    let bookingListDateTo = $state(
+        untrack(() => bookingQuery?.to) || initialBookingListDate,
+    );
+    let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>(
+        untrack(() => bookingQuery?.payment) || 'all',
+    );
+    let bookingListRequestError = $state('');
+    let bookingListRequestId = 0;
     let bookingListDesktopView = $state<'sheet' | 'cards'>(
         initialBookingListDesktopView,
     );
     let bookingListDateManuallyChanged = $state(false);
-    let bookingListVisibleCount = $state(24);
     let lastBookingListFilterSignature = $state('');
     let bookingListFilterDraft = $state({
         route: 'all',
@@ -727,9 +753,7 @@
                     return;
                 }
 
-                const currentDate = untrack(
-                    () => bookingListDateFrom || today,
-                );
+                const currentDate = untrack(() => bookingListDateFrom || today);
                 bookingListDatePicker = flatpickr(input, {
                     dateFormat: 'Y-m-d',
                     defaultDate: currentDate,
@@ -754,12 +778,13 @@
         };
     });
     const API_TIMEOUT_MS = 15000;
-    const BOOKING_LIST_PAGE_SIZE = 24;
     const BOOKING_SUCCESS_MESSAGE_TITLE = 'BOOKING BERHASIL';
     const BOOKING_LIST_DATA_PROPS = [
         'bookingGroups',
         'bookingRouteOptions',
         'bookingListReady',
+        'bookingPagination',
+        'bookingListSummary',
     ];
     const BOOKING_LIST_STATE_PROPS = [
         'listOnly',
@@ -771,6 +796,15 @@
 
     const bookingDateLabel = $derived(formatDateHuman(bookingDate));
     const bookingListLoading = $derived(listOnly && !bookingListHydrated);
+    $effect(() => {
+        if (!bookingListLoading) return;
+        const timer = setTimeout(() => {
+            bookingListRequestError =
+                'Data belum berhasil dimuat. Periksa koneksi lalu coba lagi.';
+        }, 15000);
+        return () => clearTimeout(timer);
+    });
+
     const quickDatePresets = $derived.by(() => {
         const base = new Date();
         const presets = [
@@ -2964,21 +2998,25 @@
         };
     };
     const bookingGroupUnpaidAmount = (group: BookingGroup) =>
-        visibleGroupBookingRows(group.bookings)
-            .filter(
-                (row) =>
-                    !isCanceledBooking(row.status) &&
-                    isBelumLunasPayment(row.pembayaran),
-            )
-            .reduce((total, row) => total + bookingRowFinalPrice(row), 0);
+        group.detail_loaded === false
+            ? Number(group.unpaid_amount || 0)
+            : visibleGroupBookingRows(group.bookings)
+                  .filter(
+                      (row) =>
+                          !isCanceledBooking(row.status) &&
+                          isBelumLunasPayment(row.pembayaran),
+                  )
+                  .reduce((total, row) => total + bookingRowFinalPrice(row), 0);
     const bookingGroupPaidAmount = (group: BookingGroup) =>
-        visibleGroupBookingRows(group.bookings)
-            .filter(
-                (row) =>
-                    !isCanceledBooking(row.status) &&
-                    isLunasPayment(row.pembayaran),
-            )
-            .reduce((total, row) => total + bookingRowFinalPrice(row), 0);
+        group.detail_loaded === false
+            ? Number(group.paid_amount || 0)
+            : visibleGroupBookingRows(group.bookings)
+                  .filter(
+                      (row) =>
+                          !isCanceledBooking(row.status) &&
+                          isLunasPayment(row.pembayaran),
+                  )
+                  .reduce((total, row) => total + bookingRowFinalPrice(row), 0);
     const bookingAssignmentText = (
         value: string | null | undefined,
         fallback: string,
@@ -3105,6 +3143,8 @@
     const bookingListRoutes = () => bookingListRoutesMemo;
     const filteredBookingGroupsMemo = $derived.by(() => {
         const filtered = localBookingGroups.filter((group) => {
+            // Date, normalized route and payment filters are applied before server paging.
+            if (listOnly && !groupDetailPage) return true;
             const groupDate = String(group.tanggal || '').slice(0, 10);
             if (!groupDate) {
                 return false;
@@ -3148,16 +3188,8 @@
         });
     });
     const filteredBookingGroups = () => filteredBookingGroupsMemo;
-    const visibleBookingGroupsMemo = $derived(
-        filteredBookingGroupsMemo.slice(0, bookingListVisibleCount),
-    );
+    const visibleBookingGroupsMemo = $derived(filteredBookingGroupsMemo);
     const visibleBookingGroups = () => visibleBookingGroupsMemo;
-    const remainingBookingGroupsCount = $derived(
-        Math.max(
-            filteredBookingGroupsMemo.length - visibleBookingGroupsMemo.length,
-            0,
-        ),
-    );
     const bookingListSummary = $derived.by<BookingListSummary>(() => {
         const summary: BookingListSummary = {
             schedules: filteredBookingGroupsMemo.length,
@@ -3175,7 +3207,10 @@
             }
         }
 
-        return summary;
+        return serverBookingListSummary?.schedules !== undefined &&
+            !groupDetailPage
+            ? serverBookingListSummary
+            : summary;
     });
     const bookingDateSectionsMemo = $derived.by<BookingDateSection[]>(() => {
         const sections = new Map<string, BookingDateSection>();
@@ -3213,7 +3248,6 @@
             bookingListDateFrom,
             bookingListDateTo,
             bookingListPayment,
-            localBookingGroups.length,
         ].join('|'),
     );
     const bookingListFilterActiveCount = $derived(
@@ -3239,12 +3273,16 @@
     });
 
     $effect(() => {
-        if (lastBookingListFilterSignature === bookingListFilterSignature) {
+        const signature = bookingListFilterSignature;
+        if (
+            !listOnly ||
+            groupDetailPage ||
+            lastBookingListFilterSignature === signature
+        )
             return;
-        }
-
-        lastBookingListFilterSignature = bookingListFilterSignature;
-        bookingListVisibleCount = BOOKING_LIST_PAGE_SIZE;
+        const previous = lastBookingListFilterSignature;
+        lastBookingListFilterSignature = signature;
+        if (previous) untrack(() => requestBookingPage(1));
     });
     const persistUiPreferences = (
         preferences: Parameters<typeof saveUiPreferences>[0],
@@ -3281,25 +3319,48 @@
         bookingListDateTo = safeDate;
         bookingListDateManuallyChanged = manual;
     };
-    const reloadBookingListData = () => {
-        if (!listOnly) {
-            return;
-        }
-
-        if (bookingListReloadTimer) {
-            clearTimeout(bookingListReloadTimer);
-            bookingListReloadTimer = null;
-        }
-
-        consumeDataStale(['bookings']);
+    const bookingListParams = (nextPage = 1) => ({
+        from: bookingListDateFrom,
+        to: bookingListDateTo,
+        route: bookingListRoute,
+        payment: bookingListPayment,
+        page: nextPage,
+        per_page: bookingPagination.per_page || 24,
+    });
+    const requestBookingPage = (nextPage = 1) => {
+        if (!listOnly) return;
+        const requestId = ++bookingListRequestId;
+        const failed = () => {
+            if (requestId === bookingListRequestId)
+                bookingListRequestError =
+                    'Gagal memuat keberangkatan. Coba lagi.';
+            return false;
+        };
+        bookingListRequestError = '';
         bookingListHydrated = false;
-        router.reload({
-            only: [...BOOKING_LIST_DATA_PROPS],
+        router.get('/bookings', bookingListParams(nextPage), {
+            only: [...BOOKING_LIST_DATA_PROPS, ...BOOKING_LIST_STATE_PROPS],
+            preserveState: true,
             preserveScroll: true,
-        } as Parameters<typeof router.reload>[0] & {
-            only: string[];
-            preserveScroll: boolean;
+            onError: failed,
+            onNetworkError: failed,
+            onHttpException: failed,
+            onFinish: () => {
+                if (requestId === bookingListRequestId)
+                    bookingListHydrated = true;
+            },
         });
+    };
+    const reloadBookingListData = () => {
+        if (!listOnly) return;
+        if (bookingListReloadTimer) clearTimeout(bookingListReloadTimer);
+        bookingListReloadTimer = null;
+        consumeDataStale(['bookings']);
+        if (groupDetailPage) {
+            router.reload({ only: [...BOOKING_LIST_DATA_PROPS] });
+        } else {
+            requestBookingPage(bookingPagination.page || 1);
+        }
     };
     const scheduleBookingListReload = () => {
         markDataStale(['bookings', 'payments', 'flows', 'dashboard']);
@@ -4076,6 +4137,12 @@
             return;
         }
 
+        try {
+            group = await ensureGroupDetails(group);
+        } catch {
+            formError = 'Detail pembayaran gagal dimuat. Coba lagi.';
+            return;
+        }
         const payableRows = payableBookingRows(group);
 
         if (payableRows.length === 0) {
@@ -5549,30 +5616,36 @@
     };
 
     const navigateToGroupDetail = (group: BookingGroup) => {
-        void showGroupDetail(group);
-        router.visit(`/bookings/detail/${encodeURIComponent(group.key)}`, {
-            only: [...BOOKING_LIST_STATE_PROPS],
-            preserveScroll: true,
-            preserveState: true,
-        } as Parameters<typeof router.visit>[1] & {
-            only: string[];
-            preserveScroll: boolean;
-            preserveState: boolean;
-        });
+        router.visit(
+            `/bookings/detail/${encodeURIComponent(group.key)}?${new URLSearchParams(Object.entries(bookingListParams(bookingPagination.page)).map(([key, value]) => [key, String(value)]))}`,
+            {
+                only: [...BOOKING_LIST_STATE_PROPS, ...BOOKING_LIST_DATA_PROPS],
+                preserveScroll: true,
+                preserveState: true,
+            } as Parameters<typeof router.visit>[1] & {
+                only: string[];
+                preserveScroll: boolean;
+                preserveState: boolean;
+            },
+        );
     };
 
     const navigateBackToBookingList = () => {
         openGroupDetail = null;
         groupMappingEditMode = false;
-        router.visit('/bookings', {
-            only: [...BOOKING_LIST_STATE_PROPS],
-            preserveScroll: true,
-            preserveState: true,
-        } as Parameters<typeof router.visit>[1] & {
-            only: string[];
-            preserveScroll: boolean;
-            preserveState: boolean;
-        });
+        router.get(
+            '/bookings',
+            bookingListParams(bookingPagination.page || 1),
+            {
+                only: [...BOOKING_LIST_STATE_PROPS, ...BOOKING_LIST_DATA_PROPS],
+                preserveScroll: true,
+                preserveState: true,
+            } as Parameters<typeof router.visit>[1] & {
+                only: string[];
+                preserveScroll: boolean;
+                preserveState: boolean;
+            },
+        );
     };
 
     const formatDepartDateTime = (tanggal: string, jam: string) => {
@@ -5636,8 +5709,21 @@
         }
     };
 
+    const ensureGroupDetails = async (
+        group: BookingGroup,
+    ): Promise<BookingGroup> => {
+        if (group.detail_loaded !== false) return group;
+        const payload = await apiGet(
+            `/api/bookings/groups/${encodeURIComponent(group.key)}`,
+            {},
+        );
+        if (!payload?.group)
+            throw new Error('Detail keberangkatan gagal dimuat.');
+        return payload.group as BookingGroup;
+    };
     const copyBookingGroup = async (group: BookingGroup) => {
         try {
+            group = await ensureGroupDetails(group);
             const driverName = await resolveDriverNameForGroup(group);
             const copyableBookings = group.bookings.filter(
                 (row) => !isCanceledBooking(row.status),
@@ -6388,6 +6474,7 @@
         let disposed = false;
 
         const initPickers = async () => {
+            if (!bookingDateInput) return;
             const flatpickr = await loadFlatpickr();
             if (disposed) {
                 return;
@@ -6407,7 +6494,6 @@
                     },
                 });
             }
-
         };
 
         void initPickers();
@@ -6451,9 +6537,21 @@
 <AppHead title={consoleOnly ? 'Booking Console' : 'Data Keberangkatan'} />
 
 <div
+    class:mobile-page={true}
     data-content-density="compact"
-    class={`flex h-full w-full flex-1 flex-col gap-4 overflow-x-hidden rounded-xl p-3 pb-32 md:p-4 ${listOnly && !groupDetailPage ? 'mx-auto max-w-[1500px]' : ''}`}
+    class={`flex h-full w-full flex-1 flex-col gap-4 overflow-x-hidden rounded-xl p-3 pb-4 md:p-4 ${listOnly && !groupDetailPage ? 'mx-auto max-w-[1500px]' : ''}`}
 >
+    {#if bookingListRequestError}
+        <div
+            role="alert"
+            class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 p-3 text-sm"
+        >
+            <p>{bookingListRequestError}</p>
+            <Button variant="outline" onclick={() => reloadBookingListData()}
+                >Coba lagi</Button
+            >
+        </div>
+    {/if}
     {#if tenantWriteDisabled}
         <div
             class="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 shadow-sm"
@@ -6485,12 +6583,12 @@
                         <div class="flex flex-wrap gap-2">
                             <Badge
                                 variant="secondary"
-                                class="rounded-full px-3 py-1 text-[11px]"
+                                class="rounded-full px-3 py-1 text-xs md:text-[11px]"
                                 ><Armchair class="mr-1 h-3.5 w-3.5" />Seat Map</Badge
                             >
                             <Badge
                                 variant="secondary"
-                                class="rounded-full px-3 py-1 text-[11px]"
+                                class="rounded-full px-3 py-1 text-xs md:text-[11px]"
                                 ><WalletCards class="mr-1 h-3.5 w-3.5" />Fast
                                 Checkout</Badge
                             >
@@ -6499,49 +6597,54 @@
                 </CardHeader>
             {/if}
             <CardContent class="space-y-5 p-4 md:p-5">
-                <div class="space-y-3 md:hidden">
-                    <div
-                        class="rounded-lg border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
-                    >
-                        <div class="grid grid-cols-3 gap-1.5">
-                            {#each mobileStepItems as item (item.step)}
-                                <button
-                                    type="button"
-                                    class={`rounded-xl border px-2 py-2 text-center transition ${mobileBookingStep === item.step ? 'border-cyan-500 bg-cyan-600 text-white shadow-sm' : mobileBookingStep > item.step ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-border bg-background text-muted-foreground'}`}
-                                    onclick={() => {
-                                        if (item.step === 1) {
-                                            mobileBookingStep = 1;
-                                        } else if (item.step === 2) {
-                                            goMobileScheduleNext();
-                                        } else {
-                                            goMobileSeatNext();
-                                        }
-                                    }}
+                <ViewportOnly minWidth={0} maxWidth={767}
+                    ><div class="space-y-3 md:hidden">
+                        <div
+                            class="rounded-lg border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
+                        >
+                            <div class="grid grid-cols-3 gap-1.5">
+                                {#each mobileStepItems as item (item.step)}
+                                    <button
+                                        type="button"
+                                        class={`rounded-xl border px-2 py-2 text-center transition ${mobileBookingStep === item.step ? 'border-cyan-500 bg-cyan-600 text-white shadow-sm' : mobileBookingStep > item.step ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-border bg-background text-muted-foreground'}`}
+                                        onclick={() => {
+                                            if (item.step === 1) {
+                                                mobileBookingStep = 1;
+                                            } else if (item.step === 2) {
+                                                goMobileScheduleNext();
+                                            } else {
+                                                goMobileSeatNext();
+                                            }
+                                        }}
+                                    >
+                                        <span
+                                            class="block text-xs md:text-[10px] font-black uppercase tracking-wide"
+                                            >Tab {item.step}</span
+                                        >
+                                        <span
+                                            class="block text-xs font-semibold"
+                                            >{item.label}</span
+                                        >
+                                    </button>
+                                {/each}
+                            </div>
+                            <div
+                                class="mt-3 rounded-xl bg-background/75 px-3 py-2"
+                            >
+                                <p
+                                    class="text-xs md:text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
                                 >
-                                    <span
-                                        class="block text-[10px] font-black uppercase tracking-wide"
-                                        >Tab {item.step}</span
-                                    >
-                                    <span class="block text-xs font-semibold"
-                                        >{item.label}</span
-                                    >
-                                </button>
-                            {/each}
+                                    Ringkasan Jadwal
+                                </p>
+                                <p
+                                    class="truncate text-xs font-semibold text-foreground"
+                                >
+                                    {mobileTripSummary()}
+                                </p>
+                            </div>
                         </div>
-                        <div class="mt-3 rounded-xl bg-background/75 px-3 py-2">
-                            <p
-                                class="text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
-                            >
-                                Ringkasan Jadwal
-                            </p>
-                            <p
-                                class="truncate text-xs font-semibold text-foreground"
-                            >
-                                {mobileTripSummary()}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                    </div></ViewportOnly
+                >
 
                 <div
                     class={`gap-3 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.35fr)] ${mobileBookingStep === 1 ? 'grid' : 'hidden md:grid'}`}
@@ -6562,7 +6665,7 @@
                                     type="button"
                                     size="sm"
                                     variant="ghost"
-                                    class="h-7 rounded-md px-2 text-[11px]"
+                                    class="h-7 rounded-md px-2 text-xs md:text-[11px]"
                                     onclick={() => void selectQuickDate(today)}
                                 >
                                     Hari ini
@@ -6570,15 +6673,18 @@
                             </div>
 
                             <div class="relative">
-                                <input
-                                    id="booking-date"
-                                    bind:this={bookingDateInput}
-                                    class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-center text-sm font-semibold shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-                                    type="text"
-                                    value={bookingDate}
-                                    readonly
-                                    autocomplete="off"
-                                />
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Tanggal keberangkatan</span><input
+                                        id="booking-date"
+                                        bind:this={bookingDateInput}
+                                        class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-center text-sm font-semibold shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        type="text"
+                                        value={bookingDate}
+                                        readonly
+                                        autocomplete="off"
+                                    /></label
+                                >
                             </div>
 
                             <div
@@ -6591,7 +6697,7 @@
                                         variant={bookingDate === preset.value
                                             ? 'default'
                                             : 'outline'}
-                                        class="h-8 shrink-0 rounded-full px-3 text-[11px]"
+                                        class="h-8 shrink-0 rounded-full px-3 text-xs md:text-[11px]"
                                         onclick={() =>
                                             void selectQuickDate(preset.value)}
                                     >
@@ -6607,18 +6713,23 @@
                             <div
                                 class="rounded-xl border border-input bg-background/70 p-2.5 shadow-sm lg:p-1.5"
                             >
-                                <select
-                                    id="booking-route"
-                                    class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-base font-semibold lg:h-10 lg:text-sm"
-                                    bind:value={selectedRoute}
-                                    onchange={() => void onRouteChange()}
-                                    disabled={loadingRoutes}
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Rute</span><select
+                                        id="booking-route"
+                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-base font-semibold lg:h-10 lg:text-sm"
+                                        bind:value={selectedRoute}
+                                        onchange={() => void onRouteChange()}
+                                        disabled={loadingRoutes}
+                                    >
+                                        <option value="">Pilih rute</option>
+                                        {#each availableRoutes as route, index (`route-${index}-${route}`)}
+                                            <option value={route}
+                                                >{route}</option
+                                            >
+                                        {/each}
+                                    </select></label
                                 >
-                                    <option value="">Pilih rute</option>
-                                    {#each availableRoutes as route, index (`route-${index}-${route}`)}
-                                        <option value={route}>{route}</option>
-                                    {/each}
-                                </select>
                             </div>
                         </div>
 
@@ -6627,34 +6738,38 @@
                                 <div
                                     class="rounded-xl border border-input bg-background/70 p-2.5 shadow-sm lg:p-1.5"
                                 >
-                                    <select
-                                        id="booking-jam"
-                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-base font-semibold lg:h-10 lg:text-sm"
-                                        bind:value={selectedJam}
-                                        onchange={() => void onScheduleChange()}
-                                        disabled={loadingSchedules ||
-                                            schedules.length === 0}
+                                    <label
+                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                        ><span>Jam keberangkatan</span><select
+                                            id="booking-jam"
+                                            class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-base font-semibold lg:h-10 lg:text-sm"
+                                            bind:value={selectedJam}
+                                            onchange={() =>
+                                                void onScheduleChange()}
+                                            disabled={loadingSchedules ||
+                                                schedules.length === 0}
+                                        >
+                                            <option value="">Pilih jam</option>
+                                            {#each schedules as schedule, index (`schedule-${index}-${schedule.jam}`)}
+                                                <option value={schedule.jam}>
+                                                    {schedule.jam}{schedule.unit_label
+                                                        ? ` | ${schedule.unit_label}`
+                                                        : ''}{schedule.nama_kategori
+                                                        ? ` | ${schedule.nama_kategori}`
+                                                        : ''}{scheduleSegmentCount(
+                                                        schedule,
+                                                    ) > 0
+                                                        ? ` | ${scheduleSegmentCount(schedule)} segment`
+                                                        : ''}{!consoleOnly
+                                                        ? ` | BOP ${formatCurrency(Number(schedule.bop || 0))}`
+                                                        : ''}
+                                                </option>
+                                            {/each}
+                                        </select></label
                                     >
-                                        <option value="">Pilih jam</option>
-                                        {#each schedules as schedule, index (`schedule-${index}-${schedule.jam}`)}
-                                            <option value={schedule.jam}>
-                                                {schedule.jam}{schedule.unit_label
-                                                    ? ` | ${schedule.unit_label}`
-                                                    : ''}{schedule.nama_kategori
-                                                    ? ` | ${schedule.nama_kategori}`
-                                                    : ''}{scheduleSegmentCount(
-                                                    schedule,
-                                                ) > 0
-                                                    ? ` | ${scheduleSegmentCount(schedule)} segment`
-                                                    : ''}{!consoleOnly
-                                                    ? ` | BOP ${formatCurrency(Number(schedule.bop || 0))}`
-                                                    : ''}
-                                            </option>
-                                        {/each}
-                                    </select>
                                 </div>
                                 <p
-                                    class="mt-1 text-[11px] text-muted-foreground"
+                                    class="mt-1 text-xs md:text-[11px] text-muted-foreground"
                                 >
                                     {scheduleSegmentHint(activeSchedule())}
                                 </p>
@@ -6664,18 +6779,22 @@
                                 <div
                                     class="rounded-xl border border-input bg-background/70 p-2.5 shadow-sm lg:p-1.5"
                                 >
-                                    <select
-                                        id="booking-unit"
-                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-sm lg:h-10 lg:text-xs"
-                                        bind:value={selectedUnit}
-                                        onchange={() => void loadSeatDetails()}
+                                    <label
+                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                        ><span>Nomor unit</span><select
+                                            id="booking-unit"
+                                            class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-sm lg:h-10 lg:text-xs"
+                                            bind:value={selectedUnit}
+                                            onchange={() =>
+                                                void loadSeatDetails()}
+                                        >
+                                            {#each unitOptions() as option, index (`unit-opt-${index}-${option.value}`)}
+                                                <option value={option.value}
+                                                    >{option.label}</option
+                                                >
+                                            {/each}
+                                        </select></label
                                     >
-                                        {#each unitOptions() as option, index (`unit-opt-${index}-${option.value}`)}
-                                            <option value={option.value}
-                                                >{option.label}</option
-                                            >
-                                        {/each}
-                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -6695,18 +6814,20 @@
                 </div>
 
                 {#if mobileBookingStep === 1}
-                    <div
-                        class="sticky bottom-3 z-20 rounded-lg border border-border/80 bg-background/95 p-3 shadow-lg backdrop-blur md:hidden"
-                    >
-                        <Button
-                            type="button"
-                            class="h-11 w-full rounded-xl"
-                            onclick={goMobileScheduleNext}
-                            disabled={!mobileScheduleReady()}
+                    <ViewportOnly minWidth={0} maxWidth={767}
+                        ><div
+                            class="sticky bottom-3 z-20 rounded-lg border border-border/80 bg-background/95 p-3 shadow-lg backdrop-blur md:hidden"
                         >
-                            Next: Pilih Kursi
-                        </Button>
-                    </div>
+                            <Button
+                                type="button"
+                                class="h-11 w-full rounded-xl"
+                                onclick={goMobileScheduleNext}
+                                disabled={!mobileScheduleReady()}
+                            >
+                                Berikutnya: Pilih Kursi
+                            </Button>
+                        </div></ViewportOnly
+                    >
                 {/if}
 
                 {#if routeError}
@@ -6741,7 +6862,9 @@
                                 >
                                     Peta Kursi
                                 </h3>
-                                <p class="text-[11px] text-muted-foreground">
+                                <p
+                                    class="text-xs md:text-[11px] text-muted-foreground"
+                                >
                                     Tap kursi untuk pilih, tap kursi terisi
                                     untuk detail.
                                 </p>
@@ -6820,7 +6943,7 @@
                                                     ></div>
                                                 {:else if cell.kind === 'driver'}
                                                     <div
-                                                        class="flex h-14 flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/30 text-[10px] font-semibold text-muted-foreground"
+                                                        class="flex h-14 flex-col items-center justify-center rounded-xl border border-dashed border-muted-foreground/30 bg-muted/30 text-xs md:text-[10px] font-semibold text-muted-foreground"
                                                     >
                                                         <BusFront
                                                             class="mb-1 size-4"
@@ -6864,7 +6987,7 @@
                                                                 class="size-4"
                                                             />
                                                             <span
-                                                                class="text-[11px] font-semibold"
+                                                                class="text-xs md:text-[11px] font-semibold"
                                                                 >{cell.seat}</span
                                                             >
                                                         </span>
@@ -6912,7 +7035,7 @@
                                     class="rounded-xl bg-muted/30 px-2 py-2 text-center"
                                 >
                                     <p
-                                        class="text-[11px] text-muted-foreground"
+                                        class="text-xs md:text-[11px] text-muted-foreground"
                                     >
                                         Total
                                     </p>
@@ -6924,7 +7047,7 @@
                                     class="rounded-xl bg-muted/30 px-2 py-2 text-center"
                                 >
                                     <p
-                                        class="text-[11px] text-muted-foreground"
+                                        class="text-xs md:text-[11px] text-muted-foreground"
                                     >
                                         Booked
                                     </p>
@@ -6936,7 +7059,7 @@
                                     class="rounded-xl bg-muted/30 px-2 py-2 text-center"
                                 >
                                     <p
-                                        class="text-[11px] text-muted-foreground"
+                                        class="text-xs md:text-[11px] text-muted-foreground"
                                     >
                                         Empty
                                     </p>
@@ -6948,7 +7071,7 @@
                                     class="rounded-xl bg-muted/30 px-2 py-2 text-center"
                                 >
                                     <p
-                                        class="text-[11px] text-muted-foreground"
+                                        class="text-xs md:text-[11px] text-muted-foreground"
                                     >
                                         Selected
                                     </p>
@@ -6961,105 +7084,111 @@
                             </div>
                         </div>
 
-                        <div
-                            class="space-y-3 rounded-lg border bg-background/90 p-3 shadow-sm md:hidden"
-                        >
-                            <div
-                                class="flex items-center justify-between gap-2"
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div
+                                class="space-y-3 rounded-lg border bg-background/90 p-3 shadow-sm md:hidden"
                             >
-                                <div>
-                                    <h3 class="text-sm font-semibold">
-                                        Rekap Sesi
-                                    </h3>
-                                    <p class="text-xs text-muted-foreground">
-                                        {grandCount()} kursi • Total Rp {grandTotal().toLocaleString(
-                                            'id-ID',
-                                        )}
-                                    </p>
-                                </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onclick={() => void copyRekap()}
-                                    disabled={rekapItems.length === 0}
+                                <div
+                                    class="flex items-center justify-between gap-2"
                                 >
-                                    Salin
-                                </Button>
-                            </div>
-
-                            {#if rekapItems.length === 0}
-                                <p
-                                    class="rounded-xl border border-dashed bg-muted/20 px-3 py-3 text-sm text-muted-foreground"
-                                >
-                                    Belum ada item rekap. Tap kursi terisi lalu
-                                    pilih Tambah ke Rekap.
-                                </p>
-                            {:else}
-                                <div class="max-h-56 space-y-2 overflow-auto">
-                                    {#each rekapItems as item, index (`rekap-mobile-${index}-${item.booking_id}`)}
-                                        <div
-                                            class="rounded-xl border bg-card px-3 py-2"
+                                    <div>
+                                        <h3 class="text-sm font-semibold">
+                                            Rekap Sesi
+                                        </h3>
+                                        <p
+                                            class="text-xs text-muted-foreground"
                                         >
-                                            <div
-                                                class="flex items-start justify-between gap-2"
-                                            >
-                                                <div class="min-w-0">
-                                                    <p
-                                                        class="truncate text-sm font-semibold"
-                                                    >
-                                                        Kursi {item.seat} • {item.name}
-                                                    </p>
-                                                    <p
-                                                        class="truncate text-xs text-muted-foreground"
-                                                    >
-                                                        {item.segment_name}
-                                                    </p>
-                                                </div>
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    class="h-8 shrink-0 px-2"
-                                                    onclick={() =>
-                                                        removeRekapItem(
-                                                            item.booking_id,
-                                                        )}
-                                                >
-                                                    Hapus
-                                                </Button>
-                                            </div>
-                                            <p
-                                                class="mt-1 text-xs font-semibold text-foreground"
-                                            >
-                                                Rp {item.final_price.toLocaleString(
-                                                    'id-ID',
-                                                )}
-                                            </p>
-                                        </div>
-                                    {/each}
+                                            {grandCount()} kursi • Total Rp {grandTotal().toLocaleString(
+                                                'id-ID',
+                                            )}
+                                        </p>
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onclick={() => void copyRekap()}
+                                        disabled={rekapItems.length === 0}
+                                    >
+                                        Salin
+                                    </Button>
                                 </div>
-                            {/if}
 
-                            <div class="grid grid-cols-2 gap-2">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    class="h-11 rounded-xl"
-                                    onclick={() => (mobileBookingStep = 1)}
-                                >
-                                    Back
-                                </Button>
-                                <Button
-                                    type="button"
-                                    class="h-11 rounded-xl"
-                                    onclick={goMobileSeatNext}
-                                    disabled={selectedCount() === 0}
-                                >
-                                    Next: Isi Data
-                                </Button>
-                            </div>
-                        </div>
+                                {#if rekapItems.length === 0}
+                                    <p
+                                        class="rounded-xl border border-dashed bg-muted/20 px-3 py-3 text-sm text-muted-foreground"
+                                    >
+                                        Belum ada item rekap. Tap kursi terisi
+                                        lalu pilih Tambah ke Rekap.
+                                    </p>
+                                {:else}
+                                    <div
+                                        class="max-h-56 space-y-2 overflow-auto"
+                                    >
+                                        {#each rekapItems as item, index (`rekap-mobile-${index}-${item.booking_id}`)}
+                                            <div
+                                                class="rounded-xl border bg-card px-3 py-2"
+                                            >
+                                                <div
+                                                    class="flex items-start justify-between gap-2"
+                                                >
+                                                    <div class="min-w-0">
+                                                        <p
+                                                            class="truncate text-sm font-semibold"
+                                                        >
+                                                            Kursi {item.seat} • {item.name}
+                                                        </p>
+                                                        <p
+                                                            class="truncate text-xs text-muted-foreground"
+                                                        >
+                                                            {item.segment_name}
+                                                        </p>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        class="h-8 shrink-0 px-2"
+                                                        onclick={() =>
+                                                            removeRekapItem(
+                                                                item.booking_id,
+                                                            )}
+                                                    >
+                                                        Hapus
+                                                    </Button>
+                                                </div>
+                                                <p
+                                                    class="mt-1 text-xs font-semibold text-foreground"
+                                                >
+                                                    Rp {item.final_price.toLocaleString(
+                                                        'id-ID',
+                                                    )}
+                                                </p>
+                                            </div>
+                                        {/each}
+                                    </div>
+                                {/if}
+
+                                <div class="grid grid-cols-2 gap-2">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-11 rounded-xl"
+                                        onclick={() => (mobileBookingStep = 1)}
+                                    >
+                                        Back
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        class="h-11 rounded-xl"
+                                        onclick={goMobileSeatNext}
+                                        disabled={selectedCount() === 0}
+                                    >
+                                        Berikutnya: Isi Data
+                                    </Button>
+                                </div>
+                            </div></ViewportOnly
+                        >
                     </div>
 
                     <div
@@ -7125,7 +7254,7 @@
                                                     Kursi {seat}
                                                 </span>
                                                 <span
-                                                    class={`mt-1 block text-[11px] ${complete ? 'text-emerald-600' : 'text-muted-foreground'}`}
+                                                    class={`mt-1 block text-xs md:text-[11px] ${complete ? 'text-emerald-600' : 'text-muted-foreground'}`}
                                                 >
                                                     {complete
                                                         ? 'Siap disimpan'
@@ -7162,12 +7291,12 @@
                                     <label
                                         for="booking-customer-lookup"
                                         class="mb-1.5 block text-xs font-medium text-muted-foreground"
-                                        >Cari Database Customer</label
+                                        >Cari Database Pelanggan</label
                                     >
                                     <div class="relative">
                                         <Input
                                             id="booking-customer-lookup"
-                                            placeholder="Cari customer lama (nama / telepon)"
+                                            placeholder="Cari pelanggan lama (nama / telepon)"
                                             class="h-11 rounded-xl !pl-10"
                                             bind:value={customerLookupQuery}
                                             oninput={onCustomerLookupInput}
@@ -7184,7 +7313,7 @@
                                             <p
                                                 class="mt-1 text-xs text-muted-foreground"
                                             >
-                                                Mencari customer...
+                                                Mencari pelanggan...
                                             </p>
                                         {:else if customerLookupMessage}
                                             <p
@@ -7365,7 +7494,7 @@
                                     <label
                                         for="booking-form-pickup"
                                         class="mb-1.5 block text-xs font-medium text-muted-foreground"
-                                        >Titik Jemput (Pickup Point)</label
+                                        >Titik Jemput (Titik jemput)</label
                                     >
                                     <Input
                                         id="booking-form-pickup"
@@ -7445,141 +7574,147 @@
 
         {#if selectedRoute && selectedJam}
             {#if consoleOnly}
-                <div
-                    class="hidden space-y-3 rounded-xl border bg-background/95 p-3 md:block"
-                >
-                    <div
-                        class="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center"
+                <ViewportOnly minWidth={768}
+                    ><div
+                        class="hidden space-y-3 rounded-xl border bg-background/95 p-3 md:block"
                     >
-                        <div class="min-w-0">
-                            <p
-                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
-                            >
-                                Rekap Sesi
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {grandCount()} kursi - Total Rp {grandTotal().toLocaleString(
-                                    'id-ID',
-                                )}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div class="rounded-xl border bg-muted/20 p-3">
                         <div
-                            class="mb-2 flex items-center justify-between gap-2"
+                            class="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center"
                         >
-                            <div>
-                                <h3 class="text-sm font-semibold">
-                                    Rekap Booking
-                                </h3>
-                                <p class="text-xs text-muted-foreground">
-                                    Ringkasan sesi aktif
+                            <div class="min-w-0">
+                                <p
+                                    class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
+                                >
+                                    Rekap Sesi
+                                </p>
+                                <p class="text-sm font-semibold">
+                                    {grandCount()} kursi - Total Rp {grandTotal().toLocaleString(
+                                        'id-ID',
+                                    )}
                                 </p>
                             </div>
                         </div>
 
-                        {#if rekapItems.length === 0}
-                            <p class="text-sm text-muted-foreground">
-                                Belum ada item rekap dari kursi terisi.
-                            </p>
-                        {:else}
-                            <div class="max-h-72 space-y-2 overflow-auto">
-                                {#each rekapItems as item, index (`rekap-detail-${index}-${item.booking_id}`)}
-                                    <div
-                                        class="rounded-md border bg-background p-2.5"
-                                    >
-                                        <div
-                                            class="flex items-center justify-between gap-2"
-                                        >
-                                            <p class="text-sm font-semibold">
-                                                Kursi {item.seat} - {item.name}
-                                            </p>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onclick={() =>
-                                                    removeRekapItem(
-                                                        item.booking_id,
-                                                    )}
-                                            >
-                                                Hapus
-                                            </Button>
-                                        </div>
-                                        <p
-                                            class="text-xs text-muted-foreground"
-                                        >
-                                            {item.segment_name}
-                                        </p>
-                                        <p
-                                            class="text-xs text-muted-foreground"
-                                        >
-                                            Rp {item.final_price.toLocaleString(
-                                                'id-ID',
-                                            )}
-                                        </p>
-                                    </div>
-                                {/each}
+                        <div class="rounded-xl border bg-muted/20 p-3">
+                            <div
+                                class="mb-2 flex items-center justify-between gap-2"
+                            >
+                                <div>
+                                    <h3 class="text-sm font-semibold">
+                                        Rekap Booking
+                                    </h3>
+                                    <p class="text-xs text-muted-foreground">
+                                        Ringkasan sesi aktif
+                                    </p>
+                                </div>
                             </div>
-                            <p class="mt-3 text-sm font-semibold">
-                                Total Rekap: Rp {rekapTotal().toLocaleString(
-                                    'id-ID',
-                                )}
-                            </p>
-                        {/if}
 
-                        <div class="mt-3 flex flex-wrap gap-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onclick={() => void copyRekap()}
-                                disabled={rekapItems.length === 0}
-                                >Salin Rekap</Button
-                            >
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onclick={resetRekap}
-                                disabled={rekapItems.length === 0}
-                                >Reset Rekap</Button
-                            >
+                            {#if rekapItems.length === 0}
+                                <p class="text-sm text-muted-foreground">
+                                    Belum ada item rekap dari kursi terisi.
+                                </p>
+                            {:else}
+                                <div class="max-h-72 space-y-2 overflow-auto">
+                                    {#each rekapItems as item, index (`rekap-detail-${index}-${item.booking_id}`)}
+                                        <div
+                                            class="rounded-md border bg-background p-2.5"
+                                        >
+                                            <div
+                                                class="flex items-center justify-between gap-2"
+                                            >
+                                                <p
+                                                    class="text-sm font-semibold"
+                                                >
+                                                    Kursi {item.seat} - {item.name}
+                                                </p>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onclick={() =>
+                                                        removeRekapItem(
+                                                            item.booking_id,
+                                                        )}
+                                                >
+                                                    Hapus
+                                                </Button>
+                                            </div>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                {item.segment_name}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                Rp {item.final_price.toLocaleString(
+                                                    'id-ID',
+                                                )}
+                                            </p>
+                                        </div>
+                                    {/each}
+                                </div>
+                                <p class="mt-3 text-sm font-semibold">
+                                    Total Rekap: Rp {rekapTotal().toLocaleString(
+                                        'id-ID',
+                                    )}
+                                </p>
+                            {/if}
+
+                            <div class="mt-3 flex flex-wrap gap-2">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onclick={() => void copyRekap()}
+                                    disabled={rekapItems.length === 0}
+                                    >Salin Rekap</Button
+                                >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onclick={resetRekap}
+                                    disabled={rekapItems.length === 0}
+                                    >Reset Rekap</Button
+                                >
+                            </div>
                         </div>
-                    </div>
-                </div>
-            {:else}
-                <div
-                    class="fixed inset-x-0 bottom-0 z-50 hidden border-t bg-background/95 backdrop-blur md:block"
+                    </div></ViewportOnly
                 >
-                    <div
-                        class="mx-auto flex w-full max-w-7xl flex-col items-stretch justify-between gap-3 px-4 py-3 sm:flex-row sm:items-center"
+            {:else}
+                <ViewportOnly minWidth={768}
+                    ><div
+                        class="fixed inset-x-0 bottom-0 z-50 hidden border-t bg-background/95 backdrop-blur md:block"
                     >
-                        <div class="min-w-0">
-                            <p
-                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
-                            >
-                                Rekap Sesi
-                            </p>
-                            <p class="text-sm font-semibold">
-                                {grandCount()} kursi - Total Rp {grandTotal().toLocaleString(
-                                    'id-ID',
-                                )}
-                            </p>
-                        </div>
                         <div
-                            class="grid w-full gap-2 sm:flex sm:w-auto sm:items-center"
+                            class="mx-auto flex w-full max-w-7xl flex-col items-stretch justify-between gap-3 px-4 py-3 sm:flex-row sm:items-center"
                         >
-                            <Button
-                                type="button"
-                                variant="outline"
-                                class="w-full sm:w-auto"
-                                onclick={() => (rekapModalOpen = true)}
+                            <div class="min-w-0">
+                                <p
+                                    class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
+                                >
+                                    Rekap Sesi
+                                </p>
+                                <p class="text-sm font-semibold">
+                                    {grandCount()} kursi - Total Rp {grandTotal().toLocaleString(
+                                        'id-ID',
+                                    )}
+                                </p>
+                            </div>
+                            <div
+                                class="grid w-full gap-2 sm:flex sm:w-auto sm:items-center"
                             >
-                                Lihat Rekap
-                            </Button>
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="w-full sm:w-auto"
+                                    onclick={() => (rekapModalOpen = true)}
+                                >
+                                    Lihat Rekap
+                                </Button>
+                            </div>
                         </div>
-                    </div>
-                </div>
+                    </div></ViewportOnly
+                >
             {/if}
         {/if}
     {/if}
@@ -7600,17 +7735,17 @@
                         <div class="flex flex-wrap items-center gap-1.5">
                             <Badge
                                 variant="secondary"
-                                class="rounded-full px-2 py-0.5 text-[9px] sm:text-[10px]"
+                                class="rounded-full px-2 py-0.5 text-xs md:text-[9px] sm:text-[10px]"
                                 >Detail Penumpang</Badge
                             >
                             <Badge
                                 variant="secondary"
-                                class="rounded-full px-2 py-0.5 text-[9px] sm:text-[10px]"
+                                class="rounded-full px-2 py-0.5 text-xs md:text-[9px] sm:text-[10px]"
                                 >Kursi {detailSeat.seat}</Badge
                             >
                             <Badge
                                 variant={paymentVariant(detailSeat.pembayaran)}
-                                class="rounded-full px-2 py-0.5 text-[9px] sm:text-[10px]"
+                                class="rounded-full px-2 py-0.5 text-xs md:text-[9px] sm:text-[10px]"
                             >
                                 {detailSeat.pembayaran || '-'}
                             </Badge>
@@ -7620,7 +7755,9 @@
                         >
                             {detailSeat.name || '-'}
                         </h3>
-                        <p class="text-[11px] text-muted-foreground sm:text-xs">
+                        <p
+                            class="text-xs md:text-[11px] text-muted-foreground sm:text-xs"
+                        >
                             {selectedRoute} · {bookingDate} · {selectedJam} · Unit
                             {selectedUnit}
                         </p>
@@ -7646,7 +7783,7 @@
                                 class="rounded-xl border border-primary/15 bg-primary/5 p-3 sm:col-span-2"
                             >
                                 <p
-                                    class="text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]"
+                                    class="text-xs md:text-[10px] font-medium uppercase tracking-wide text-muted-foreground sm:text-[11px]"
                                 >
                                     Ringkasan Harga
                                 </p>
@@ -7665,7 +7802,7 @@
                                         ).toLocaleString('id-ID')}
                                     </p>
                                     <p
-                                        class="text-[11px] text-muted-foreground sm:text-xs"
+                                        class="text-xs md:text-[11px] text-muted-foreground sm:text-xs"
                                     >
                                         Diskon Rp {Number(
                                             detailSeat.discount || 0,
@@ -7679,7 +7816,7 @@
                                 <div class="grid grid-cols-2 gap-px">
                                     <div class="bg-background p-3">
                                         <p
-                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                            class="text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
                                         >
                                             Nama
                                         </p>
@@ -7691,7 +7828,7 @@
                                     </div>
                                     <div class="bg-background p-3">
                                         <p
-                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                            class="text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
                                         >
                                             Telepon
                                         </p>
@@ -7705,7 +7842,7 @@
                                 <div class="grid grid-cols-2 gap-px">
                                     <div class="bg-background p-3">
                                         <p
-                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                            class="text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
                                         >
                                             Segment
                                         </p>
@@ -7717,7 +7854,7 @@
                                     </div>
                                     <div class="bg-background p-3">
                                         <p
-                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                            class="text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
                                         >
                                             Jam Segment
                                         </p>
@@ -7737,7 +7874,7 @@
                                 <div class="grid grid-cols-2 gap-px">
                                     <div class="bg-background p-3">
                                         <p
-                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                            class="text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
                                         >
                                             Pembayaran
                                         </p>
@@ -7749,9 +7886,9 @@
                                     </div>
                                     <div class="bg-background p-3">
                                         <p
-                                            class="text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
+                                            class="text-xs md:text-[10px] text-muted-foreground uppercase tracking-wider mb-1"
                                         >
-                                            Pickup Point
+                                            Titik jemput
                                         </p>
                                         <p
                                             class="break-words text-sm font-semibold"
@@ -7764,87 +7901,110 @@
                         </div>
                     {:else}
                         <div class="grid gap-2.5 sm:grid-cols-2">
-                            <select
-                                class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
-                                bind:value={detailEditSeat}
-                                disabled={loadingDetailEditSeats ||
-                                    savingDetailEdit}
-                                aria-label="Pilih kursi"
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Pilih kursi</span><select
+                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
+                                    bind:value={detailEditSeat}
+                                    disabled={loadingDetailEditSeats ||
+                                        savingDetailEdit}
+                                    aria-label="Pilih kursi"
+                                >
+                                    {#if detailEditSeatOptions.length === 0}
+                                        <option value=""
+                                            >Tidak ada kursi tersedia</option
+                                        >
+                                    {:else}
+                                        {#each detailEditSeatOptions as seat (`detail-seat-option-${seat}`)}
+                                            <option value={seat}>
+                                                Kursi {seat}{seat ===
+                                                detailSeat?.seat
+                                                    ? ' (saat ini)'
+                                                    : ''}
+                                            </option>
+                                        {/each}
+                                    {/if}
+                                </select></label
                             >
-                                {#if detailEditSeatOptions.length === 0}
-                                    <option value=""
-                                        >Tidak ada kursi tersedia</option
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Nama</span><Input
+                                    class="h-10 rounded-xl sm:h-11"
+                                    placeholder="Nama"
+                                    bind:value={detailEditName}
+                                /></label
+                            >
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Telepon</span><Input
+                                    class="h-10 rounded-xl sm:h-11"
+                                    placeholder="Telepon"
+                                    bind:value={detailEditPhone}
+                                /></label
+                            >
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Titik jemput</span><Input
+                                    class="h-10 rounded-xl sm:h-11"
+                                    placeholder="Titik jemput"
+                                    bind:value={detailEditPickupPoint}
+                                /></label
+                            >
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Pembayaran</span><select
+                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
+                                    bind:value={detailEditPayment}
+                                >
+                                    {#each paymentOptions as option, index (`detail-payment-${index}-${option}`)}
+                                        <option value={option}>{option}</option>
+                                    {/each}
+                                </select></label
+                            >
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Diskon</span><Input
+                                    class="h-10 rounded-xl sm:h-11"
+                                    type="text"
+                                    inputmode="numeric"
+                                    placeholder="Diskon"
+                                    value={formatCurrencyInput(
+                                        detailEditDiscount,
+                                    )}
+                                    oninput={(event) => {
+                                        detailEditDiscount = parseCurrencyInput(
+                                            (
+                                                event.currentTarget as HTMLInputElement
+                                            ).value,
+                                        );
+                                    }}
+                                /></label
+                            >
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Segmen</span><select
+                                    class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:col-span-2 sm:h-11"
+                                    bind:value={detailEditSegmentId}
+                                >
+                                    <option value={0}
+                                        >{segments.length === 0
+                                            ? detailSeat.segment_name ||
+                                              'Tanpa Segment'
+                                            : 'Pilih segment rute'}</option
                                     >
-                                {:else}
-                                    {#each detailEditSeatOptions as seat (`detail-seat-option-${seat}`)}
-                                        <option value={seat}>
-                                            Kursi {seat}{seat ===
-                                            detailSeat?.seat
-                                                ? ' (saat ini)'
-                                                : ''}
+                                    {#each scheduleSegmentOptions() as segment, index (`detail-segment-${index}-${segment.id}`)}
+                                        <option value={segment.id}>
+                                            {segment.rute}{segmentJamSummary(
+                                                segment.jam_pickups,
+                                            ) || segment.jam
+                                                ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
+                                                : ''} (Rp {Number(
+                                                segment.harga,
+                                            ).toLocaleString('id-ID')})
                                         </option>
                                     {/each}
-                                {/if}
-                            </select>
-                            <Input
-                                class="h-10 rounded-xl sm:h-11"
-                                placeholder="Nama"
-                                bind:value={detailEditName}
-                            />
-                            <Input
-                                class="h-10 rounded-xl sm:h-11"
-                                placeholder="Telepon"
-                                bind:value={detailEditPhone}
-                            />
-                            <Input
-                                class="h-10 rounded-xl sm:h-11"
-                                placeholder="Pickup Point"
-                                bind:value={detailEditPickupPoint}
-                            />
-                            <select
-                                class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:h-11"
-                                bind:value={detailEditPayment}
+                                </select></label
                             >
-                                {#each paymentOptions as option, index (`detail-payment-${index}-${option}`)}
-                                    <option value={option}>{option}</option>
-                                {/each}
-                            </select>
-                            <Input
-                                class="h-10 rounded-xl sm:h-11"
-                                type="text"
-                                inputmode="numeric"
-                                placeholder="Diskon"
-                                value={formatCurrencyInput(detailEditDiscount)}
-                                oninput={(event) => {
-                                    detailEditDiscount = parseCurrencyInput(
-                                        (
-                                            event.currentTarget as HTMLInputElement
-                                        ).value,
-                                    );
-                                }}
-                            />
-                            <select
-                                class="flex h-10 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm sm:col-span-2 sm:h-11"
-                                bind:value={detailEditSegmentId}
-                            >
-                                <option value={0}
-                                    >{segments.length === 0
-                                        ? detailSeat.segment_name ||
-                                          'Tanpa Segment'
-                                        : 'Pilih segment rute'}</option
-                                >
-                                {#each scheduleSegmentOptions() as segment, index (`detail-segment-${index}-${segment.id}`)}
-                                    <option value={segment.id}>
-                                        {segment.rute}{segmentJamSummary(
-                                            segment.jam_pickups,
-                                        ) || segment.jam
-                                            ? ` • ${segmentJamSummary(segment.jam_pickups) || segmentJamLabel(segment.jam)}`
-                                            : ''} (Rp {Number(
-                                            segment.harga,
-                                        ).toLocaleString('id-ID')})
-                                    </option>
-                                {/each}
-                            </select>
                         </div>
                         {#if loadingDetailEditSeats}
                             <p class="mt-2 text-xs text-muted-foreground">
@@ -8031,7 +8191,7 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <p
-                                class="text-[11px] font-medium uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-300"
+                                class="text-xs md:text-[11px] font-medium uppercase tracking-[0.22em] text-emerald-600 dark:text-emerald-300"
                             >
                                 Booking sukses
                             </p>
@@ -8357,7 +8517,9 @@
             <div
                 class="w-full rounded-lg border border-border/70 bg-background p-4 shadow-sm md:p-5"
             >
-                <div class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4">
+                <div
+                    class="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border/60 pb-4"
+                >
                     <div class="space-y-1.5">
                         <Button
                             type="button"
@@ -8370,39 +8532,65 @@
                             Kembali ke Data Keberangkatan
                         </Button>
                         <div class="flex flex-wrap items-center gap-2.5">
-                            <h2 class="text-lg font-bold tracking-tight text-foreground sm:text-xl">
+                            <h2
+                                class="text-lg font-bold tracking-tight text-foreground sm:text-xl"
+                            >
                                 {openGroupDetail.rute}
                             </h2>
-                            <span class="font-mono text-xs font-semibold uppercase text-muted-foreground bg-muted/60 px-2 py-0.5 rounded">
+                            <span
+                                class="font-mono text-xs font-semibold uppercase text-muted-foreground bg-muted/60 px-2 py-0.5 rounded"
+                            >
                                 {openGroupDetail.departure_code}
                             </span>
-                            <Badge variant="outline" class="rounded px-2 py-0.5 text-xs font-medium border-border/80 bg-background text-muted-foreground">
+                            <Badge
+                                variant="outline"
+                                class="rounded px-2 py-0.5 text-xs font-medium border-border/80 bg-background text-muted-foreground"
+                            >
                                 Slot {openGroupDetail.unit}
                             </Badge>
                             {#if !consoleOnly && Number(openGroupDetail.bop || 0) > 0}
-                                <Badge variant="outline" class="rounded px-2 py-0.5 text-xs font-medium border-border/80 bg-background text-muted-foreground">
-                                    BOP {formatCurrency(Number(openGroupDetail.bop || 0))}
+                                <Badge
+                                    variant="outline"
+                                    class="rounded px-2 py-0.5 text-xs font-medium border-border/80 bg-background text-muted-foreground"
+                                >
+                                    BOP {formatCurrency(
+                                        Number(openGroupDetail.bop || 0),
+                                    )}
                                 </Badge>
                             {/if}
                             {#if isCanceledDeparture(openGroupDetail)}
-                                <Badge variant="destructive" class="rounded px-2 py-0.5 text-xs">
+                                <Badge
+                                    variant="destructive"
+                                    class="rounded px-2 py-0.5 text-xs"
+                                >
                                     Batal
                                 </Badge>
                             {:else if isDepartedDeparture(openGroupDetail)}
-                                <Badge variant="outline" class="rounded border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200">
+                                <Badge
+                                    variant="outline"
+                                    class="rounded border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200"
+                                >
                                     Berangkat
                                 </Badge>
                             {:else if isArrivedDeparture(openGroupDetail)}
-                                <Badge variant="outline" class="rounded border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200">
+                                <Badge
+                                    variant="outline"
+                                    class="rounded border-emerald-300 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200"
+                                >
                                     Armada Tiba
                                 </Badge>
                             {:else if isManifestClosed(openGroupDetail)}
-                                <Badge variant="outline" class="rounded border-slate-300 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
+                                <Badge
+                                    variant="outline"
+                                    class="rounded border-slate-300 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                >
                                     Manifest Close
                                 </Badge>
                             {/if}
                             {#if openGroupDetail.armada_nopol}
-                                <span class="rounded bg-muted/60 px-2 py-0.5 font-mono text-xs font-medium text-muted-foreground">
+                                <span
+                                    class="rounded bg-muted/60 px-2 py-0.5 font-mono text-xs font-medium text-muted-foreground"
+                                >
                                     {openGroupDetail.armada_nopol}
                                 </span>
                             {/if}
@@ -8425,23 +8613,31 @@
                                 type="button"
                                 size="sm"
                                 class="h-8 text-xs font-medium"
-                                onclick={() => void markBookingGroupAsPaid(openGroupDetail!)}
+                                onclick={() =>
+                                    void markBookingGroupAsPaid(
+                                        openGroupDetail!,
+                                    )}
                                 disabled={markingPaidSeatId !== null ||
                                     isCanceledDeparture(openGroupDetail) ||
-                                    payableBookingRows(openGroupDetail).length === 0}
+                                    payableBookingRows(openGroupDetail)
+                                        .length === 0}
                             >
                                 <WalletCards class="mr-1.5 h-3.5 w-3.5" />
-                                {markingPaidSeatId !== null && markingPaidSeatId < 0 ? 'Melunaskan...' : 'Lunaskan Semua'}
+                                {markingPaidSeatId !== null &&
+                                markingPaidSeatId < 0
+                                    ? 'Melunaskan...'
+                                    : 'Lunaskan Semua'}
                             </Button>
                             <Button
                                 type="button"
                                 variant="outline"
                                 size="sm"
                                 class="h-8 text-xs font-medium"
-                                onclick={() => void copyBookingGroup(openGroupDetail!)}
+                                onclick={() =>
+                                    void copyBookingGroup(openGroupDetail!)}
                             >
                                 <Copy class="mr-1.5 h-3.5 w-3.5" />
-                                Copy Data
+                                Salin data
                             </Button>
                         {/if}
                         {#if isArrivedDeparture(openGroupDetail) && !isManifestLocked(openGroupDetail)}
@@ -8449,7 +8645,8 @@
                                 type="button"
                                 size="sm"
                                 class="h-8 text-xs font-medium bg-rose-600 text-white hover:bg-rose-700 dark:bg-rose-500 dark:text-white dark:hover:bg-rose-600"
-                                onclick={() => void closeManifest(openGroupDetail!)}
+                                onclick={() =>
+                                    void closeManifest(openGroupDetail!)}
                             >
                                 Close Manifest
                             </Button>
@@ -8466,7 +8663,7 @@
                         <div class="space-y-4">
                             <div>
                                 <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
+                                    class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
                                 >
                                     Ringkasan Keberangkatan
                                 </p>
@@ -8477,7 +8674,7 @@
                                         class="rounded-xl border border-border/70 bg-background/85 px-2.5 py-2"
                                     >
                                         <p
-                                            class="text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
+                                            class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
                                         >
                                             Total
                                         </p>
@@ -8491,7 +8688,7 @@
                                         class="rounded-xl border border-border/70 bg-background/85 px-2.5 py-2"
                                     >
                                         <p
-                                            class="text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
+                                            class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
                                         >
                                             Aktif
                                         </p>
@@ -8505,9 +8702,9 @@
                                         class="rounded-xl border border-rose-200/80 bg-rose-50/80 px-2.5 py-2 dark:border-rose-500/20 dark:bg-rose-950/20"
                                     >
                                         <p
-                                            class="text-[9px] uppercase tracking-[0.1em] text-rose-700 dark:text-rose-300"
+                                            class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-rose-700 dark:text-rose-300"
                                         >
-                                            Cancel
+                                            Batal
                                         </p>
                                         <p
                                             class="mt-1 text-xs font-semibold text-rose-700 dark:text-rose-200 sm:text-sm"
@@ -8519,7 +8716,7 @@
                                         class="rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-2 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                     >
                                         <p
-                                            class="text-[9px] uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-300"
+                                            class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-300"
                                         >
                                             Lunas
                                         </p>
@@ -8533,7 +8730,7 @@
                                         class="rounded-xl border border-sky-200/80 bg-sky-50/80 px-2.5 py-2 dark:border-sky-500/20 dark:bg-sky-950/20"
                                     >
                                         <p
-                                            class="text-[9px] uppercase tracking-[0.1em] text-sky-700 dark:text-sky-300"
+                                            class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-sky-700 dark:text-sky-300"
                                         >
                                             Refund
                                         </p>
@@ -8547,7 +8744,7 @@
                                         class="rounded-xl border border-amber-200/80 bg-amber-50/80 px-2.5 py-2 dark:border-amber-500/20 dark:bg-amber-950/20"
                                     >
                                         <p
-                                            class="text-[9px] uppercase tracking-[0.1em] text-amber-700 dark:text-amber-300"
+                                            class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-amber-700 dark:text-amber-300"
                                         >
                                             Belum Lunas
                                         </p>
@@ -8563,7 +8760,7 @@
                                         class="rounded-lg border border-emerald-200/70 bg-emerald-50/70 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
+                                            class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
                                         >
                                             Total Pembayaran Lunas
                                         </p>
@@ -8579,7 +8776,7 @@
                                         class="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-950/20"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
+                                            class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
                                         >
                                             Total Pembayaran Belum Lunas
                                         </p>
@@ -8596,7 +8793,7 @@
 
                             <div>
                                 <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
+                                    class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
                                 >
                                     Mapping Keberangkatan
                                 </p>
@@ -8606,7 +8803,7 @@
                                     <div class="relative">
                                         <label
                                             for="group-driver-search"
-                                            class="mb-1 block text-[11px] font-medium text-muted-foreground"
+                                            class="mb-1 block text-xs md:text-[11px] font-medium text-muted-foreground"
                                             >Driver</label
                                         >
                                         <div class="relative">
@@ -8676,7 +8873,7 @@
                                                                         >{driver.nama}</span
                                                                     >
                                                                     <span
-                                                                        class="block text-[11px] text-muted-foreground"
+                                                                        class="block text-xs md:text-[11px] text-muted-foreground"
                                                                         >{driver.phone ||
                                                                             'Driver aktif'}</span
                                                                     >
@@ -8692,7 +8889,7 @@
                                     <div class="relative">
                                         <label
                                             for="group-armada-search"
-                                            class="mb-1 block text-[11px] font-medium text-muted-foreground"
+                                            class="mb-1 block text-xs md:text-[11px] font-medium text-muted-foreground"
                                             >Nomor Polisi</label
                                         >
                                         <div class="relative">
@@ -8773,7 +8970,7 @@
                                                                         >{armada.nopol}</span
                                                                     >
                                                                     <span
-                                                                        class="block text-[11px] text-muted-foreground"
+                                                                        class="block text-xs md:text-[11px] text-muted-foreground"
                                                                         >{[
                                                                             armada.merk,
                                                                             armada.kategori,
@@ -8841,7 +9038,7 @@
                                         </div>
                                     {:else}
                                         <div
-                                            class="rounded-lg border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200"
+                                            class="rounded-lg border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-xs md:text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200"
                                         >
                                             Manifest sudah ditutup. Mapping
                                             driver dan armada hanya bisa
@@ -8918,7 +9115,7 @@
                             class="rounded-lg border border-cyan-200/70 bg-background/90 p-4 dark:border-cyan-500/20"
                         >
                             <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
+                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
                             >
                                 Info Perjalanan
                             </p>
@@ -8927,7 +9124,7 @@
                                     class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
                                 >
                                     <p
-                                        class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                        class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
                                     >
                                         Kode
                                     </p>
@@ -8941,7 +9138,7 @@
                                     class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
                                 >
                                     <p
-                                        class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                        class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
                                     >
                                         Jadwal
                                     </p>
@@ -8958,7 +9155,7 @@
                                         class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
                                     >
                                         <p
-                                            class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                            class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
                                         >
                                             Nilai sudah lunas
                                         </p>
@@ -8975,7 +9172,7 @@
                                     class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
                                 >
                                     <p
-                                        class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                        class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
                                     >
                                         Rute
                                     </p>
@@ -9021,7 +9218,7 @@
                                 groupPassengerTab = 'history';
                             }}
                         >
-                            History Cancel {canceledGroupBookings().length}
+                            History Batal {canceledGroupBookings().length}
                         </button>
                     </div>
                 </div>
@@ -9038,7 +9235,7 @@
                             >
                                 <div>
                                     <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
+                                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
                                     >
                                         Bagasi Terpasang
                                     </p>
@@ -9047,7 +9244,7 @@
                                     class="rounded-lg border border-emerald-200/70 bg-emerald-50/80 px-3 py-2 text-right dark:border-emerald-500/20 dark:bg-emerald-950/20"
                                 >
                                     <p
-                                        class="text-[10px] uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300"
+                                        class="text-xs md:text-[10px] uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300"
                                     >
                                         Revenue Bagasi
                                     </p>
@@ -9092,7 +9289,7 @@
                                                             '-'}
                                                     </p>
                                                     <p
-                                                        class="mt-1 text-[11px] text-muted-foreground"
+                                                        class="mt-1 text-xs md:text-[11px] text-muted-foreground"
                                                     >
                                                         {row.rute || '-'} • {row.tanggal ||
                                                             '-'}
@@ -9103,14 +9300,14 @@
                                                 >
                                                     <Badge
                                                         variant="secondary"
-                                                        class="rounded-full px-2 py-0 text-[10px]"
+                                                        class="rounded-full px-2 py-0 text-xs md:text-[10px]"
                                                         >{luggageStatusLabel(
                                                             row.status,
                                                         )}</Badge
                                                     >
                                                     <Badge
                                                         variant="secondary"
-                                                        class="rounded-full px-2 py-0 text-[10px]"
+                                                        class="rounded-full px-2 py-0 text-xs md:text-[10px]"
                                                         >{row.payment_status ||
                                                             '-'}</Badge
                                                     >
@@ -9173,28 +9370,30 @@
                             >
                                 <div>
                                     <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
+                                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
                                     >
                                         Bagasi Siap Dimapping
                                     </p>
                                 </div>
                                 <div class="flex items-center gap-2">
-                                    <div class="flex md:hidden">
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            class="h-8 rounded-full px-3 text-xs"
-                                            onclick={() =>
-                                                (groupRiturFiltersExpanded =
-                                                    !groupRiturFiltersExpanded)}
-                                            aria-expanded={groupRiturFiltersExpanded}
-                                        >
-                                            {groupRiturFiltersExpanded
-                                                ? 'Sembunyikan Filter'
-                                                : 'Tampilkan Filter'}
-                                        </Button>
-                                    </div>
+                                    <ViewportOnly minWidth={0} maxWidth={767}
+                                        ><div class="flex md:hidden">
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                class="h-8 rounded-full px-3 text-xs"
+                                                onclick={() =>
+                                                    (groupRiturFiltersExpanded =
+                                                        !groupRiturFiltersExpanded)}
+                                                aria-expanded={groupRiturFiltersExpanded}
+                                            >
+                                                {groupRiturFiltersExpanded
+                                                    ? 'Sembunyikan Filter'
+                                                    : 'Tampilkan Filter'}
+                                            </Button>
+                                        </div></ViewportOnly
+                                    >
                                     <Button
                                         type="button"
                                         size="sm"
@@ -9216,7 +9415,7 @@
 
                             {#if isManifestLocked(openGroupDetail)}
                                 <div
-                                    class="mb-3 rounded-lg border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200"
+                                    class="mb-3 rounded-lg border border-amber-200/70 bg-amber-50/80 px-3 py-2 text-xs md:text-[11px] text-amber-700 dark:border-amber-500/20 dark:bg-amber-950/20 dark:text-amber-200"
                                 >
                                     Manifest sudah ditutup. Kontrol mapping
                                     bagasi hanya bisa dilihat.
@@ -9233,12 +9432,15 @@
                                         <Search
                                             class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                                         />
-                                        <Input
-                                            bind:value={groupRiturSearch}
-                                            class="h-10 rounded-xl !pl-9 text-sm"
-                                            placeholder="Cari resi, pengirim, penerima, nomor HP, atau rute"
-                                            oninput={queueGroupRiturSearch}
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Pencarian</span><Input
+                                                bind:value={groupRiturSearch}
+                                                class="h-10 rounded-xl !pl-9 text-sm"
+                                                placeholder="Cari resi, pengirim, penerima, nomor HP, atau rute"
+                                                oninput={queueGroupRiturSearch}
+                                            /></label
+                                        >
                                     </div>
                                 </div>
 
@@ -9330,7 +9532,7 @@
                                                             '-'}
                                                     </p>
                                                     <p
-                                                        class="mt-1 text-[11px] text-muted-foreground"
+                                                        class="mt-1 text-xs md:text-[11px] text-muted-foreground"
                                                     >
                                                         {row.rute || '-'} • {row.tanggal ||
                                                             '-'}
@@ -9341,14 +9543,14 @@
                                                 >
                                                     <Badge
                                                         variant="secondary"
-                                                        class="rounded-full px-2 py-0 text-[10px]"
+                                                        class="rounded-full px-2 py-0 text-xs md:text-[10px]"
                                                         >{luggageStatusLabel(
                                                             row.status,
                                                         )}</Badge
                                                     >
                                                     <Badge
                                                         variant="secondary"
-                                                        class="rounded-full px-2 py-0 text-[10px]"
+                                                        class="rounded-full px-2 py-0 text-xs md:text-[10px]"
                                                         >{row.payment_status ||
                                                             '-'}</Badge
                                                     >
@@ -9409,9 +9611,9 @@
                         >
                             <div>
                                 <p
-                                    class="text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-700 dark:text-rose-300"
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-rose-700 dark:text-rose-300"
                                 >
-                                    History Cancel
+                                    History Batal
                                 </p>
                                 <p
                                     class="mt-1 text-sm font-semibold text-rose-700 dark:text-rose-200"
@@ -9421,7 +9623,7 @@
                             </div>
                             <div>
                                 <p
-                                    class="text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700 dark:text-sky-300"
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-sky-700 dark:text-sky-300"
                                 >
                                     Refund Selesai
                                 </p>
@@ -9437,7 +9639,7 @@
                             </div>
                             <div>
                                 <p
-                                    class="text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
                                 >
                                     Perlu Refund
                                 </p>
@@ -9460,550 +9662,560 @@
                             </p>
                         </div>
                     {/if}
-                    <div class="space-y-2 md:hidden">
-                        {#if visibleGroupBookings().length === 0}
-                            <div
-                                class="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground"
-                            >
-                                {groupPassengerTab === 'history'
-                                    ? 'Belum ada history cancel pada keberangkatan ini.'
-                                    : 'Belum ada penumpang aktif pada keberangkatan ini.'}
-                            </div>
-                        {/if}
-                        {#each visibleGroupBookings() as row, index (`group-booking-mobile-${index}-${row.id}`)}
-                            <div
-                                class="rounded-lg border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/25 p-3.5 shadow-xs dark:to-cyan-950/15"
-                            >
+                    <ViewportOnly minWidth={0} maxWidth={767}
+                        ><div class="space-y-2 md:hidden">
+                            {#if visibleGroupBookings().length === 0}
                                 <div
-                                    class="mb-2.5 flex items-start justify-between gap-3"
+                                    class="rounded-lg border border-dashed border-border/80 bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground"
                                 >
-                                    <div>
-                                        <p class="text-sm font-semibold">
-                                            Kursi {row.seat} • {row.name}
-                                        </p>
-                                        <p
-                                            class="text-[11px] text-muted-foreground"
-                                        >
-                                            {row.phone || '-'} • {row.ticket_code ||
-                                                '-'}
-                                        </p>
-                                    </div>
-                                    <div class="flex items-start gap-2">
-                                        <div
-                                            class="flex flex-col items-end gap-1"
-                                        >
-                                            <Badge
-                                                variant={statusVariant(
-                                                    row.status,
-                                                )}
-                                                class="rounded-full px-2 py-0 text-[11px]"
-                                                >{row.status}</Badge
-                                            >
-                                            <Badge
-                                                variant={paymentVariant(
-                                                    row.pembayaran,
-                                                )}
-                                                class="rounded-full px-2 py-0 text-[11px]"
-                                                >{row.pembayaran}</Badge
-                                            >
-                                        </div>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                {#snippet children(props)}
-                                                    <Button
-                                                        type="button"
-                                                        size="icon"
-                                                        variant="outline"
-                                                        class="h-8 w-8 rounded-full"
-                                                        onclick={props.onclick}
-                                                        aria-expanded={props[
-                                                            'aria-expanded'
-                                                        ]}
-                                                        data-state={props[
-                                                            'data-state'
-                                                        ]}
-                                                    >
-                                                        <MoreVertical
-                                                            class="h-4 w-4"
-                                                        />
-                                                    </Button>
-                                                {/snippet}
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                side="top"
-                                                sideOffset={8}
-                                                class="z-[120] w-44 text-[11px] shadow-lg"
-                                            >
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void copyBookingPassenger(
-                                                            openGroupDetail!,
-                                                            row,
-                                                        )}
-                                                >
-                                                    Copy Data
-                                                </DropdownMenuItem>
-                                                {#if !isManifestLocked(openGroupDetail)}
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void openGroupRowEdit(
-                                                                openGroupDetail!,
-                                                                row,
-                                                            )}
-                                                    >
-                                                        Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void openGroupRowReschedule(
-                                                                openGroupDetail!,
-                                                                row,
-                                                            )}
-                                                    >
-                                                        Reschedule
-                                                    </DropdownMenuItem>
-                                                {/if}
-                                                {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status) && !isSettledPayment(row.pembayaran)}
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void markBookingRowAsPaid(
-                                                                row.id,
-                                                                row.seat,
-                                                                row.pembayaran,
-                                                            )}
-                                                    >
-                                                        Lunas
-                                                    </DropdownMenuItem>
-                                                {/if}
-                                                {#if !isManifestLocked(openGroupDetail) && canRefundCanceledBooking(row)}
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void markBookingRowAsRefund(
-                                                                row.id,
-                                                                row.seat,
-                                                                row.pembayaran,
-                                                            )}
-                                                    >
-                                                        Refund
-                                                    </DropdownMenuItem>
-                                                {/if}
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        openTicketPrint(row.id)}
-                                                >
-                                                    Print Tiket
-                                                </DropdownMenuItem>
-                                                {#if canBookingDelete && !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void cancelBookingRow(
-                                                                row.id,
-                                                                row.seat,
-                                                                row.status,
-                                                            )}
-                                                    >
-                                                        Cancel
-                                                    </DropdownMenuItem>
-                                                {/if}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
+                                    {groupPassengerTab === 'history'
+                                        ? 'Belum ada history cancel pada keberangkatan ini.'
+                                        : 'Belum ada penumpang aktif pada keberangkatan ini.'}
                                 </div>
-
+                            {/if}
+                            {#each visibleGroupBookings() as row, index (`group-booking-mobile-${index}-${row.id}`)}
                                 <div
-                                    class="grid gap-2 rounded-xl border border-border/70 bg-background/80 p-3 text-xs text-muted-foreground"
+                                    class="rounded-lg border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/25 p-3.5 shadow-xs dark:to-cyan-950/15"
                                 >
-                                    <div class="grid grid-cols-2 gap-2">
+                                    <div
+                                        class="mb-2.5 flex items-start justify-between gap-3"
+                                    >
                                         <div>
-                                            <p
-                                                class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                            >
-                                                Jemput
+                                            <p class="text-sm font-semibold">
+                                                Kursi {row.seat} • {row.name}
                                             </p>
                                             <p
-                                                class="mt-1 font-medium text-foreground"
+                                                class="text-xs md:text-[11px] text-muted-foreground"
                                             >
-                                                {row.pickup_point || '-'}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p
-                                                class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                            >
-                                                Segment
-                                            </p>
-                                            <p
-                                                class="mt-1 font-medium text-foreground"
-                                            >
-                                                {row.segment_name || '-'}
+                                                {row.phone || '-'} • {row.ticket_code ||
+                                                    '-'}
                                             </p>
                                         </div>
-                                    </div>
-                                    {#if row.gmaps}
-                                        <p class="truncate">
-                                            <span
-                                                class="font-medium text-foreground"
-                                                >Gmaps:</span
-                                            >
-                                            {row.gmaps}
-                                        </p>
-                                    {/if}
-                                </div>
-
-                                <div
-                                    class="mt-2 grid grid-cols-3 gap-1 rounded-xl border border-border/70 bg-background/80 p-1.5 text-[11px]"
-                                >
-                                    <div
-                                        class="rounded-lg bg-muted/35 px-2 py-1"
-                                    >
-                                        <span class="text-muted-foreground"
-                                            >Harga</span
-                                        >
-                                        <span
-                                            class="block font-semibold text-foreground"
-                                            >Rp {Number(
-                                                row.price || 0,
-                                            ).toLocaleString('id-ID')}</span
-                                        >
-                                    </div>
-                                    <div
-                                        class="rounded-lg bg-muted/35 px-2 py-1"
-                                    >
-                                        <span class="text-muted-foreground"
-                                            >Diskon</span
-                                        >
-                                        <span
-                                            class="block font-semibold text-foreground"
-                                            >Rp {Number(
-                                                row.discount || 0,
-                                            ).toLocaleString('id-ID')}</span
-                                        >
-                                    </div>
-                                    <div
-                                        class="rounded-lg bg-cyan-50 px-2 py-1 text-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-200"
-                                    >
-                                        <span>Total</span>
-                                        <span class="block font-semibold"
-                                            >Rp {Math.max(
-                                                Number(row.price || 0) -
-                                                    Number(row.discount || 0),
-                                                0,
-                                            ).toLocaleString('id-ID')}</span
-                                        >
-                                    </div>
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-
-                    <div
-                        class="hidden overflow-visible rounded-lg border border-border/80 bg-card/95 md:block"
-                    >
-                        <table class="w-full min-w-[980px] text-xs">
-                            <thead>
-                                <tr
-                                    class="border-b bg-muted/45 text-left text-[11px] tracking-wide text-muted-foreground uppercase"
-                                >
-                                    <th class="px-2 py-3">Aksi</th>
-                                    <th class="px-3 py-3">Seat</th>
-                                    <th class="px-3 py-3">Penumpang</th>
-                                    <th class="px-3 py-3">Operasional</th>
-                                    <th class="px-3 py-3">Tarif</th>
-                                    <th class="px-3 py-3">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {#if visibleGroupBookings().length === 0}
-                                    <tr>
-                                        <td
-                                            colspan="6"
-                                            class="px-3 py-6 text-center text-sm text-muted-foreground"
-                                        >
-                                            {groupPassengerTab === 'history'
-                                                ? 'Belum ada history cancel pada keberangkatan ini.'
-                                                : 'Belum ada penumpang aktif pada keberangkatan ini.'}
-                                        </td>
-                                    </tr>
-                                {/if}
-                                {#each visibleGroupBookings() as row, index (`group-booking-table-${index}-${row.id}`)}
-                                    <tr
-                                        class="border-b/70 align-top transition-colors hover:bg-muted/20"
-                                    >
-                                        <td class="px-2 py-3">
+                                        <div class="flex items-start gap-2">
                                             <div
-                                                class="flex flex-col items-center gap-2"
-                                            >
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        {#snippet children(
-                                                            props,
-                                                        )}
-                                                            <Button
-                                                                type="button"
-                                                                size="icon"
-                                                                variant="outline"
-                                                                class="h-7 w-7 rounded-full"
-                                                                onclick={props.onclick}
-                                                                aria-expanded={props[
-                                                                    'aria-expanded'
-                                                                ]}
-                                                                data-state={props[
-                                                                    'data-state'
-                                                                ]}
-                                                            >
-                                                                <MoreVertical
-                                                                    class="h-3.5 w-3.5"
-                                                                />
-                                                            </Button>
-                                                        {/snippet}
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="start"
-                                                        side="top"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44 text-[11px] shadow-lg"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void copyBookingPassenger(
-                                                                    openGroupDetail!,
-                                                                    row,
-                                                                )}
-                                                        >
-                                                            Copy Data
-                                                        </DropdownMenuItem>
-                                                        {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void openGroupRowEdit(
-                                                                        openGroupDetail!,
-                                                                        row,
-                                                                    )}
-                                                            >
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void openGroupRowReschedule(
-                                                                        openGroupDetail!,
-                                                                        row,
-                                                                    )}
-                                                            >
-                                                                Reschedule
-                                                            </DropdownMenuItem>
-                                                            {#if !isSettledPayment(row.pembayaran)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void markBookingRowAsPaid(
-                                                                            row.id,
-                                                                            row.seat,
-                                                                            row.pembayaran,
-                                                                        )}
-                                                                >
-                                                                    Lunas
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canBookingDelete}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void cancelBookingRow(
-                                                                            row.id,
-                                                                            row.seat,
-                                                                            row.status,
-                                                                        )}
-                                                                >
-                                                                    Cancel
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                        {/if}
-                                                        {#if !isManifestLocked(openGroupDetail) && canRefundCanceledBooking(row)}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void markBookingRowAsRefund(
-                                                                        row.id,
-                                                                        row.seat,
-                                                                        row.pembayaran,
-                                                                    )}
-                                                            >
-                                                                Refund
-                                                            </DropdownMenuItem>
-                                                        {/if}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                openTicketPrint(
-                                                                    row.id,
-                                                                )}
-                                                        >
-                                                            Print Tiket
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </div>
-                                        </td>
-                                        <td class="px-3 py-3">
-                                            <div
-                                                class="inline-flex min-w-11 items-center justify-center rounded-lg border border-cyan-200/70 bg-cyan-50/80 px-3 py-2 text-sm font-semibold text-cyan-700 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-200"
-                                            >
-                                                {row.seat}
-                                            </div>
-                                        </td>
-                                        <td class="px-3 py-3">
-                                            <p
-                                                class="text-sm font-semibold leading-tight"
-                                            >
-                                                {row.name || '-'}
-                                            </p>
-                                            <p
-                                                class="mt-1 text-[11px] text-muted-foreground"
-                                            >
-                                                {row.phone || '-'}
-                                            </p>
-                                            <div
-                                                class="mt-2 inline-flex rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
-                                            >
-                                                {row.ticket_code || '-'}
-                                            </div>
-                                        </td>
-                                        <td
-                                            class="px-3 py-3 text-[11px] leading-relaxed"
-                                        >
-                                            <div
-                                                class="grid gap-2 rounded-lg border border-border/70 bg-background/80 p-3"
-                                            >
-                                                <div
-                                                    class="grid grid-cols-2 gap-2"
-                                                >
-                                                    <div>
-                                                        <p
-                                                            class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                                        >
-                                                            Jemput
-                                                        </p>
-                                                        <p
-                                                            class="mt-1 font-medium text-foreground"
-                                                        >
-                                                            {row.pickup_point ||
-                                                                '-'}
-                                                        </p>
-                                                    </div>
-                                                    <div>
-                                                        <p
-                                                            class="text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                                        >
-                                                            Segment
-                                                        </p>
-                                                        <p
-                                                            class="mt-1 font-medium text-foreground"
-                                                        >
-                                                            {row.segment_name ||
-                                                                '-'}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                {#if row.gmaps}
-                                                    <p
-                                                        class="max-w-[280px] truncate text-muted-foreground"
-                                                    >
-                                                        <span
-                                                            class="font-medium text-foreground"
-                                                            >Gmaps:</span
-                                                        >
-                                                        {row.gmaps}
-                                                    </p>
-                                                {/if}
-                                            </div>
-                                        </td>
-                                        <td
-                                            class="px-2 py-3 text-[11px] leading-relaxed"
-                                        >
-                                            <div
-                                                class="min-w-40 rounded-xl border border-border/70 bg-background/80 p-2"
-                                            >
-                                                <div
-                                                    class="flex items-center justify-between gap-2"
-                                                >
-                                                    <span
-                                                        class="text-muted-foreground"
-                                                        >Harga</span
-                                                    >
-                                                    <span
-                                                        class="font-medium text-foreground"
-                                                        >Rp {Number(
-                                                            row.price || 0,
-                                                        ).toLocaleString(
-                                                            'id-ID',
-                                                        )}</span
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="mt-0.5 flex items-center justify-between gap-2"
-                                                >
-                                                    <span
-                                                        class="text-muted-foreground"
-                                                        >Diskon</span
-                                                    >
-                                                    <span
-                                                        class="font-medium text-foreground"
-                                                        >Rp {Number(
-                                                            row.discount || 0,
-                                                        ).toLocaleString(
-                                                            'id-ID',
-                                                        )}</span
-                                                    >
-                                                </div>
-                                                <div
-                                                    class="mt-1 flex items-center justify-between gap-2 rounded-lg bg-cyan-50 px-2 py-1 dark:bg-cyan-950/25"
-                                                >
-                                                    <span
-                                                        class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
-                                                        >Total</span
-                                                    >
-                                                    <span
-                                                        class="text-xs font-semibold text-foreground"
-                                                        >Rp {Math.max(
-                                                            Number(
-                                                                row.price || 0,
-                                                            ) -
-                                                                Number(
-                                                                    row.discount ||
-                                                                        0,
-                                                                ),
-                                                            0,
-                                                        ).toLocaleString(
-                                                            'id-ID',
-                                                        )}</span
-                                                    >
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td class="px-3 py-3">
-                                            <div
-                                                class="flex flex-col items-start gap-1"
+                                                class="flex flex-col items-end gap-1"
                                             >
                                                 <Badge
                                                     variant={statusVariant(
                                                         row.status,
                                                     )}
-                                                    class="rounded-full px-2 py-0 text-[10px]"
+                                                    class="rounded-full px-2 py-0 text-xs md:text-[11px]"
                                                     >{row.status}</Badge
                                                 >
                                                 <Badge
                                                     variant={paymentVariant(
                                                         row.pembayaran,
                                                     )}
-                                                    class="rounded-full px-2 py-0 text-[10px]"
+                                                    class="rounded-full px-2 py-0 text-xs md:text-[11px]"
                                                     >{row.pembayaran}</Badge
                                                 >
                                             </div>
-                                        </td>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    {#snippet children(props)}
+                                                        <Button
+                                                            type="button"
+                                                            size="icon"
+                                                            variant="outline"
+                                                            class="h-8 w-8 rounded-full"
+                                                            onclick={props.onclick}
+                                                            aria-expanded={props[
+                                                                'aria-expanded'
+                                                            ]}
+                                                            data-state={props[
+                                                                'data-state'
+                                                            ]}
+                                                        >
+                                                            <MoreVertical
+                                                                class="h-4 w-4"
+                                                            />
+                                                        </Button>
+                                                    {/snippet}
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    side="top"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44 text-xs md:text-[11px] shadow-lg"
+                                                >
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void copyBookingPassenger(
+                                                                openGroupDetail!,
+                                                                row,
+                                                            )}
+                                                    >
+                                                        Salin data
+                                                    </DropdownMenuItem>
+                                                    {#if !isManifestLocked(openGroupDetail)}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void openGroupRowEdit(
+                                                                    openGroupDetail!,
+                                                                    row,
+                                                                )}
+                                                        >
+                                                            Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void openGroupRowReschedule(
+                                                                    openGroupDetail!,
+                                                                    row,
+                                                                )}
+                                                        >
+                                                            Reschedule
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status) && !isSettledPayment(row.pembayaran)}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void markBookingRowAsPaid(
+                                                                    row.id,
+                                                                    row.seat,
+                                                                    row.pembayaran,
+                                                                )}
+                                                        >
+                                                            Lunas
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if !isManifestLocked(openGroupDetail) && canRefundCanceledBooking(row)}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void markBookingRowAsRefund(
+                                                                    row.id,
+                                                                    row.seat,
+                                                                    row.pembayaran,
+                                                                )}
+                                                        >
+                                                            Refund
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            openTicketPrint(
+                                                                row.id,
+                                                            )}
+                                                    >
+                                                        Print Tiket
+                                                    </DropdownMenuItem>
+                                                    {#if canBookingDelete && !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void cancelBookingRow(
+                                                                    row.id,
+                                                                    row.seat,
+                                                                    row.status,
+                                                                )}
+                                                        >
+                                                            Batal
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                    </div>
+
+                                    <div
+                                        class="grid gap-2 rounded-xl border border-border/70 bg-background/80 p-3 text-xs text-muted-foreground"
+                                    >
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <div>
+                                                <p
+                                                    class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                >
+                                                    Jemput
+                                                </p>
+                                                <p
+                                                    class="mt-1 font-medium text-foreground"
+                                                >
+                                                    {row.pickup_point || '-'}
+                                                </p>
+                                            </div>
+                                            <div>
+                                                <p
+                                                    class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                >
+                                                    Segment
+                                                </p>
+                                                <p
+                                                    class="mt-1 font-medium text-foreground"
+                                                >
+                                                    {row.segment_name || '-'}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        {#if row.gmaps}
+                                            <p class="truncate">
+                                                <span
+                                                    class="font-medium text-foreground"
+                                                    >Gmaps:</span
+                                                >
+                                                {row.gmaps}
+                                            </p>
+                                        {/if}
+                                    </div>
+
+                                    <div
+                                        class="mt-2 grid grid-cols-3 gap-1 rounded-xl border border-border/70 bg-background/80 p-1.5 text-xs md:text-[11px]"
+                                    >
+                                        <div
+                                            class="rounded-lg bg-muted/35 px-2 py-1"
+                                        >
+                                            <span class="text-muted-foreground"
+                                                >Harga</span
+                                            >
+                                            <span
+                                                class="block font-semibold text-foreground"
+                                                >Rp {Number(
+                                                    row.price || 0,
+                                                ).toLocaleString('id-ID')}</span
+                                            >
+                                        </div>
+                                        <div
+                                            class="rounded-lg bg-muted/35 px-2 py-1"
+                                        >
+                                            <span class="text-muted-foreground"
+                                                >Diskon</span
+                                            >
+                                            <span
+                                                class="block font-semibold text-foreground"
+                                                >Rp {Number(
+                                                    row.discount || 0,
+                                                ).toLocaleString('id-ID')}</span
+                                            >
+                                        </div>
+                                        <div
+                                            class="rounded-lg bg-cyan-50 px-2 py-1 text-cyan-800 dark:bg-cyan-950/30 dark:text-cyan-200"
+                                        >
+                                            <span>Total</span>
+                                            <span class="block font-semibold"
+                                                >Rp {Math.max(
+                                                    Number(row.price || 0) -
+                                                        Number(
+                                                            row.discount || 0,
+                                                        ),
+                                                    0,
+                                                ).toLocaleString('id-ID')}</span
+                                            >
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                        </div></ViewportOnly
+                    >
+
+                    <ViewportOnly minWidth={768}
+                        ><div
+                            class="hidden overflow-visible rounded-lg border border-border/80 bg-card/95 md:block"
+                        >
+                            <table class="w-full min-w-[980px] text-xs">
+                                <thead>
+                                    <tr
+                                        class="border-b bg-muted/45 text-left text-xs md:text-[11px] tracking-wide text-muted-foreground uppercase"
+                                    >
+                                        <th class="px-2 py-3">Aksi</th>
+                                        <th class="px-3 py-3">Seat</th>
+                                        <th class="px-3 py-3">Penumpang</th>
+                                        <th class="px-3 py-3">Operasional</th>
+                                        <th class="px-3 py-3">Tarif</th>
+                                        <th class="px-3 py-3">Status</th>
                                     </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {#if visibleGroupBookings().length === 0}
+                                        <tr>
+                                            <td
+                                                colspan="6"
+                                                class="px-3 py-6 text-center text-sm text-muted-foreground"
+                                            >
+                                                {groupPassengerTab === 'history'
+                                                    ? 'Belum ada history cancel pada keberangkatan ini.'
+                                                    : 'Belum ada penumpang aktif pada keberangkatan ini.'}
+                                            </td>
+                                        </tr>
+                                    {/if}
+                                    {#each visibleGroupBookings() as row, index (`group-booking-table-${index}-${row.id}`)}
+                                        <tr
+                                            class="border-b/70 align-top transition-colors hover:bg-muted/20"
+                                        >
+                                            <td class="px-2 py-3">
+                                                <div
+                                                    class="flex flex-col items-center gap-2"
+                                                >
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
+                                                        >
+                                                            {#snippet children(
+                                                                props,
+                                                            )}
+                                                                <Button
+                                                                    type="button"
+                                                                    size="icon"
+                                                                    variant="outline"
+                                                                    class="h-7 w-7 rounded-full"
+                                                                    onclick={props.onclick}
+                                                                    aria-expanded={props[
+                                                                        'aria-expanded'
+                                                                    ]}
+                                                                    data-state={props[
+                                                                        'data-state'
+                                                                    ]}
+                                                                >
+                                                                    <MoreVertical
+                                                                        class="h-3.5 w-3.5"
+                                                                    />
+                                                                </Button>
+                                                            {/snippet}
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="start"
+                                                            side="top"
+                                                            sideOffset={8}
+                                                            class="z-[120] w-44 text-xs md:text-[11px] shadow-lg"
+                                                        >
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void copyBookingPassenger(
+                                                                        openGroupDetail!,
+                                                                        row,
+                                                                    )}
+                                                            >
+                                                                Salin data
+                                                            </DropdownMenuItem>
+                                                            {#if !isManifestLocked(openGroupDetail) && !isCanceledBooking(row.status)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void openGroupRowEdit(
+                                                                            openGroupDetail!,
+                                                                            row,
+                                                                        )}
+                                                                >
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void openGroupRowReschedule(
+                                                                            openGroupDetail!,
+                                                                            row,
+                                                                        )}
+                                                                >
+                                                                    Reschedule
+                                                                </DropdownMenuItem>
+                                                                {#if !isSettledPayment(row.pembayaran)}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            void markBookingRowAsPaid(
+                                                                                row.id,
+                                                                                row.seat,
+                                                                                row.pembayaran,
+                                                                            )}
+                                                                    >
+                                                                        Lunas
+                                                                    </DropdownMenuItem>
+                                                                {/if}
+                                                                {#if canBookingDelete}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            void cancelBookingRow(
+                                                                                row.id,
+                                                                                row.seat,
+                                                                                row.status,
+                                                                            )}
+                                                                    >
+                                                                        Batal
+                                                                    </DropdownMenuItem>
+                                                                {/if}
+                                                            {/if}
+                                                            {#if !isManifestLocked(openGroupDetail) && canRefundCanceledBooking(row)}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void markBookingRowAsRefund(
+                                                                            row.id,
+                                                                            row.seat,
+                                                                            row.pembayaran,
+                                                                        )}
+                                                                >
+                                                                    Refund
+                                                                </DropdownMenuItem>
+                                                            {/if}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openTicketPrint(
+                                                                        row.id,
+                                                                    )}
+                                                            >
+                                                                Print Tiket
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            </td>
+                                            <td class="px-3 py-3">
+                                                <div
+                                                    class="inline-flex min-w-11 items-center justify-center rounded-lg border border-cyan-200/70 bg-cyan-50/80 px-3 py-2 text-sm font-semibold text-cyan-700 dark:border-cyan-500/20 dark:bg-cyan-950/20 dark:text-cyan-200"
+                                                >
+                                                    {row.seat}
+                                                </div>
+                                            </td>
+                                            <td class="px-3 py-3">
+                                                <p
+                                                    class="text-sm font-semibold leading-tight"
+                                                >
+                                                    {row.name || '-'}
+                                                </p>
+                                                <p
+                                                    class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                                >
+                                                    {row.phone || '-'}
+                                                </p>
+                                                <div
+                                                    class="mt-2 inline-flex rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                                                >
+                                                    {row.ticket_code || '-'}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="px-3 py-3 text-xs md:text-[11px] leading-relaxed"
+                                            >
+                                                <div
+                                                    class="grid gap-2 rounded-lg border border-border/70 bg-background/80 p-3"
+                                                >
+                                                    <div
+                                                        class="grid grid-cols-2 gap-2"
+                                                    >
+                                                        <div>
+                                                            <p
+                                                                class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                            >
+                                                                Jemput
+                                                            </p>
+                                                            <p
+                                                                class="mt-1 font-medium text-foreground"
+                                                            >
+                                                                {row.pickup_point ||
+                                                                    '-'}
+                                                            </p>
+                                                        </div>
+                                                        <div>
+                                                            <p
+                                                                class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                            >
+                                                                Segment
+                                                            </p>
+                                                            <p
+                                                                class="mt-1 font-medium text-foreground"
+                                                            >
+                                                                {row.segment_name ||
+                                                                    '-'}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    {#if row.gmaps}
+                                                        <p
+                                                            class="max-w-[280px] truncate text-muted-foreground"
+                                                        >
+                                                            <span
+                                                                class="font-medium text-foreground"
+                                                                >Gmaps:</span
+                                                            >
+                                                            {row.gmaps}
+                                                        </p>
+                                                    {/if}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="px-2 py-3 text-xs md:text-[11px] leading-relaxed"
+                                            >
+                                                <div
+                                                    class="min-w-40 rounded-xl border border-border/70 bg-background/80 p-2"
+                                                >
+                                                    <div
+                                                        class="flex items-center justify-between gap-2"
+                                                    >
+                                                        <span
+                                                            class="text-muted-foreground"
+                                                            >Harga</span
+                                                        >
+                                                        <span
+                                                            class="font-medium text-foreground"
+                                                            >Rp {Number(
+                                                                row.price || 0,
+                                                            ).toLocaleString(
+                                                                'id-ID',
+                                                            )}</span
+                                                        >
+                                                    </div>
+                                                    <div
+                                                        class="mt-0.5 flex items-center justify-between gap-2"
+                                                    >
+                                                        <span
+                                                            class="text-muted-foreground"
+                                                            >Diskon</span
+                                                        >
+                                                        <span
+                                                            class="font-medium text-foreground"
+                                                            >Rp {Number(
+                                                                row.discount ||
+                                                                    0,
+                                                            ).toLocaleString(
+                                                                'id-ID',
+                                                            )}</span
+                                                        >
+                                                    </div>
+                                                    <div
+                                                        class="mt-1 flex items-center justify-between gap-2 rounded-lg bg-cyan-50 px-2 py-1 dark:bg-cyan-950/25"
+                                                    >
+                                                        <span
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
+                                                            >Total</span
+                                                        >
+                                                        <span
+                                                            class="text-xs font-semibold text-foreground"
+                                                            >Rp {Math.max(
+                                                                Number(
+                                                                    row.price ||
+                                                                        0,
+                                                                ) -
+                                                                    Number(
+                                                                        row.discount ||
+                                                                            0,
+                                                                    ),
+                                                                0,
+                                                            ).toLocaleString(
+                                                                'id-ID',
+                                                            )}</span
+                                                        >
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-3 py-3">
+                                                <div
+                                                    class="flex flex-col items-start gap-1"
+                                                >
+                                                    <Badge
+                                                        variant={statusVariant(
+                                                            row.status,
+                                                        )}
+                                                        class="rounded-full px-2 py-0 text-xs md:text-[10px]"
+                                                        >{row.status}</Badge
+                                                    >
+                                                    <Badge
+                                                        variant={paymentVariant(
+                                                            row.pembayaran,
+                                                        )}
+                                                        class="rounded-full px-2 py-0 text-xs md:text-[10px]"
+                                                        >{row.pembayaran}</Badge
+                                                    >
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div></ViewportOnly
+                    >
                 {/if}
             </div>
         {:else}
@@ -10141,29 +10353,43 @@
                 <div class="flex flex-wrap items-center justify-between gap-3">
                     <div class="space-y-1">
                         <div class="flex flex-wrap items-center gap-2.5">
-                            <CardTitle class="text-lg font-bold tracking-tight text-foreground md:text-xl">
-                                {listOnly ? 'Data Keberangkatan' : 'Keberangkatan Terbaru'}
+                            <CardTitle
+                                class="text-lg font-bold tracking-tight text-foreground md:text-xl"
+                            >
+                                {listOnly
+                                    ? 'Data Keberangkatan'
+                                    : 'Keberangkatan Terbaru'}
                             </CardTitle>
                             {#if listOnly}
-                                <span class="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-foreground">
-                                    <CalendarDays class="h-3.5 w-3.5 text-primary" />
+                                <span
+                                    class="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-foreground"
+                                >
+                                    <CalendarDays
+                                        class="h-3.5 w-3.5 text-primary"
+                                    />
                                     {formatGroupDateLabel(bookingListDateFrom)}
                                 </span>
                             {/if}
                         </div>
                         {#if listOnly}
-                            <div class="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-muted-foreground">
+                            <div
+                                class="flex flex-wrap items-center gap-2 pt-0.5 text-xs text-muted-foreground"
+                            >
                                 <span class="font-medium text-foreground">
                                     {bookingListSummary.schedules} jadwal
                                 </span>
                                 <span>•</span>
                                 <span class="font-medium text-foreground">
-                                    {bookingListSummary.activePassengers} penumpang aktif
+                                    {bookingListSummary.activePassengers} penumpang
+                                    aktif
                                 </span>
                                 {#if bookingListSummary.unpaidSchedules > 0}
                                     <span>•</span>
-                                    <span class="inline-flex items-center rounded-md border border-amber-300/80 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-200">
-                                        {bookingListSummary.unpaidSchedules} jadwal belum lunas
+                                    <span
+                                        class="inline-flex items-center rounded-md border border-amber-300/80 bg-amber-50 px-2 py-0.5 text-xs md:text-[11px] font-semibold text-amber-800 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-200"
+                                    >
+                                        {bookingListSummary.unpaidSchedules} jadwal
+                                        belum lunas
                                     </span>
                                 {/if}
                             </div>
@@ -10173,40 +10399,49 @@
                     {#if listOnly}
                         <div class="flex flex-wrap items-center gap-2">
                             <!-- View mode switcher -->
-                            <div class="hidden items-center rounded-lg border border-border bg-muted/40 p-0.5 lg:inline-flex">
-                                <button
-                                    type="button"
-                                    class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                                        bookingListDesktopView === 'sheet'
-                                            ? 'bg-background text-foreground shadow-xs font-semibold'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                    onclick={() => setBookingListDesktopView('sheet')}
+                            <ViewportOnly minWidth={1024}
+                                ><div
+                                    class="hidden items-center rounded-lg border border-border bg-muted/40 p-0.5 lg:inline-flex"
                                 >
-                                    <Rows3 class="h-3.5 w-3.5" />
-                                    Tabel
-                                </button>
-                                <button
-                                    type="button"
-                                    class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
-                                        bookingListDesktopView === 'cards'
-                                            ? 'bg-background text-foreground shadow-xs font-semibold'
-                                            : 'text-muted-foreground hover:text-foreground'
-                                    }`}
-                                    onclick={() => setBookingListDesktopView('cards')}
-                                >
-                                    <LayoutGrid class="h-3.5 w-3.5" />
-                                    Kartu
-                                </button>
-                            </div>
+                                    <button
+                                        type="button"
+                                        class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                                            bookingListDesktopView === 'sheet'
+                                                ? 'bg-background text-foreground shadow-xs font-semibold'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                        onclick={() =>
+                                            setBookingListDesktopView('sheet')}
+                                    >
+                                        <Rows3 class="h-3.5 w-3.5" />
+                                        Tabel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
+                                            bookingListDesktopView === 'cards'
+                                                ? 'bg-background text-foreground shadow-xs font-semibold'
+                                                : 'text-muted-foreground hover:text-foreground'
+                                        }`}
+                                        onclick={() =>
+                                            setBookingListDesktopView('cards')}
+                                    >
+                                        <LayoutGrid class="h-3.5 w-3.5" />
+                                        Kartu
+                                    </button>
+                                </div></ViewportOnly
+                            >
 
                             <!-- Tambah Jadwal Button -->
                             <Button
                                 type="button"
                                 size="sm"
-                                variant={emptyDepartureOpen ? 'secondary' : 'default'}
+                                variant={emptyDepartureOpen
+                                    ? 'secondary'
+                                    : 'default'}
                                 class="h-8 gap-1.5 rounded-lg px-3 text-xs font-medium"
-                                disabled={!emptyDepartureOpen && tenantWriteDisabled}
+                                disabled={!emptyDepartureOpen &&
+                                    tenantWriteDisabled}
                                 onclick={() => void openEmptyDepartureForm()}
                             >
                                 {#if emptyDepartureOpen}
@@ -10222,14 +10457,17 @@
                 </div>
                 {#if !listOnly}
                     <CardDescription>
-                        Preview data keberangkatan terbaru dari tabel `bookings`.
+                        Preview data keberangkatan terbaru dari tabel
+                        `bookings`.
                     </CardDescription>
                 {/if}
             </CardHeader>
             <CardContent class="p-3 sm:p-4 md:p-5">
                 {#if listOnly}
                     <div class="mb-4 space-y-3">
-                        <div class="rounded-xl border border-border/80 bg-muted/20 p-2.5 sm:p-3">
+                        <div
+                            class="rounded-xl border border-border/80 bg-muted/20 p-2.5 sm:p-3"
+                        >
                             <ResponsiveFilterBar
                                 label="Keberangkatan"
                                 activeCount={bookingListFilterActiveCount}
@@ -10240,46 +10478,78 @@
                                 onCancel={beginBookingListFilterDraft}
                             >
                                 {#snippet primary()}
-                                    <div class="flex items-center gap-2 md:hidden">
-                                        <span class="text-xs font-medium text-muted-foreground">
-                                            Filter:
-                                        </span>
-                                        <span class="truncate text-xs font-semibold text-foreground">
-                                            {bookingListFilterSummary}
-                                        </span>
-                                    </div>
+                                    <ViewportOnly minWidth={0} maxWidth={767}
+                                        ><div
+                                            class="flex items-center gap-2 md:hidden"
+                                        >
+                                            <span
+                                                class="text-xs font-medium text-muted-foreground"
+                                            >
+                                                Filter:
+                                            </span>
+                                            <span
+                                                class="truncate text-xs font-semibold text-foreground"
+                                            >
+                                                {bookingListFilterSummary}
+                                            </span>
+                                        </div></ViewportOnly
+                                    >
                                 {/snippet}
                                 {#snippet desktop()}
-                                    <div class="grid gap-2.5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]">
-                                        <select
-                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                            bind:value={bookingListRoute}
-                                            aria-label="Filter berdasarkan rute"
+                                    <div
+                                        class="grid gap-2.5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                                    >
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Filter berdasarkan rute</span
+                                            ><select
+                                                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                bind:value={bookingListRoute}
+                                                aria-label="Filter berdasarkan rute"
+                                            >
+                                                <option value="all"
+                                                    >Semua Rute</option
+                                                >
+                                                {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
+                                                    <option value={route}
+                                                        >{route}</option
+                                                    >
+                                                {/each}
+                                            </select></label
                                         >
-                                            <option value="all">Semua Rute</option>
-                                            {#each bookingListRoutes() as route, index (`booking-route-filter-${index}-${route}`)}
-                                                <option value={route}>{route}</option>
-                                            {/each}
-                                        </select>
-                                        <input
-                                            bind:this={bookingListDateInput}
-                                            aria-label="Tanggal keberangkatan"
-                                            type="text"
-                                            value={bookingListDateFrom}
-                                            readonly
-                                            autocomplete="off"
-                                            placeholder="Pilih tanggal"
-                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                        />
-                                        <select
-                                            class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                                            bind:value={bookingListPayment}
-                                            aria-label="Status pembayaran"
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Tanggal keberangkatan</span
+                                            ><input
+                                                bind:this={bookingListDateInput}
+                                                aria-label="Tanggal keberangkatan"
+                                                type="text"
+                                                value={bookingListDateFrom}
+                                                readonly
+                                                autocomplete="off"
+                                                placeholder="Pilih tanggal"
+                                                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                            /></label
                                         >
-                                            <option value="all">Semua Pembayaran</option>
-                                            <option value="lunas">Lunas Semua</option>
-                                            <option value="belum_lunas">Masih Belum Lunas</option>
-                                        </select>
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Status pembayaran</span
+                                            ><select
+                                                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                bind:value={bookingListPayment}
+                                                aria-label="Status pembayaran"
+                                            >
+                                                <option value="all"
+                                                    >Semua Pembayaran</option
+                                                >
+                                                <option value="lunas"
+                                                    >Lunas Semua</option
+                                                >
+                                                <option value="belum_lunas"
+                                                    >Masih Belum Lunas</option
+                                                >
+                                            </select></label
+                                        >
                                         <Button
                                             type="button"
                                             size="sm"
@@ -10293,31 +10563,51 @@
                                 {/snippet}
                                 {#snippet filters()}
                                     <div class="grid gap-3">
-                                        <label class="grid gap-1.5 text-xs font-medium">
+                                        <label
+                                            class="grid gap-1.5 text-xs font-medium"
+                                        >
                                             Rute
                                             <select
                                                 class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
-                                                bind:value={bookingListFilterDraft.route}
+                                                bind:value={
+                                                    bookingListFilterDraft.route
+                                                }
                                             >
-                                                <option value="all">Semua Rute</option>
+                                                <option value="all"
+                                                    >Semua Rute</option
+                                                >
                                                 {#each bookingListRoutes() as route, index (`mobile-booking-route-filter-${index}-${route}`)}
-                                                    <option value={route}>{route}</option>
+                                                    <option value={route}
+                                                        >{route}</option
+                                                    >
                                                 {/each}
                                             </select>
                                         </label>
                                         <FilterDateInput
                                             label="Tanggal"
-                                            bind:value={bookingListFilterDraft.date}
+                                            bind:value={
+                                                bookingListFilterDraft.date
+                                            }
                                         />
-                                        <label class="grid gap-1.5 text-xs font-medium">
+                                        <label
+                                            class="grid gap-1.5 text-xs font-medium"
+                                        >
                                             Pembayaran
                                             <select
                                                 class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
-                                                bind:value={bookingListFilterDraft.payment}
+                                                bind:value={
+                                                    bookingListFilterDraft.payment
+                                                }
                                             >
-                                                <option value="all">Semua Pembayaran</option>
-                                                <option value="lunas">Lunas Semua</option>
-                                                <option value="belum_lunas">Masih Belum Lunas</option>
+                                                <option value="all"
+                                                    >Semua Pembayaran</option
+                                                >
+                                                <option value="lunas"
+                                                    >Lunas Semua</option
+                                                >
+                                                <option value="belum_lunas"
+                                                    >Masih Belum Lunas</option
+                                                >
                                             </select>
                                         </label>
                                     </div>
@@ -10325,77 +10615,137 @@
                             </ResponsiveFilterBar>
                         </div>
                         {#if emptyDepartureOpen}
-                            <div class="rounded-xl border border-border bg-card p-4 shadow-xs">
-                                <div class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5">
+                            <div
+                                class="rounded-xl border border-border bg-card p-4 shadow-xs"
+                            >
+                                <div
+                                    class="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-border/60 pb-2.5"
+                                >
                                     <div>
-                                        <h4 class="text-xs font-bold uppercase tracking-wider text-foreground">
+                                        <h4
+                                            class="text-xs font-bold uppercase tracking-wider text-foreground"
+                                        >
                                             Tambah Jadwal Keberangkatan Kosong
                                         </h4>
-                                        <p class="text-[11px] text-muted-foreground">
-                                            Membuat slot keberangkatan kosong sesuai data jadwal rute induk.
+                                        <p
+                                            class="text-xs md:text-[11px] text-muted-foreground"
+                                        >
+                                            Membuat slot keberangkatan kosong
+                                            sesuai data jadwal rute induk.
                                         </p>
                                     </div>
                                     {#if emptyDepartureSchedule()}
-                                        <Badge variant="secondary" class="rounded-md font-mono text-[11px]">
-                                            BOP {formatCurrency(Number(emptyDepartureSchedule()?.bop || 0))}
+                                        <Badge
+                                            variant="secondary"
+                                            class="rounded-md font-mono text-xs md:text-[11px]"
+                                        >
+                                            BOP {formatCurrency(
+                                                Number(
+                                                    emptyDepartureSchedule()
+                                                        ?.bop || 0,
+                                                ),
+                                            )}
                                         </Badge>
                                     {/if}
                                 </div>
                                 <div class="grid gap-2.5 md:grid-cols-5">
                                     <div class="space-y-1">
-                                        <label class="text-[11px] font-medium text-muted-foreground">Tanggal</label>
+                                        <label
+                                            for="emptyDepartureDate"
+                                            class="text-sm font-medium text-muted-foreground"
+                                            >Tanggal</label
+                                        >
                                         <input
+                                            id="emptyDepartureDate"
                                             type="date"
                                             bind:value={emptyDepartureDate}
-                                            onchange={() => void onEmptyDepartureDateChange()}
+                                            onchange={() =>
+                                                void onEmptyDepartureDateChange()}
                                             class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                         />
                                     </div>
                                     <div class="space-y-1 md:col-span-2">
-                                        <label class="text-[11px] font-medium text-muted-foreground">Rute</label>
+                                        <label
+                                            for="emptyDepartureRoute"
+                                            class="text-sm font-medium text-muted-foreground"
+                                            >Rute</label
+                                        >
                                         <select
+                                            id="emptyDepartureRoute"
                                             class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             bind:value={emptyDepartureRoute}
-                                            onchange={() => void onEmptyDepartureRouteChange()}
+                                            onchange={() =>
+                                                void onEmptyDepartureRouteChange()}
                                             disabled={loadingEmptyDepartureRoutes}
                                         >
-                                            <option value="">{loadingEmptyDepartureRoutes ? 'Memuat rute...' : 'Pilih rute'}</option>
+                                            <option value=""
+                                                >{loadingEmptyDepartureRoutes
+                                                    ? 'Memuat rute...'
+                                                    : 'Pilih rute'}</option
+                                            >
                                             {#each emptyDepartureRoutes as route, index (`empty-departure-route-${index}-${route}`)}
-                                                <option value={route}>{route}</option>
+                                                <option value={route}
+                                                    >{route}</option
+                                                >
                                             {/each}
                                         </select>
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-[11px] font-medium text-muted-foreground">Jam Berangkat</label>
+                                        <label
+                                            for="emptyDepartureJam"
+                                            class="text-sm font-medium text-muted-foreground"
+                                            >Jam Berangkat</label
+                                        >
                                         <select
+                                            id="emptyDepartureJam"
                                             class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             bind:value={emptyDepartureJam}
-                                            disabled={!emptyDepartureRoute || loadingEmptyDepartureSchedules}
+                                            disabled={!emptyDepartureRoute ||
+                                                loadingEmptyDepartureSchedules}
                                         >
-                                            <option value="">{loadingEmptyDepartureSchedules ? 'Memuat jam...' : 'Pilih jam'}</option>
+                                            <option value=""
+                                                >{loadingEmptyDepartureSchedules
+                                                    ? 'Memuat jam...'
+                                                    : 'Pilih jam'}</option
+                                            >
                                             {#each emptyDepartureSchedules as schedule, index (`empty-departure-schedule-${index}-${schedule.jam}`)}
                                                 <option value={schedule.jam}>
-                                                    {schedule.jam} {schedule.bop ? `(BOP ${formatCurrency(Number(schedule.bop))})` : ''}
+                                                    {schedule.jam}
+                                                    {schedule.bop
+                                                        ? `(BOP ${formatCurrency(Number(schedule.bop))})`
+                                                        : ''}
                                                 </option>
                                             {/each}
                                         </select>
                                     </div>
                                     <div class="space-y-1">
-                                        <label class="text-[11px] font-medium text-muted-foreground">Slot Unit</label>
+                                        <label
+                                            for="emptyDepartureUnit"
+                                            class="text-sm font-medium text-muted-foreground"
+                                            >Slot Unit</label
+                                        >
                                         <select
+                                            id="emptyDepartureUnit"
                                             class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                             bind:value={emptyDepartureUnit}
                                             disabled={!emptyDepartureJam}
                                         >
                                             {#each emptyDepartureUnitOptions() as option, index (`empty-departure-unit-${index}-${option.value}`)}
-                                                <option value={option.value}>{option.label}</option>
+                                                <option value={option.value}
+                                                    >{option.label}</option
+                                                >
                                             {/each}
                                         </select>
                                     </div>
                                 </div>
-                                <div class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3">
-                                    <p class="text-[11px] text-muted-foreground">
-                                        Slot keberangkatan akan muncul di daftar Data Keberangkatan.
+                                <div
+                                    class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/50 pt-3"
+                                >
+                                    <p
+                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                    >
+                                        Slot keberangkatan akan muncul di daftar
+                                        Data Keberangkatan.
                                     </p>
                                     <div class="flex items-center gap-2">
                                         <Button
@@ -10403,7 +10753,8 @@
                                             size="sm"
                                             variant="ghost"
                                             class="h-8 rounded-lg px-3 text-xs"
-                                            onclick={() => (emptyDepartureOpen = false)}
+                                            onclick={() =>
+                                                (emptyDepartureOpen = false)}
                                         >
                                             Batal
                                         </Button>
@@ -10411,10 +10762,14 @@
                                             type="button"
                                             size="sm"
                                             class="h-8 rounded-lg px-4 text-xs font-medium"
-                                            onclick={() => void saveEmptyDeparture()}
+                                            onclick={() =>
+                                                void saveEmptyDeparture()}
                                             loading={savingEmptyDeparture}
                                             loadingText="Menyimpan..."
-                                            disabled={savingEmptyDeparture || tenantWriteDisabled || !emptyDepartureRoute || !emptyDepartureJam}
+                                            disabled={savingEmptyDeparture ||
+                                                tenantWriteDisabled ||
+                                                !emptyDepartureRoute ||
+                                                !emptyDepartureJam}
                                         >
                                             Simpan Jadwal
                                         </LoadingButton>
@@ -10498,361 +10853,531 @@
                     {:else}
                         <div class="space-y-4">
                             {#if bookingListDesktopView === 'sheet'}
-                                <div class="hidden space-y-4 lg:block">
-                                    {#each bookingDateSectionsMemo as section, index (`booking-date-section-${index}-${section.key}`)}
-                                        <section
-                                            class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
-                                        >
-                                            <div
-                                                class="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-3 py-2.5"
+                                <ViewportOnly minWidth={1024}
+                                    ><div class="hidden space-y-4 lg:block">
+                                        {#each bookingDateSectionsMemo as section, index (`booking-date-section-${index}-${section.key}`)}
+                                            <section
+                                                class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                                             >
-                                                <div class="space-y-0.5">
-                                                    <h3
-                                                        class="text-sm font-semibold text-foreground"
-                                                    >
-                                                        {section.label}
-                                                    </h3>
-                                                    <p
-                                                        class="text-[10px] leading-snug text-muted-foreground"
-                                                    >
-                                                        {section.totalSchedules}
-                                                        keberangkatan aktif di hari
-                                                        ini.
-                                                    </p>
-                                                </div>
                                                 <div
-                                                    class="flex flex-wrap items-center gap-1 text-[10px]"
+                                                    class="flex flex-wrap items-center justify-between gap-2 border-b border-border/60 bg-muted/20 px-3 py-2.5"
                                                 >
-                                                    <span
-                                                        class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
+                                                    <div class="space-y-0.5">
+                                                        <h3
+                                                            class="text-sm font-semibold text-foreground"
+                                                        >
+                                                            {section.label}
+                                                        </h3>
+                                                        <p
+                                                            class="text-xs md:text-[10px] leading-snug text-muted-foreground"
+                                                        >
+                                                            {section.totalSchedules}
+                                                            keberangkatan aktif di
+                                                            hari ini.
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        class="flex flex-wrap items-center gap-1 text-xs md:text-[10px]"
                                                     >
-                                                        {section.totalPassengers}
-                                                        penumpang aktif
-                                                    </span>
-                                                    <span
-                                                        class="rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
-                                                    >
-                                                        {section.totalUnpaid}
-                                                        belum lunas
-                                                    </span>
-                                                    <span
-                                                        class="rounded-md border border-amber-200/80 bg-background px-1.5 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:text-amber-200"
-                                                    >
-                                                        {formatCurrency(
-                                                            section.unpaidAmount,
-                                                        )}
-                                                    </span>
+                                                        <span
+                                                            class="rounded-md border border-border/70 bg-background px-1.5 py-0.5 font-medium text-muted-foreground"
+                                                        >
+                                                            {section.totalPassengers}
+                                                            penumpang aktif
+                                                        </span>
+                                                        <span
+                                                            class="rounded-md border border-amber-200/80 bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:bg-amber-950/20 dark:text-amber-200"
+                                                        >
+                                                            {section.totalUnpaid}
+                                                            belum lunas
+                                                        </span>
+                                                        <span
+                                                            class="rounded-md border border-amber-200/80 bg-background px-1.5 py-0.5 font-medium text-amber-700 dark:border-amber-500/30 dark:text-amber-200"
+                                                        >
+                                                            {formatCurrency(
+                                                                section.unpaidAmount,
+                                                            )}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
 
-                                            <div class="table-container">
-                                                <table
-                                                    class="min-w-full text-left text-xs"
-                                                >
-                                                    <thead
-                                                        class="sticky top-0 z-10 border-b border-border/70 bg-muted/40 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur"
+                                                <div class="table-container">
+                                                    <table
+                                                        class="min-w-full text-left text-xs"
                                                     >
-                                                        <tr>
-                                                            <th class="w-32 px-3.5 py-2.5">
-                                                                Jam & Slot
-                                                            </th>
-                                                            <th class="min-w-[200px] px-3.5 py-2.5">
-                                                                Rute & Kode
-                                                            </th>
-                                                            <th class="min-w-[180px] px-3.5 py-2.5">
-                                                                Driver & Armada
-                                                            </th>
-                                                            <th class="w-36 px-3.5 py-2.5">
-                                                                Penumpang
-                                                            </th>
-                                                            <th class="min-w-[210px] px-3.5 py-2.5">
-                                                                Status Pembayaran
-                                                            </th>
-                                                            <th class="w-44 px-3.5 py-2.5 text-right">
-                                                                Aksi
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody class="divide-y divide-border/60 text-xs">
-                                                        {#each section.groups as group, index (`section-group-${index}-${group.key}`)}
-                                                            {@const unpaidAmount =
-                                                                bookingGroupUnpaidAmount(
-                                                                    group,
-                                                                )}
-                                                            {@const driverMissing =
-                                                                bookingAssignmentMissing(
-                                                                    group.driver_name,
-                                                                )}
-                                                            {@const armadaMissing =
-                                                                bookingAssignmentMissing(
-                                                                    group.armada_nopol,
-                                                                )}
-                                                            <tr
-                                                                class={`align-top transition-colors hover:bg-muted/30 ${isCanceledDeparture(group) ? 'bg-rose-50/40 dark:bg-rose-950/15' : ''}`}
-                                                            >
-                                                                <td class="px-3.5 py-2.5">
-                                                                    <div class="space-y-1">
-                                                                        <div class="inline-flex items-center gap-1.5 font-bold text-foreground tabular-nums text-sm">
-                                                                            <Clock3 class="h-3.5 w-3.5 text-primary shrink-0" />
-                                                                            {formatGroupTimeLabel(group.jam)}
-                                                                        </div>
-                                                                        <div class="flex flex-wrap items-center gap-1">
-                                                                            <Badge variant="outline" class="rounded px-1.5 py-0 text-[10px] font-medium border-border/80 bg-background text-muted-foreground">
-                                                                                Slot {group.unit}
-                                                                            </Badge>
-                                                                            {#if isCanceledDeparture(group)}
-                                                                                <Badge variant="destructive" class="rounded px-1.5 py-0 text-[10px]">
-                                                                                    Batal
-                                                                                </Badge>
-                                                                            {:else if isDepartedDeparture(group)}
-                                                                                <Badge variant="outline" class="rounded border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200">
-                                                                                    Berangkat
-                                                                                </Badge>
-                                                                            {:else if isArrivedDeparture(group)}
-                                                                                <Badge variant="outline" class="rounded border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200">
-                                                                                    Tiba
-                                                                                </Badge>
-                                                                            {:else if isManifestClosed(group)}
-                                                                                <Badge variant="outline" class="rounded border-slate-300 bg-slate-50 px-1.5 py-0 text-[10px] font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
-                                                                                    Manifest Close
-                                                                                </Badge>
-                                                                            {/if}
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td class="px-3.5 py-2.5">
-                                                                    <div class="space-y-0.5">
-                                                                        <span class="font-mono text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-                                                                            {group.departure_code}
-                                                                        </span>
-                                                                        <p class="font-semibold text-foreground text-xs leading-snug">
-                                                                            {group.rute}
-                                                                        </p>
-                                                                    </div>
-                                                                </td>
-                                                                <td class="px-3.5 py-2.5">
-                                                                    <div class="space-y-1 text-xs">
-                                                                        <div class="flex items-center gap-1.5">
-                                                                            <UserRound class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                                                            <span class={driverMissing ? 'font-medium text-amber-600 dark:text-amber-300' : 'text-foreground font-medium'}>
-                                                                                {bookingAssignmentText(group.driver_name, 'Belum ditugaskan')}
-                                                                            </span>
-                                                                        </div>
-                                                                        <div class="flex items-center gap-1.5">
-                                                                            <CarFront class="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                                                                            <span class={armadaMissing ? 'font-medium text-amber-600 dark:text-amber-300' : 'text-foreground font-medium'}>
-                                                                                {bookingAssignmentText(group.armada_nopol, 'Belum ditugaskan')}
-                                                                            </span>
-                                                                        </div>
-                                                                        {#if !consoleOnly && Number(group.bop || 0) > 0}
-                                                                            <div class="text-[11px] text-muted-foreground">
-                                                                                BOP: <span class="font-medium text-foreground">{formatCurrency(Number(group.bop || 0))}</span>
-                                                                            </div>
-                                                                        {/if}
-                                                                    </div>
-                                                                </td>
-                                                                <td class="px-3.5 py-2.5">
-                                                                    <div class="space-y-0.5">
-                                                                        <div class="flex items-baseline gap-1.5 text-xs">
-                                                                            <span class="font-bold text-foreground text-sm">{group.active}</span>
-                                                                            <span class="text-muted-foreground">/ {group.total} pax</span>
-                                                                        </div>
-                                                                        <div class="flex flex-wrap items-center gap-1 text-[11px]">
-                                                                            {#if canceledGroupCount(group) > 0}
-                                                                                <span class="text-rose-600 dark:text-rose-400 font-medium">
-                                                                                    {canceledGroupCount(group)} cancel
-                                                                                </span>
-                                                                            {:else}
-                                                                                <span class="text-muted-foreground text-[10px]">
-                                                                                    Semua aktif
-                                                                                </span>
-                                                                            {/if}
-                                                                        </div>
-                                                                    </div>
-                                                                </td>
-                                                                <td class="px-3.5 py-2.5">
-                                                                    <div class="space-y-1">
-                                                                        <div class="flex items-center justify-between text-[11px]">
-                                                                            <span class="text-muted-foreground">Lunas ({group.lunas})</span>
-                                                                            <span class="font-medium text-emerald-700 dark:text-emerald-400">{formatCurrency(bookingGroupPaidAmount(group))}</span>
-                                                                        </div>
-                                                                        {#if unpaidAmount > 0}
-                                                                            <div class="flex items-center justify-between text-[11px] rounded bg-amber-50 dark:bg-amber-950/20 px-1.5 py-0.5 border border-amber-200/80 dark:border-amber-500/25">
-                                                                                <span class="font-medium text-amber-700 dark:text-amber-300">Belum ({group.belum_lunas})</span>
-                                                                                <span class="font-semibold text-amber-700 dark:text-amber-300">{formatCurrency(unpaidAmount)}</span>
-                                                                            </div>
-                                                                        {:else}
-                                                                            <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
-                                                                                ✓ Lunas Penuh
-                                                                            </div>
-                                                                        {/if}
-                                                                    </div>
-                                                                </td>
-                                                                <td class="px-3.5 py-2.5">
-                                                                    <div class="flex items-center justify-end gap-1.5">
-                                                                        <Button
-                                                                            type="button"
-                                                                            size="sm"
-                                                                            variant="outline"
-                                                                            class="h-7 rounded-md px-2.5 text-xs font-medium"
-                                                                            onclick={() => navigateToGroupDetail(group)}
+                                                        <thead
+                                                            class="sticky top-0 z-10 border-b border-border/70 bg-muted/40 text-left text-xs md:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur"
+                                                        >
+                                                            <tr>
+                                                                <th
+                                                                    class="w-32 px-3.5 py-2.5"
+                                                                >
+                                                                    Jam & Slot
+                                                                </th>
+                                                                <th
+                                                                    class="min-w-[200px] px-3.5 py-2.5"
+                                                                >
+                                                                    Rute & Kode
+                                                                </th>
+                                                                <th
+                                                                    class="min-w-[180px] px-3.5 py-2.5"
+                                                                >
+                                                                    Driver &
+                                                                    Armada
+                                                                </th>
+                                                                <th
+                                                                    class="w-36 px-3.5 py-2.5"
+                                                                >
+                                                                    Penumpang
+                                                                </th>
+                                                                <th
+                                                                    class="min-w-[210px] px-3.5 py-2.5"
+                                                                >
+                                                                    Status
+                                                                    Pembayaran
+                                                                </th>
+                                                                <th
+                                                                    class="w-44 px-3.5 py-2.5 text-right"
+                                                                >
+                                                                    Aksi
+                                                                </th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody
+                                                            class="divide-y divide-border/60 text-xs"
+                                                        >
+                                                            {#each section.groups as group, index (`section-group-${index}-${group.key}`)}
+                                                                {@const unpaidAmount =
+                                                                    bookingGroupUnpaidAmount(
+                                                                        group,
+                                                                    )}
+                                                                {@const driverMissing =
+                                                                    bookingAssignmentMissing(
+                                                                        group.driver_name,
+                                                                    )}
+                                                                {@const armadaMissing =
+                                                                    bookingAssignmentMissing(
+                                                                        group.armada_nopol,
+                                                                    )}
+                                                                <tr
+                                                                    class={`align-top transition-colors hover:bg-muted/30 ${isCanceledDeparture(group) ? 'bg-rose-50/40 dark:bg-rose-950/15' : ''}`}
+                                                                >
+                                                                    <td
+                                                                        class="px-3.5 py-2.5"
+                                                                    >
+                                                                        <div
+                                                                            class="space-y-1"
                                                                         >
-                                                                            Detail
-                                                                        </Button>
-                                                                        {#if canMarkDepartureDeparted(group)}
-                                                                            <Button
-                                                                                type="button"
-                                                                                size="sm"
-                                                                                class="h-7 rounded-md bg-amber-600 hover:bg-amber-700 text-white px-2 text-xs"
-                                                                                onclick={() => void markDepartureDeparted(group)}
-                                                                                disabled={cancelingDepartureKey === group.key}
+                                                                            <div
+                                                                                class="inline-flex items-center gap-1.5 font-bold text-foreground tabular-nums text-sm"
                                                                             >
-                                                                                {cancelingDepartureKey === group.key ? '...' : 'Berangkat'}
-                                                                            </Button>
-                                                                        {:else if canMarkDepartureArrived(group)}
-                                                                            <Button
-                                                                                type="button"
-                                                                                size="sm"
-                                                                                class="h-7 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-2 text-xs"
-                                                                                onclick={() => void markDepartureArrived(group)}
-                                                                                disabled={cancelingDepartureKey === group.key}
-                                                                            >
-                                                                                {cancelingDepartureKey === group.key ? '...' : 'Tiba'}
-                                                                            </Button>
-                                                                        {/if}
-                                                                        <DropdownMenu>
-                                                                            <DropdownMenuTrigger
-                                                                                asChild
-                                                                            >
-                                                                                {#snippet children(
-                                                                                    props,
+                                                                                <Clock3
+                                                                                    class="h-3.5 w-3.5 text-primary shrink-0"
+                                                                                />
+                                                                                {formatGroupTimeLabel(
+                                                                                    group.jam,
                                                                                 )}
-                                                                                    <Button
-                                                                                        type="button"
-                                                                                        size="icon"
-                                                                                        variant="ghost"
-                                                                                        class="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground"
-                                                                                        onclick={props.onclick}
-                                                                                        aria-expanded={props[
-                                                                                            'aria-expanded'
-                                                                                        ]}
-                                                                                        data-state={props[
-                                                                                            'data-state'
-                                                                                        ]}
-                                                                                    >
-                                                                                        <MoreHorizontal
-                                                                                            class="h-4 w-4"
-                                                                                        />
-                                                                                    </Button>
-                                                                                {/snippet}
-                                                                            </DropdownMenuTrigger>
-                                                                            <DropdownMenuContent
-                                                                                align="end"
-                                                                                sideOffset={6}
-                                                                                class="z-[120] w-44 text-[11px] shadow-lg"
+                                                                            </div>
+                                                                            <div
+                                                                                class="flex flex-wrap items-center gap-1"
                                                                             >
-                                                                                <DropdownMenuItem
-                                                                                    onclick={() =>
-                                                                                        navigateToGroupDetail(
-                                                                                            group,
-                                                                                        )}
+                                                                                <Badge
+                                                                                    variant="outline"
+                                                                                    class="rounded px-1.5 py-0 text-xs md:text-[10px] font-medium border-border/80 bg-background text-muted-foreground"
                                                                                 >
-                                                                                    Detail
-                                                                                </DropdownMenuItem>
-                                                                                {#if !isManifestLocked(group)}
-                                                                                    <DropdownMenuItem
-                                                                                        onclick={() =>
-                                                                                            void copyBookingGroup(
-                                                                                                group,
-                                                                                            )}
+                                                                                    Slot
+                                                                                    {group.unit}
+                                                                                </Badge>
+                                                                                {#if isCanceledDeparture(group)}
+                                                                                    <Badge
+                                                                                        variant="destructive"
+                                                                                        class="rounded px-1.5 py-0 text-xs md:text-[10px]"
                                                                                     >
-                                                                                        Copy
-                                                                                        Data
-                                                                                    </DropdownMenuItem>
-                                                                                {/if}
-                                                                                <DropdownMenuItem
-                                                                                    onclick={() =>
-                                                                                        openManifestPrint(
-                                                                                            group,
-                                                                                        )}
-                                                                                >
-                                                                                    Print
-                                                                                    Manifest
-                                                                                </DropdownMenuItem>
-                                                                                {#if canMarkDepartureDeparted(group)}
-                                                                                    <DropdownMenuItem
-                                                                                        onclick={() =>
-                                                                                            void markDepartureDeparted(
-                                                                                                group,
-                                                                                            )}
+                                                                                        Batal
+                                                                                    </Badge>
+                                                                                {:else if isDepartedDeparture(group)}
+                                                                                    <Badge
+                                                                                        variant="outline"
+                                                                                        class="rounded border-amber-300 bg-amber-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200"
                                                                                     >
-                                                                                        {cancelingDepartureKey ===
-                                                                                        group.key
-                                                                                            ? 'Memproses...'
-                                                                                            : 'Armada Sudah Berangkat'}
-                                                                                    </DropdownMenuItem>
-                                                                                {/if}
-                                                                                {#if canMarkDepartureArrived(group)}
-                                                                                    <DropdownMenuItem
-                                                                                        onclick={() =>
-                                                                                            void markDepartureArrived(
-                                                                                                group,
-                                                                                            )}
+                                                                                        Berangkat
+                                                                                    </Badge>
+                                                                                {:else if isArrivedDeparture(group)}
+                                                                                    <Badge
+                                                                                        variant="outline"
+                                                                                        class="rounded border-emerald-300 bg-emerald-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200"
                                                                                     >
-                                                                                        {cancelingDepartureKey ===
-                                                                                        group.key
-                                                                                            ? 'Memproses...'
-                                                                                            : 'Armada Sudah Tiba'}
-                                                                                    </DropdownMenuItem>
-                                                                                {/if}
-                                                                                {#if isArrivedDeparture(group) && !isManifestLocked(group)}
-                                                                                    <DropdownMenuItem
-                                                                                        class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
-                                                                                        onclick={() =>
-                                                                                            void closeManifest(
-                                                                                                group,
-                                                                                            )}
+                                                                                        Tiba
+                                                                                    </Badge>
+                                                                                {:else if isManifestClosed(group)}
+                                                                                    <Badge
+                                                                                        variant="outline"
+                                                                                        class="rounded border-slate-300 bg-slate-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
                                                                                     >
+                                                                                        Manifest
                                                                                         Close
+                                                                                    </Badge>
+                                                                                {/if}
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-3.5 py-2.5"
+                                                                    >
+                                                                        <div
+                                                                            class="space-y-0.5"
+                                                                        >
+                                                                            <span
+                                                                                class="font-mono text-xs md:text-[10px] uppercase font-semibold text-muted-foreground tracking-wider"
+                                                                            >
+                                                                                {group.departure_code}
+                                                                            </span>
+                                                                            <p
+                                                                                class="font-semibold text-foreground text-xs leading-snug"
+                                                                            >
+                                                                                {group.rute}
+                                                                            </p>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-3.5 py-2.5"
+                                                                    >
+                                                                        <div
+                                                                            class="space-y-1 text-xs"
+                                                                        >
+                                                                            <div
+                                                                                class="flex items-center gap-1.5"
+                                                                            >
+                                                                                <UserRound
+                                                                                    class="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                                                                />
+                                                                                <span
+                                                                                    class={driverMissing
+                                                                                        ? 'font-medium text-amber-600 dark:text-amber-300'
+                                                                                        : 'text-foreground font-medium'}
+                                                                                >
+                                                                                    {bookingAssignmentText(
+                                                                                        group.driver_name,
+                                                                                        'Belum ditugaskan',
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
+                                                                            <div
+                                                                                class="flex items-center gap-1.5"
+                                                                            >
+                                                                                <CarFront
+                                                                                    class="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                                                                                />
+                                                                                <span
+                                                                                    class={armadaMissing
+                                                                                        ? 'font-medium text-amber-600 dark:text-amber-300'
+                                                                                        : 'text-foreground font-medium'}
+                                                                                >
+                                                                                    {bookingAssignmentText(
+                                                                                        group.armada_nopol,
+                                                                                        'Belum ditugaskan',
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
+                                                                            {#if !consoleOnly && Number(group.bop || 0) > 0}
+                                                                                <div
+                                                                                    class="text-xs md:text-[11px] text-muted-foreground"
+                                                                                >
+                                                                                    BOP:
+                                                                                    <span
+                                                                                        class="font-medium text-foreground"
+                                                                                        >{formatCurrency(
+                                                                                            Number(
+                                                                                                group.bop ||
+                                                                                                    0,
+                                                                                            ),
+                                                                                        )}</span
+                                                                                    >
+                                                                                </div>
+                                                                            {/if}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-3.5 py-2.5"
+                                                                    >
+                                                                        <div
+                                                                            class="space-y-0.5"
+                                                                        >
+                                                                            <div
+                                                                                class="flex items-baseline gap-1.5 text-xs"
+                                                                            >
+                                                                                <span
+                                                                                    class="font-bold text-foreground text-sm"
+                                                                                    >{group.active}</span
+                                                                                >
+                                                                                <span
+                                                                                    class="text-muted-foreground"
+                                                                                    >/
+                                                                                    {group.total}
+                                                                                    pax</span
+                                                                                >
+                                                                            </div>
+                                                                            <div
+                                                                                class="flex flex-wrap items-center gap-1 text-xs md:text-[11px]"
+                                                                            >
+                                                                                {#if canceledGroupCount(group) > 0}
+                                                                                    <span
+                                                                                        class="text-rose-600 dark:text-rose-400 font-medium"
+                                                                                    >
+                                                                                        {canceledGroupCount(
+                                                                                            group,
+                                                                                        )}
+                                                                                        cancel
+                                                                                    </span>
+                                                                                {:else}
+                                                                                    <span
+                                                                                        class="text-muted-foreground text-xs md:text-[10px]"
+                                                                                    >
+                                                                                        Semua
+                                                                                        aktif
+                                                                                    </span>
+                                                                                {/if}
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-3.5 py-2.5"
+                                                                    >
+                                                                        <div
+                                                                            class="space-y-1"
+                                                                        >
+                                                                            <div
+                                                                                class="flex items-center justify-between text-xs md:text-[11px]"
+                                                                            >
+                                                                                <span
+                                                                                    class="text-muted-foreground"
+                                                                                    >Lunas
+                                                                                    ({group.lunas})</span
+                                                                                >
+                                                                                <span
+                                                                                    class="font-medium text-emerald-700 dark:text-emerald-400"
+                                                                                    >{formatCurrency(
+                                                                                        bookingGroupPaidAmount(
+                                                                                            group,
+                                                                                        ),
+                                                                                    )}</span
+                                                                                >
+                                                                            </div>
+                                                                            {#if unpaidAmount > 0}
+                                                                                <div
+                                                                                    class="flex items-center justify-between text-xs md:text-[11px] rounded bg-amber-50 dark:bg-amber-950/20 px-1.5 py-0.5 border border-amber-200/80 dark:border-amber-500/25"
+                                                                                >
+                                                                                    <span
+                                                                                        class="font-medium text-amber-700 dark:text-amber-300"
+                                                                                        >Belum
+                                                                                        ({group.belum_lunas})</span
+                                                                                    >
+                                                                                    <span
+                                                                                        class="font-semibold text-amber-700 dark:text-amber-300"
+                                                                                        >{formatCurrency(
+                                                                                            unpaidAmount,
+                                                                                        )}</span
+                                                                                    >
+                                                                                </div>
+                                                                            {:else}
+                                                                                <div
+                                                                                    class="text-xs md:text-[10px] text-emerald-600 dark:text-emerald-400 font-medium"
+                                                                                >
+                                                                                    ✓
+                                                                                    Lunas
+                                                                                    Penuh
+                                                                                </div>
+                                                                            {/if}
+                                                                        </div>
+                                                                    </td>
+                                                                    <td
+                                                                        class="px-3.5 py-2.5"
+                                                                    >
+                                                                        <div
+                                                                            class="flex items-center justify-end gap-1.5"
+                                                                        >
+                                                                            <Button
+                                                                                type="button"
+                                                                                size="sm"
+                                                                                variant="outline"
+                                                                                class="h-7 rounded-md px-2.5 text-xs font-medium"
+                                                                                onclick={() =>
+                                                                                    navigateToGroupDetail(
+                                                                                        group,
+                                                                                    )}
+                                                                            >
+                                                                                Detail
+                                                                            </Button>
+                                                                            {#if canMarkDepartureDeparted(group)}
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    class="h-7 rounded-md bg-amber-600 hover:bg-amber-700 text-white px-2 text-xs"
+                                                                                    onclick={() =>
+                                                                                        void markDepartureDeparted(
+                                                                                            group,
+                                                                                        )}
+                                                                                    disabled={cancelingDepartureKey ===
+                                                                                        group.key}
+                                                                                >
+                                                                                    {cancelingDepartureKey ===
+                                                                                    group.key
+                                                                                        ? '...'
+                                                                                        : 'Berangkat'}
+                                                                                </Button>
+                                                                            {:else if canMarkDepartureArrived(group)}
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    size="sm"
+                                                                                    class="h-7 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-2 text-xs"
+                                                                                    onclick={() =>
+                                                                                        void markDepartureArrived(
+                                                                                            group,
+                                                                                        )}
+                                                                                    disabled={cancelingDepartureKey ===
+                                                                                        group.key}
+                                                                                >
+                                                                                    {cancelingDepartureKey ===
+                                                                                    group.key
+                                                                                        ? '...'
+                                                                                        : 'Tiba'}
+                                                                                </Button>
+                                                                            {/if}
+                                                                            <DropdownMenu
+                                                                            >
+                                                                                <DropdownMenuTrigger
+                                                                                    asChild
+                                                                                >
+                                                                                    {#snippet children(
+                                                                                        props,
+                                                                                    )}
+                                                                                        <Button
+                                                                                            type="button"
+                                                                                            size="icon"
+                                                                                            variant="ghost"
+                                                                                            class="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground"
+                                                                                            onclick={props.onclick}
+                                                                                            aria-expanded={props[
+                                                                                                'aria-expanded'
+                                                                                            ]}
+                                                                                            data-state={props[
+                                                                                                'data-state'
+                                                                                            ]}
+                                                                                        >
+                                                                                            <MoreHorizontal
+                                                                                                class="h-4 w-4"
+                                                                                            />
+                                                                                        </Button>
+                                                                                    {/snippet}
+                                                                                </DropdownMenuTrigger>
+                                                                                <DropdownMenuContent
+                                                                                    align="end"
+                                                                                    sideOffset={6}
+                                                                                    class="z-[120] w-44 text-xs md:text-[11px] shadow-lg"
+                                                                                >
+                                                                                    <DropdownMenuItem
+                                                                                        onclick={() =>
+                                                                                            navigateToGroupDetail(
+                                                                                                group,
+                                                                                            )}
+                                                                                    >
+                                                                                        Detail
+                                                                                    </DropdownMenuItem>
+                                                                                    {#if !isManifestLocked(group)}
+                                                                                        <DropdownMenuItem
+                                                                                            onclick={() =>
+                                                                                                void copyBookingGroup(
+                                                                                                    group,
+                                                                                                )}
+                                                                                        >
+                                                                                            Copy
+                                                                                            Data
+                                                                                        </DropdownMenuItem>
+                                                                                    {/if}
+                                                                                    <DropdownMenuItem
+                                                                                        onclick={() =>
+                                                                                            openManifestPrint(
+                                                                                                group,
+                                                                                            )}
+                                                                                    >
+                                                                                        Print
                                                                                         Manifest
                                                                                     </DropdownMenuItem>
-                                                                                {/if}
-                                                                                {#if !isManifestLocked(group) && !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
-                                                                                    <DropdownMenuItem
-                                                                                        onclick={() =>
-                                                                                            void cancelDeparture(
-                                                                                                group,
-                                                                                            )}
-                                                                                    >
-                                                                                        {cancelingDepartureKey ===
-                                                                                        group.key
-                                                                                            ? 'Membatalkan...'
-                                                                                            : 'Batalkan Jadwal'}
-                                                                                    </DropdownMenuItem>
-                                                                                {/if}
-                                                                                {#if !isManifestLocked(group) && !isCanceledDeparture(group) && group.belum_lunas > 0}
-                                                                                    <DropdownMenuItem
-                                                                                        onclick={() =>
-                                                                                            void markBookingGroupAsPaid(
-                                                                                                group,
-                                                                                            )}
-                                                                                    >
-                                                                                        Lunas
-                                                                                        Semua
-                                                                                    </DropdownMenuItem>
-                                                                                {/if}
-                                                                            </DropdownMenuContent>
-                                                                        </DropdownMenu>
-                                                                    </div>
-                                                                </td>
-                                                            </tr>
-                                                        {/each}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </section>
-                                    {/each}
-                                </div>
+                                                                                    {#if canMarkDepartureDeparted(group)}
+                                                                                        <DropdownMenuItem
+                                                                                            onclick={() =>
+                                                                                                void markDepartureDeparted(
+                                                                                                    group,
+                                                                                                )}
+                                                                                        >
+                                                                                            {cancelingDepartureKey ===
+                                                                                            group.key
+                                                                                                ? 'Memproses...'
+                                                                                                : 'Armada Sudah Berangkat'}
+                                                                                        </DropdownMenuItem>
+                                                                                    {/if}
+                                                                                    {#if canMarkDepartureArrived(group)}
+                                                                                        <DropdownMenuItem
+                                                                                            onclick={() =>
+                                                                                                void markDepartureArrived(
+                                                                                                    group,
+                                                                                                )}
+                                                                                        >
+                                                                                            {cancelingDepartureKey ===
+                                                                                            group.key
+                                                                                                ? 'Memproses...'
+                                                                                                : 'Armada Sudah Tiba'}
+                                                                                        </DropdownMenuItem>
+                                                                                    {/if}
+                                                                                    {#if isArrivedDeparture(group) && !isManifestLocked(group)}
+                                                                                        <DropdownMenuItem
+                                                                                            class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
+                                                                                            onclick={() =>
+                                                                                                void closeManifest(
+                                                                                                    group,
+                                                                                                )}
+                                                                                        >
+                                                                                            Close
+                                                                                            Manifest
+                                                                                        </DropdownMenuItem>
+                                                                                    {/if}
+                                                                                    {#if !isManifestLocked(group) && !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
+                                                                                        <DropdownMenuItem
+                                                                                            onclick={() =>
+                                                                                                void cancelDeparture(
+                                                                                                    group,
+                                                                                                )}
+                                                                                        >
+                                                                                            {cancelingDepartureKey ===
+                                                                                            group.key
+                                                                                                ? 'Membatalkan...'
+                                                                                                : 'Batalkan Jadwal'}
+                                                                                        </DropdownMenuItem>
+                                                                                    {/if}
+                                                                                    {#if !isManifestLocked(group) && !isCanceledDeparture(group) && group.belum_lunas > 0}
+                                                                                        <DropdownMenuItem
+                                                                                            onclick={() =>
+                                                                                                void markBookingGroupAsPaid(
+                                                                                                    group,
+                                                                                                )}
+                                                                                        >
+                                                                                            Lunas
+                                                                                            Semua
+                                                                                        </DropdownMenuItem>
+                                                                                    {/if}
+                                                                                </DropdownMenuContent>
+                                                                            </DropdownMenu>
+                                                                        </div>
+                                                                    </td>
+                                                                </tr>
+                                                            {/each}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </section>
+                                        {/each}
+                                    </div></ViewportOnly
+                                >
                             {/if}
 
                             <div
@@ -10867,39 +11392,75 @@
                                         class={`group relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:shadow-sm ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/40 dark:border-rose-500/30 dark:bg-rose-950/15' : ''}`}
                                     >
                                         <!-- Top Row: Time, Unit, Badges, Menu -->
-                                        <div class="flex items-start justify-between gap-2 border-b border-border/60 pb-3">
+                                        <div
+                                            class="flex items-start justify-between gap-2 border-b border-border/60 pb-3"
+                                        >
                                             <div class="space-y-1">
-                                                <div class="flex items-center gap-2">
-                                                    <span class="inline-flex items-center gap-1.5 font-bold text-foreground text-base tabular-nums">
-                                                        <Clock3 class="h-4 w-4 text-primary" />
-                                                        {formatGroupTimeLabel(group.jam)}
+                                                <div
+                                                    class="flex items-center gap-2"
+                                                >
+                                                    <span
+                                                        class="inline-flex items-center gap-1.5 font-bold text-foreground text-base tabular-nums"
+                                                    >
+                                                        <Clock3
+                                                            class="h-4 w-4 text-primary"
+                                                        />
+                                                        {formatGroupTimeLabel(
+                                                            group.jam,
+                                                        )}
                                                     </span>
-                                                    <Badge variant="outline" class="rounded px-1.5 py-0 text-[10px] font-medium border-border/80 bg-background text-muted-foreground">
+                                                    <Badge
+                                                        variant="outline"
+                                                        class="rounded px-1.5 py-0 text-xs md:text-[10px] font-medium border-border/80 bg-background text-muted-foreground"
+                                                    >
                                                         Slot {group.unit}
                                                     </Badge>
                                                     {#if isCanceledDeparture(group)}
-                                                        <Badge variant="destructive" class="rounded px-1.5 py-0 text-[10px]">
+                                                        <Badge
+                                                            variant="destructive"
+                                                            class="rounded px-1.5 py-0 text-xs md:text-[10px]"
+                                                        >
                                                             Batal
                                                         </Badge>
                                                     {:else if isDepartedDeparture(group)}
-                                                        <Badge variant="outline" class="rounded border-amber-300 bg-amber-50 px-1.5 py-0 text-[10px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200">
+                                                        <Badge
+                                                            variant="outline"
+                                                            class="rounded border-amber-300 bg-amber-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-amber-700 dark:border-amber-500/40 dark:bg-amber-950/25 dark:text-amber-200"
+                                                        >
                                                             Berangkat
                                                         </Badge>
                                                     {:else if isArrivedDeparture(group)}
-                                                        <Badge variant="outline" class="rounded border-emerald-300 bg-emerald-50 px-1.5 py-0 text-[10px] font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200">
+                                                        <Badge
+                                                            variant="outline"
+                                                            class="rounded border-emerald-300 bg-emerald-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-emerald-700 dark:border-emerald-500/40 dark:bg-emerald-950/25 dark:text-emerald-200"
+                                                        >
                                                             Tiba
                                                         </Badge>
                                                     {:else if isManifestClosed(group)}
-                                                        <Badge variant="outline" class="rounded border-slate-300 bg-slate-50 px-1.5 py-0 text-[10px] font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200">
+                                                        <Badge
+                                                            variant="outline"
+                                                            class="rounded border-slate-300 bg-slate-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                                        >
                                                             Manifest Close
                                                         </Badge>
                                                     {/if}
                                                 </div>
-                                                <p class="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
-                                                    <CalendarDays class="h-3.5 w-3.5 shrink-0" />
-                                                    <span>{formatGroupDateLabel(group.tanggal)}</span>
+                                                <p
+                                                    class="inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                                                >
+                                                    <CalendarDays
+                                                        class="h-3.5 w-3.5 shrink-0"
+                                                    />
+                                                    <span
+                                                        >{formatGroupDateLabel(
+                                                            group.tanggal,
+                                                        )}</span
+                                                    >
                                                     <span>•</span>
-                                                    <span class="font-mono text-[11px] uppercase tracking-wider">{group.departure_code}</span>
+                                                    <span
+                                                        class="font-mono text-xs md:text-[11px] uppercase tracking-wider"
+                                                        >{group.departure_code}</span
+                                                    >
                                                 </p>
                                             </div>
 
@@ -10911,531 +11472,6 @@
                                                             size="icon"
                                                             variant="ghost"
                                                             class="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground"
-                                                            onclick={props.onclick}
-                                                            aria-expanded={props['aria-expanded']}
-                                                            data-state={props['data-state']}
-                                                        >
-                                                            <MoreHorizontal class="h-4 w-4" />
-                                                        </Button>
-                                                    {/snippet}
-                                                </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            side="top"
-                                                            sideOffset={6}
-                                                            class="z-[120] w-44 text-[11px] shadow-lg"
-                                                        >
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    navigateToGroupDetail(
-                                                                        group,
-                                                                    )}
-                                                            >
-                                                                Detail
-                                                            </DropdownMenuItem>
-                                                            {#if !isManifestLocked(group)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void copyBookingGroup(
-                                                                            group,
-                                                                        )}
-                                                                >
-                                                                    Copy Data
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    openManifestPrint(
-                                                                        group,
-                                                                    )}
-                                                            >
-                                                                Print Manifest
-                                                            </DropdownMenuItem>
-                                                            {#if canMarkDepartureDeparted(group)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void markDepartureDeparted(
-                                                                            group,
-                                                                        )}
-                                                                >
-                                                                    {cancelingDepartureKey ===
-                                                                    group.key
-                                                                        ? 'Memproses...'
-                                                                        : 'Armada Sudah Berangkat'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canMarkDepartureArrived(group)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void markDepartureArrived(
-                                                                            group,
-                                                                        )}
-                                                                >
-                                                                    {cancelingDepartureKey ===
-                                                                    group.key
-                                                                        ? 'Memproses...'
-                                                                        : 'Armada Sudah Tiba'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if isArrivedDeparture(group) && !isManifestLocked(group)}
-                                                                <DropdownMenuItem
-                                                                    class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
-                                                                    onclick={() =>
-                                                                        void closeManifest(
-                                                                            group,
-                                                                        )}
-                                                                >
-                                                                    Close
-                                                                    Manifest
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if !isManifestLocked(group) && !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void cancelDeparture(
-                                                                            group,
-                                                                        )}
-                                                                >
-                                                                    {cancelingDepartureKey ===
-                                                                    group.key
-                                                                        ? 'Membatalkan...'
-                                                                        : 'Batalkan Jadwal'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if !isManifestLocked(group) && !isCanceledDeparture(group) && group.belum_lunas > 0}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void markBookingGroupAsPaid(
-                                                                            group,
-                                                                        )}
-                                                                >
-                                                                    Lunas Semua
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                        </div>
-
-                                        <!-- Route -->
-                                        <div class="my-3">
-                                            <p class="font-semibold text-foreground text-sm leading-snug line-clamp-2">
-                                                {group.rute}
-                                            </p>
-                                        </div>
-
-                                        <!-- Crew & Armada Assignment -->
-                                        <div class="space-y-1.5 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-xs">
-                                            <div class="flex items-center justify-between gap-2">
-                                                <span class="inline-flex items-center gap-1.5 text-muted-foreground">
-                                                    <UserRound class="h-3.5 w-3.5 shrink-0" />
-                                                    Driver
-                                                </span>
-                                                <span class={`font-medium truncate ${bookingAssignmentMissing(group.driver_name) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}>
-                                                    {bookingAssignmentText(group.driver_name, 'Belum ditugaskan')}
-                                                </span>
-                                            </div>
-                                            <div class="flex items-center justify-between gap-2">
-                                                <span class="inline-flex items-center gap-1.5 text-muted-foreground">
-                                                    <CarFront class="h-3.5 w-3.5 shrink-0" />
-                                                    Armada
-                                                </span>
-                                                <span class={`font-medium truncate ${bookingAssignmentMissing(group.armada_nopol) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}>
-                                                    {bookingAssignmentText(group.armada_nopol, 'Belum ditugaskan')}
-                                                </span>
-                                            </div>
-                                            {#if !consoleOnly && Number(group.bop || 0) > 0}
-                                                <div class="flex items-center justify-between gap-2 pt-1 border-t border-border/40 text-[11px]">
-                                                    <span class="text-muted-foreground">BOP Operasional</span>
-                                                    <span class="font-medium text-foreground">{formatCurrency(Number(group.bop || 0))}</span>
-                                                </div>
-                                            {/if}
-                                        </div>
-
-                                        <!-- Passenger & Payment Metrics -->
-                                        <div class="my-3 space-y-2">
-                                            <div class="flex items-center justify-between text-xs">
-                                                <span class="text-muted-foreground">Penumpang</span>
-                                                <div class="flex items-center gap-2">
-                                                    <span class="font-semibold text-foreground">{group.active} / {group.total} pax</span>
-                                                    {#if canceledGroupCount(group) > 0}
-                                                        <span class="text-rose-600 dark:text-rose-400 font-medium text-[11px]">({canceledGroupCount(group)} batal)</span>
-                                                    {/if}
-                                                </div>
-                                            </div>
-
-                                            {#if unpaidAmount > 0}
-                                                <div class="flex items-center justify-between rounded-md border border-amber-200/80 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-800 dark:border-amber-500/25 dark:bg-amber-950/20 dark:text-amber-200">
-                                                    <span>Belum Lunas ({group.belum_lunas} pax)</span>
-                                                    <span class="font-semibold tabular-nums">{formatCurrency(unpaidAmount)}</span>
-                                                </div>
-                                            {:else}
-                                                <div class="flex items-center justify-between rounded-md border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-950/20 dark:text-emerald-200">
-                                                    <span>Semua Lunas ({group.lunas} pax)</span>
-                                                    <span class="font-semibold tabular-nums">{formatCurrency(bookingGroupPaidAmount(group))}</span>
-                                                </div>
-                                            {/if}
-                                        </div>
-
-                                        <!-- Footer Actions -->
-                                        <div class="flex items-center gap-2 pt-2 border-t border-border/60">
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                class="flex-1 text-xs h-8 font-medium"
-                                                onclick={() => navigateToGroupDetail(group)}
-                                            >
-                                                Buka Detail
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                size="icon"
-                                                variant="outline"
-                                                class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                                                onclick={() => openManifestPrint(group)}
-                                                title="Print Manifest"
-                                            >
-                                                <Printer class="h-3.5 w-3.5" />
-                                            </Button>
-                                            {#if canMarkDepartureDeparted(group)}
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    class="h-8 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white shrink-0 font-medium"
-                                                    onclick={() => void markDepartureDeparted(group)}
-                                                    disabled={cancelingDepartureKey === group.key}
-                                                >
-                                                    {cancelingDepartureKey === group.key ? '...' : 'Berangkat'}
-                                                </Button>
-                                            {:else if canMarkDepartureArrived(group)}
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    class="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 font-medium"
-                                                    onclick={() => void markDepartureArrived(group)}
-                                                    disabled={cancelingDepartureKey === group.key}
-                                                >
-                                                    {cancelingDepartureKey === group.key ? '...' : 'Tiba'}
-                                                </Button>
-                                            {/if}
-                                        </div>
-                                    </div>
-                                {/each}
-                            </div>
-                        </div>
-                        {#if remainingBookingGroupsCount > 0}
-                            <div class="mt-4 flex justify-center">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    class="rounded-full px-4 text-xs"
-                                    onclick={() =>
-                                        (bookingListVisibleCount +=
-                                            BOOKING_LIST_PAGE_SIZE)}
-                                >
-                                    Tampilkan {Math.min(
-                                        BOOKING_LIST_PAGE_SIZE,
-                                        remainingBookingGroupsCount,
-                                    )}
-                                    jadwal lagi
-                                </Button>
-                            </div>
-                        {/if}
-                    {/if}
-                {:else if localLatestBookings.length === 0}
-                    <p class="text-sm text-muted-foreground">
-                        Belum ada data keberangkatan. Jalankan proses
-                        import/migrasi data lama untuk melihat isi tabel.
-                    </p>
-                {:else}
-                    <div class="space-y-2.5 md:hidden">
-                        {#each localLatestBookings as booking, index (`latest-mobile-${index}-${booking.id}`)}
-                            <div
-                                class="group relative overflow-hidden rounded-lg border border-border/70 bg-card/95 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-safe:transition-all hover:shadow-md hover:shadow-cyan-900/10 active:scale-[0.99]"
-                            >
-                                <div
-                                    class="pointer-events-none absolute inset-x-0 top-0 h-16 bg-linear-to-r from-cyan-500/10 via-sky-500/8 to-transparent opacity-90 transition-opacity duration-300 group-hover:opacity-100"
-                                ></div>
-                                <div class="relative p-3.5">
-                                    <div
-                                        class="mb-3 flex items-start justify-between gap-2"
-                                    >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground"
-                                            >
-                                                <UserRound
-                                                    class="h-3.5 w-3.5 text-primary"
-                                                />
-                                                <span class="truncate"
-                                                    >{booking.name}</span
-                                                >
-                                            </p>
-                                            <p
-                                                class="mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground"
-                                            >
-                                                <Phone class="h-3.5 w-3.5" />
-                                                {booking.phone}
-                                            </p>
-                                            <p
-                                                class="mt-1 text-[11px] text-muted-foreground"
-                                            >
-                                                {booking.ticket_code || '-'} • {booking.departure_code ||
-                                                    '-'}
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="flex flex-col items-end gap-1"
-                                        >
-                                            <Badge
-                                                variant={statusVariant(
-                                                    booking.status,
-                                                )}
-                                                class="rounded-full px-2.5 py-0.5 text-[11px]"
-                                            >
-                                                {booking.status}
-                                            </Badge>
-                                            <Badge
-                                                variant={paymentVariant(
-                                                    booking.pembayaran,
-                                                )}
-                                                class="rounded-full px-2.5 py-0.5 text-[11px]"
-                                            >
-                                                {booking.pembayaran}
-                                            </Badge>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="mb-3 rounded-xl border border-border/60 bg-background/70 p-2.5 transition-colors duration-300 group-hover:bg-background/80"
-                                    >
-                                        <p
-                                            class="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
-                                        >
-                                            <Route class="h-3.5 w-3.5" />
-                                            Rute
-                                        </p>
-                                        <p
-                                            class="mt-1 text-sm font-semibold leading-snug text-foreground"
-                                        >
-                                            {booking.rute}
-                                        </p>
-                                    </div>
-
-                                    <div class="grid grid-cols-3 gap-2 text-xs">
-                                        <div
-                                            class="rounded-lg border border-border/60 bg-muted/40 px-2 py-1.5 transition-colors duration-300 group-hover:bg-muted/55"
-                                        >
-                                            <p
-                                                class="text-[10px] uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Tanggal
-                                            </p>
-                                            <p
-                                                class="mt-0.5 inline-flex items-center gap-1 font-semibold text-foreground"
-                                            >
-                                                <CalendarDays class="h-3 w-3" />
-                                                {booking.tanggal}
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="rounded-lg border border-border/60 bg-muted/40 px-2 py-1.5 transition-colors duration-300 group-hover:bg-muted/55"
-                                        >
-                                            <p
-                                                class="text-[10px] uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Jam
-                                            </p>
-                                            <p
-                                                class="mt-0.5 inline-flex items-center gap-1 font-semibold text-foreground"
-                                            >
-                                                <Clock3 class="h-3 w-3" />
-                                                {booking.jam}
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="rounded-lg border border-border/60 bg-muted/40 px-2 py-1.5 transition-colors duration-300 group-hover:bg-muted/55"
-                                        >
-                                            <p
-                                                class="text-[10px] uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Unit
-                                            </p>
-                                            <p
-                                                class="mt-0.5 inline-flex items-center gap-1 font-semibold text-foreground"
-                                            >
-                                                <BusFront class="h-3 w-3" />
-                                                {booking.unit}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div class="mt-3 flex items-center gap-2">
-                                        <Badge
-                                            variant="secondary"
-                                            class="rounded-full px-2.5 py-0.5 text-[11px]"
-                                        >
-                                            <Armchair
-                                                class="mr-1 h-3.5 w-3.5"
-                                            />
-                                            Seat {booking.seat}
-                                        </Badge>
-                                    </div>
-
-                                    <div
-                                        class="mt-3 flex flex-wrap items-center gap-2"
-                                    >
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                {#snippet children(props)}
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        class="h-8 rounded-lg text-xs"
-                                                        onclick={props.onclick}
-                                                        aria-expanded={props[
-                                                            'aria-expanded'
-                                                        ]}
-                                                        data-state={props[
-                                                            'data-state'
-                                                        ]}
-                                                    >
-                                                        <Printer
-                                                            class="mr-1 h-3.5 w-3.5"
-                                                        />
-                                                        Print
-                                                    </Button>
-                                                {/snippet}
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="start"
-                                                class="w-40"
-                                            >
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        openTicketPrint(
-                                                            booking.id,
-                                                        )}
-                                                >
-                                                    Print Tiket
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        openTicketPdf(
-                                                            booking.id,
-                                                        )}
-                                                >
-                                                    Buka PDF
-                                                </DropdownMenuItem>
-                                                {#if booking.group_key}
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            openManifestPrintByKey(
-                                                                booking.group_key ||
-                                                                    '',
-                                                            )}
-                                                    >
-                                                        Print Manifest
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            openManifestPdfByKey(
-                                                                booking.group_key ||
-                                                                    '',
-                                                            )}
-                                                    >
-                                                        Buka PDF Manifest
-                                                    </DropdownMenuItem>
-                                                {/if}
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </div>
-                            </div>
-                        {/each}
-                    </div>
-                    <div class="hidden overflow-x-auto md:block">
-                        <table class="w-full min-w-[840px] text-sm">
-                            <thead>
-                                <tr
-                                    class="border-b text-left text-muted-foreground"
-                                >
-                                    <th class="px-2 py-2 font-medium">Kode</th>
-                                    <th class="px-2 py-2 font-medium">Nama</th>
-                                    <th class="px-2 py-2 font-medium"
-                                        >Telepon</th
-                                    >
-                                    <th class="px-2 py-2 font-medium">Rute</th>
-                                    <th class="px-2 py-2 font-medium"
-                                        >Tanggal</th
-                                    >
-                                    <th class="px-2 py-2 font-medium">Jam</th>
-                                    <th class="px-2 py-2 font-medium">Slot</th>
-                                    <th class="px-2 py-2 font-medium">Seat</th>
-                                    <th class="px-2 py-2 font-medium">Status</th
-                                    >
-                                    <th class="px-2 py-2 font-medium"
-                                        >Pembayaran</th
-                                    >
-                                    <th class="px-2 py-2 font-medium"
-                                        >Dokumen</th
-                                    >
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {#each localLatestBookings as booking, index (`latest-table-${index}-${booking.id}`)}
-                                    <tr class="border-b/70">
-                                        <td class="px-2 py-2">
-                                            <p class="text-xs font-medium">
-                                                {booking.ticket_code || '-'}
-                                            </p>
-                                            <p
-                                                class="text-[11px] text-muted-foreground"
-                                            >
-                                                {booking.departure_code || '-'}
-                                            </p>
-                                        </td>
-                                        <td class="px-2 py-2 font-medium"
-                                            >{booking.name}</td
-                                        >
-                                        <td class="px-2 py-2"
-                                            >{booking.phone}</td
-                                        >
-                                        <td class="px-2 py-2">{booking.rute}</td
-                                        >
-                                        <td class="px-2 py-2"
-                                            >{booking.tanggal}</td
-                                        >
-                                        <td class="px-2 py-2">{booking.jam}</td>
-                                        <td class="px-2 py-2">{booking.unit}</td
-                                        >
-                                        <td class="px-2 py-2">{booking.seat}</td
-                                        >
-                                        <td class="px-2 py-2">
-                                            <Badge
-                                                variant={statusVariant(
-                                                    booking.status,
-                                                )}>{booking.status}</Badge
-                                            >
-                                        </td>
-                                        <td class="px-2 py-2">
-                                            <Badge
-                                                variant={paymentVariant(
-                                                    booking.pembayaran,
-                                                )}>{booking.pembayaran}</Badge
-                                            >
-                                        </td>
-                                        <td class="px-2 py-2">
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    {#snippet children(props)}
-                                                        <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant="outline"
-                                                            class="h-8 rounded-lg px-2.5"
                                                             onclick={props.onclick}
                                                             aria-expanded={props[
                                                                 'aria-expanded'
@@ -11452,7 +11488,516 @@
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent
                                                     align="end"
-                                                    class="w-44"
+                                                    side="top"
+                                                    sideOffset={6}
+                                                    class="z-[120] w-44 text-xs md:text-[11px] shadow-lg"
+                                                >
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            navigateToGroupDetail(
+                                                                group,
+                                                            )}
+                                                    >
+                                                        Detail
+                                                    </DropdownMenuItem>
+                                                    {#if !isManifestLocked(group)}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void copyBookingGroup(
+                                                                    group,
+                                                                )}
+                                                        >
+                                                            Salin data
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            openManifestPrint(
+                                                                group,
+                                                            )}
+                                                    >
+                                                        Print Manifest
+                                                    </DropdownMenuItem>
+                                                    {#if canMarkDepartureDeparted(group)}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void markDepartureDeparted(
+                                                                    group,
+                                                                )}
+                                                        >
+                                                            {cancelingDepartureKey ===
+                                                            group.key
+                                                                ? 'Memproses...'
+                                                                : 'Armada Sudah Berangkat'}
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if canMarkDepartureArrived(group)}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void markDepartureArrived(
+                                                                    group,
+                                                                )}
+                                                        >
+                                                            {cancelingDepartureKey ===
+                                                            group.key
+                                                                ? 'Memproses...'
+                                                                : 'Armada Sudah Tiba'}
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if isArrivedDeparture(group) && !isManifestLocked(group)}
+                                                        <DropdownMenuItem
+                                                            class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
+                                                            onclick={() =>
+                                                                void closeManifest(
+                                                                    group,
+                                                                )}
+                                                        >
+                                                            Close Manifest
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if !isManifestLocked(group) && !isCanceledDeparture(group) && !isDepartedDeparture(group) && !isArrivedDeparture(group)}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void cancelDeparture(
+                                                                    group,
+                                                                )}
+                                                        >
+                                                            {cancelingDepartureKey ===
+                                                            group.key
+                                                                ? 'Membatalkan...'
+                                                                : 'Batalkan Jadwal'}
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    {#if !isManifestLocked(group) && !isCanceledDeparture(group) && group.belum_lunas > 0}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void markBookingGroupAsPaid(
+                                                                    group,
+                                                                )}
+                                                        >
+                                                            Lunas Semua
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+
+                                        <!-- Route -->
+                                        <div class="my-3">
+                                            <p
+                                                class="font-semibold text-foreground text-sm leading-snug line-clamp-2"
+                                            >
+                                                {group.rute}
+                                            </p>
+                                        </div>
+
+                                        <!-- Crew & Armada Assignment -->
+                                        <div
+                                            class="space-y-1.5 rounded-lg border border-border/60 bg-muted/30 p-2.5 text-xs"
+                                        >
+                                            <div
+                                                class="flex items-center justify-between gap-2"
+                                            >
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 text-muted-foreground"
+                                                >
+                                                    <UserRound
+                                                        class="h-3.5 w-3.5 shrink-0"
+                                                    />
+                                                    Driver
+                                                </span>
+                                                <span
+                                                    class={`font-medium truncate ${bookingAssignmentMissing(group.driver_name) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}
+                                                >
+                                                    {bookingAssignmentText(
+                                                        group.driver_name,
+                                                        'Belum ditugaskan',
+                                                    )}
+                                                </span>
+                                            </div>
+                                            <div
+                                                class="flex items-center justify-between gap-2"
+                                            >
+                                                <span
+                                                    class="inline-flex items-center gap-1.5 text-muted-foreground"
+                                                >
+                                                    <CarFront
+                                                        class="h-3.5 w-3.5 shrink-0"
+                                                    />
+                                                    Armada
+                                                </span>
+                                                <span
+                                                    class={`font-medium truncate ${bookingAssignmentMissing(group.armada_nopol) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}
+                                                >
+                                                    {bookingAssignmentText(
+                                                        group.armada_nopol,
+                                                        'Belum ditugaskan',
+                                                    )}
+                                                </span>
+                                            </div>
+                                            {#if !consoleOnly && Number(group.bop || 0) > 0}
+                                                <div
+                                                    class="flex items-center justify-between gap-2 pt-1 border-t border-border/40 text-xs md:text-[11px]"
+                                                >
+                                                    <span
+                                                        class="text-muted-foreground"
+                                                        >BOP Operasional</span
+                                                    >
+                                                    <span
+                                                        class="font-medium text-foreground"
+                                                        >{formatCurrency(
+                                                            Number(
+                                                                group.bop || 0,
+                                                            ),
+                                                        )}</span
+                                                    >
+                                                </div>
+                                            {/if}
+                                        </div>
+
+                                        <!-- Passenger & Payment Metrics -->
+                                        <div class="my-3 space-y-2">
+                                            <div
+                                                class="flex items-center justify-between text-xs"
+                                            >
+                                                <span
+                                                    class="text-muted-foreground"
+                                                    >Penumpang</span
+                                                >
+                                                <div
+                                                    class="flex items-center gap-2"
+                                                >
+                                                    <span
+                                                        class="font-semibold text-foreground"
+                                                        >{group.active} / {group.total}
+                                                        pax</span
+                                                    >
+                                                    {#if canceledGroupCount(group) > 0}
+                                                        <span
+                                                            class="text-rose-600 dark:text-rose-400 font-medium text-xs md:text-[11px]"
+                                                            >({canceledGroupCount(
+                                                                group,
+                                                            )} batal)</span
+                                                        >
+                                                    {/if}
+                                                </div>
+                                            </div>
+
+                                            {#if unpaidAmount > 0}
+                                                <div
+                                                    class="flex items-center justify-between rounded-md border border-amber-200/80 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-800 dark:border-amber-500/25 dark:bg-amber-950/20 dark:text-amber-200"
+                                                >
+                                                    <span
+                                                        >Belum Lunas ({group.belum_lunas}
+                                                        pax)</span
+                                                    >
+                                                    <span
+                                                        class="font-semibold tabular-nums"
+                                                        >{formatCurrency(
+                                                            unpaidAmount,
+                                                        )}</span
+                                                    >
+                                                </div>
+                                            {:else}
+                                                <div
+                                                    class="flex items-center justify-between rounded-md border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-950/20 dark:text-emerald-200"
+                                                >
+                                                    <span
+                                                        >Semua Lunas ({group.lunas}
+                                                        pax)</span
+                                                    >
+                                                    <span
+                                                        class="font-semibold tabular-nums"
+                                                        >{formatCurrency(
+                                                            bookingGroupPaidAmount(
+                                                                group,
+                                                            ),
+                                                        )}</span
+                                                    >
+                                                </div>
+                                            {/if}
+                                        </div>
+
+                                        <!-- Footer Actions -->
+                                        <div
+                                            class="flex items-center gap-2 pt-2 border-t border-border/60"
+                                        >
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                class="flex-1 text-xs h-8 font-medium"
+                                                onclick={() =>
+                                                    navigateToGroupDetail(
+                                                        group,
+                                                    )}
+                                            >
+                                                Buka Detail
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                size="icon"
+                                                variant="outline"
+                                                class="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                                                onclick={() =>
+                                                    openManifestPrint(group)}
+                                                title="Print Manifest"
+                                            >
+                                                <Printer class="h-3.5 w-3.5" />
+                                            </Button>
+                                            {#if canMarkDepartureDeparted(group)}
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    class="h-8 px-3 text-xs bg-amber-600 hover:bg-amber-700 text-white shrink-0 font-medium"
+                                                    onclick={() =>
+                                                        void markDepartureDeparted(
+                                                            group,
+                                                        )}
+                                                    disabled={cancelingDepartureKey ===
+                                                        group.key}
+                                                >
+                                                    {cancelingDepartureKey ===
+                                                    group.key
+                                                        ? '...'
+                                                        : 'Berangkat'}
+                                                </Button>
+                                            {:else if canMarkDepartureArrived(group)}
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    class="h-8 px-3 text-xs bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 font-medium"
+                                                    onclick={() =>
+                                                        void markDepartureArrived(
+                                                            group,
+                                                        )}
+                                                    disabled={cancelingDepartureKey ===
+                                                        group.key}
+                                                >
+                                                    {cancelingDepartureKey ===
+                                                    group.key
+                                                        ? '...'
+                                                        : 'Tiba'}
+                                                </Button>
+                                            {/if}
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div>
+                        </div>
+                        <nav
+                            class="mobile-pagination mt-4 flex flex-wrap items-center justify-between gap-3"
+                            aria-label="Halaman keberangkatan"
+                        >
+                            <p class="text-sm text-muted-foreground">
+                                {bookingPagination.total} keberangkatan · Halaman
+                                {bookingPagination.page} dari {bookingPagination.last_page}
+                            </p>
+                            <div
+                                class:mobile-pagination={true}
+                                class="flex gap-2"
+                            >
+                                <Button
+                                    variant="outline"
+                                    disabled={bookingListLoading ||
+                                        bookingPagination.page <= 1}
+                                    onclick={() =>
+                                        requestBookingPage(
+                                            bookingPagination.page - 1,
+                                        )}>Sebelumnya</Button
+                                >
+                                <Button
+                                    variant="outline"
+                                    disabled={bookingListLoading ||
+                                        bookingPagination.page >=
+                                            bookingPagination.last_page}
+                                    onclick={() =>
+                                        requestBookingPage(
+                                            bookingPagination.page + 1,
+                                        )}>Berikutnya</Button
+                                >
+                            </div>
+                        </nav>
+                    {/if}
+                {:else if localLatestBookings.length === 0}
+                    <p class="text-sm text-muted-foreground">
+                        Belum ada data keberangkatan. Jalankan proses
+                        import/migrasi data lama untuk melihat isi tabel.
+                    </p>
+                {:else}
+                    <ViewportOnly minWidth={0} maxWidth={767}
+                        ><div class="space-y-2.5 md:hidden">
+                            {#each localLatestBookings as booking, index (`latest-mobile-${index}-${booking.id}`)}
+                                <div
+                                    class="group relative overflow-hidden rounded-lg border border-border/70 bg-card/95 shadow-sm motion-safe:animate-in motion-safe:fade-in motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-safe:transition-all hover:shadow-md hover:shadow-cyan-900/10 active:scale-[0.99]"
+                                >
+                                    <div
+                                        class="pointer-events-none absolute inset-x-0 top-0 h-16 bg-linear-to-r from-cyan-500/10 via-sky-500/8 to-transparent opacity-90 transition-opacity duration-300 group-hover:opacity-100"
+                                    ></div>
+                                    <div class="relative p-3.5">
+                                        <div
+                                            class="mb-3 flex items-start justify-between gap-2"
+                                        >
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground"
+                                                >
+                                                    <UserRound
+                                                        class="h-3.5 w-3.5 text-primary"
+                                                    />
+                                                    <span class="truncate"
+                                                        >{booking.name}</span
+                                                    >
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 inline-flex items-center gap-1.5 text-xs text-muted-foreground"
+                                                >
+                                                    <Phone
+                                                        class="h-3.5 w-3.5"
+                                                    />
+                                                    {booking.phone}
+                                                </p>
+                                                <p
+                                                    class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                                >
+                                                    {booking.ticket_code || '-'} •
+                                                    {booking.departure_code ||
+                                                        '-'}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="flex flex-col items-end gap-1"
+                                            >
+                                                <Badge
+                                                    variant={statusVariant(
+                                                        booking.status,
+                                                    )}
+                                                    class="rounded-full px-2.5 py-0.5 text-xs md:text-[11px]"
+                                                >
+                                                    {booking.status}
+                                                </Badge>
+                                                <Badge
+                                                    variant={paymentVariant(
+                                                        booking.pembayaran,
+                                                    )}
+                                                    class="rounded-full px-2.5 py-0.5 text-xs md:text-[11px]"
+                                                >
+                                                    {booking.pembayaran}
+                                                </Badge>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="mb-3 rounded-xl border border-border/60 bg-background/70 p-2.5 transition-colors duration-300 group-hover:bg-background/80"
+                                        >
+                                            <p
+                                                class="inline-flex items-center gap-1.5 text-xs md:text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
+                                            >
+                                                <Route class="h-3.5 w-3.5" />
+                                                Rute
+                                            </p>
+                                            <p
+                                                class="mt-1 text-sm font-semibold leading-snug text-foreground"
+                                            >
+                                                {booking.rute}
+                                            </p>
+                                        </div>
+
+                                        <div
+                                            class="grid grid-cols-3 gap-2 text-xs"
+                                        >
+                                            <div
+                                                class="rounded-lg border border-border/60 bg-muted/40 px-2 py-1.5 transition-colors duration-300 group-hover:bg-muted/55"
+                                            >
+                                                <p
+                                                    class="text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Tanggal
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 inline-flex items-center gap-1 font-semibold text-foreground"
+                                                >
+                                                    <CalendarDays
+                                                        class="h-3 w-3"
+                                                    />
+                                                    {booking.tanggal}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-lg border border-border/60 bg-muted/40 px-2 py-1.5 transition-colors duration-300 group-hover:bg-muted/55"
+                                            >
+                                                <p
+                                                    class="text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Jam
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 inline-flex items-center gap-1 font-semibold text-foreground"
+                                                >
+                                                    <Clock3 class="h-3 w-3" />
+                                                    {booking.jam}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-lg border border-border/60 bg-muted/40 px-2 py-1.5 transition-colors duration-300 group-hover:bg-muted/55"
+                                            >
+                                                <p
+                                                    class="text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Unit
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 inline-flex items-center gap-1 font-semibold text-foreground"
+                                                >
+                                                    <BusFront class="h-3 w-3" />
+                                                    {booking.unit}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="mt-3 flex items-center gap-2"
+                                        >
+                                            <Badge
+                                                variant="secondary"
+                                                class="rounded-full px-2.5 py-0.5 text-xs md:text-[11px]"
+                                            >
+                                                <Armchair
+                                                    class="mr-1 h-3.5 w-3.5"
+                                                />
+                                                Seat {booking.seat}
+                                            </Badge>
+                                        </div>
+
+                                        <div
+                                            class="mt-3 flex flex-wrap items-center gap-2"
+                                        >
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    {#snippet children(props)}
+                                                        <Button
+                                                            type="button"
+                                                            size="sm"
+                                                            variant="outline"
+                                                            class="h-8 rounded-lg text-xs"
+                                                            onclick={props.onclick}
+                                                            aria-expanded={props[
+                                                                'aria-expanded'
+                                                            ]}
+                                                            data-state={props[
+                                                                'data-state'
+                                                            ]}
+                                                        >
+                                                            <Printer
+                                                                class="mr-1 h-3.5 w-3.5"
+                                                            />
+                                                            Print
+                                                        </Button>
+                                                    {/snippet}
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="start"
+                                                    class="w-40"
                                                 >
                                                     <DropdownMenuItem
                                                         onclick={() =>
@@ -11468,7 +12013,7 @@
                                                                 booking.id,
                                                             )}
                                                     >
-                                                        Buka PDF Tiket
+                                                        Buka PDF
                                                     </DropdownMenuItem>
                                                     {#if booking.group_key}
                                                         <DropdownMenuItem
@@ -11492,12 +12037,181 @@
                                                     {/if}
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
-                                        </td>
+                                        </div>
+                                    </div>
+                                </div>
+                            {/each}
+                        </div></ViewportOnly
+                    >
+                    <ViewportOnly minWidth={768}
+                        ><div class="hidden overflow-x-auto md:block">
+                            <table class="w-full min-w-[840px] text-sm">
+                                <thead>
+                                    <tr
+                                        class="border-b text-left text-muted-foreground"
+                                    >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Kode</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Nama</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Telepon</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Rute</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Tanggal</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Jam</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Slot</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Seat</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Status</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Pembayaran</th
+                                        >
+                                        <th class="px-2 py-2 font-medium"
+                                            >Dokumen</th
+                                        >
                                     </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {#each localLatestBookings as booking, index (`latest-table-${index}-${booking.id}`)}
+                                        <tr class="border-b/70">
+                                            <td class="px-2 py-2">
+                                                <p class="text-xs font-medium">
+                                                    {booking.ticket_code || '-'}
+                                                </p>
+                                                <p
+                                                    class="text-xs md:text-[11px] text-muted-foreground"
+                                                >
+                                                    {booking.departure_code ||
+                                                        '-'}
+                                                </p>
+                                            </td>
+                                            <td class="px-2 py-2 font-medium"
+                                                >{booking.name}</td
+                                            >
+                                            <td class="px-2 py-2"
+                                                >{booking.phone}</td
+                                            >
+                                            <td class="px-2 py-2"
+                                                >{booking.rute}</td
+                                            >
+                                            <td class="px-2 py-2"
+                                                >{booking.tanggal}</td
+                                            >
+                                            <td class="px-2 py-2"
+                                                >{booking.jam}</td
+                                            >
+                                            <td class="px-2 py-2"
+                                                >{booking.unit}</td
+                                            >
+                                            <td class="px-2 py-2"
+                                                >{booking.seat}</td
+                                            >
+                                            <td class="px-2 py-2">
+                                                <Badge
+                                                    variant={statusVariant(
+                                                        booking.status,
+                                                    )}>{booking.status}</Badge
+                                                >
+                                            </td>
+                                            <td class="px-2 py-2">
+                                                <Badge
+                                                    variant={paymentVariant(
+                                                        booking.pembayaran,
+                                                    )}
+                                                    >{booking.pembayaran}</Badge
+                                                >
+                                            </td>
+                                            <td class="px-2 py-2">
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
+                                                        {#snippet children(
+                                                            props,
+                                                        )}
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                class="h-8 rounded-lg px-2.5"
+                                                                onclick={props.onclick}
+                                                                aria-expanded={props[
+                                                                    'aria-expanded'
+                                                                ]}
+                                                                data-state={props[
+                                                                    'data-state'
+                                                                ]}
+                                                            >
+                                                                <MoreHorizontal
+                                                                    class="h-4 w-4"
+                                                                />
+                                                            </Button>
+                                                        {/snippet}
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent
+                                                        align="end"
+                                                        class="w-44"
+                                                    >
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                openTicketPrint(
+                                                                    booking.id,
+                                                                )}
+                                                        >
+                                                            Print Tiket
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                openTicketPdf(
+                                                                    booking.id,
+                                                                )}
+                                                        >
+                                                            Buka PDF Tiket
+                                                        </DropdownMenuItem>
+                                                        {#if booking.group_key}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openManifestPrintByKey(
+                                                                        booking.group_key ||
+                                                                            '',
+                                                                    )}
+                                                            >
+                                                                Print Manifest
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openManifestPdfByKey(
+                                                                        booking.group_key ||
+                                                                            '',
+                                                                    )}
+                                                            >
+                                                                Buka PDF
+                                                                Manifest
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div></ViewportOnly
+                    >
                 {/if}
             </CardContent>
         </Card>

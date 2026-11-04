@@ -216,9 +216,9 @@
                 <span class="mobile-nav-loading" aria-hidden="true"></span>
             {/if}
         </span>
-        {#if !isConsole}
-            <span class="mobile-nav-label">{mobileLabel(item.title)}</span>
-        {/if}
+        <span class="mobile-nav-label"
+            >{isConsole ? 'Booking' : mobileLabel(item.title)}</span
+        >
     </a>
 {/snippet}
 

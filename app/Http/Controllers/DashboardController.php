@@ -88,47 +88,47 @@ class DashboardController extends Controller
                 $this->activePoolId = $deferredPoolId;
 
                 return $this->dailyTrend($today);
-            }, 'dashboard-data'),
+            }, 'dashboard-trends', rescue: true),
             'monthlyTrend' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
 
                 return $this->monthlyTrend($today);
-            }, 'dashboard-data'),
+            }, 'dashboard-trends', rescue: true),
             'recentActivity' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
 
                 return $resolveRecentActivity()['items'];
-            }, 'dashboard-data'),
+            }, 'dashboard-activity', rescue: true),
             'recentActivityTotal' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): int {
                 $this->activePoolId = $deferredPoolId;
 
                 return (int) $resolveRecentActivity()['total'];
-            }, 'dashboard-data'),
+            }, 'dashboard-activity', rescue: true),
             'recentActivityVisibleCount' => Inertia::defer(function () use ($resolveRecentActivity, $deferredPoolId): int {
                 $this->activePoolId = $deferredPoolId;
 
                 return (int) $resolveRecentActivity()['visible_count'];
-            }, 'dashboard-data'),
+            }, 'dashboard-activity', rescue: true),
             'departuresToday' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
 
                 return $this->departuresToday($today);
-            }, 'dashboard-data'),
+            }, 'dashboard-operations', rescue: true),
             'upcomingCharterReminder' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
 
                 return $this->upcomingCharterReminder($today);
-            }, 'dashboard-data'),
+            }, 'dashboard-operations', rescue: true),
             'topDrivers' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
 
                 return $this->topDriversByRevenue($today);
-            }, 'dashboard-data'),
+            }, 'dashboard-performance', rescue: true),
             'topArmadas' => Inertia::defer(function () use ($today, $deferredPoolId): array {
                 $this->activePoolId = $deferredPoolId;
 
                 return $this->topArmadasByRevenue($today);
-            }, 'dashboard-data'),
+            }, 'dashboard-performance', rescue: true),
         ]);
     }
 

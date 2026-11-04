@@ -1,12 +1,14 @@
 <?php
 
 use App\Http\Middleware\EnsureFeature;
-use App\Http\Middleware\HandleAppearance;
-use App\Http\Middleware\EnsureTenantSubscriptionActive;
-use App\Http\Middleware\EnsureSuperAdminTenantContext;
 use App\Http\Middleware\EnsurePermission;
+use App\Http\Middleware\EnsureSuperAdminTenantContext;
+use App\Http\Middleware\EnsureTenantSubscriptionActive;
+use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\MeasureNavigation;
 use App\Http\Middleware\RedirectSuperAdmin;
+use App\Support\AccessControl;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -70,6 +72,7 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         $middleware->web(append: [
+            MeasureNavigation::class,
             HandleAppearance::class,
             EnsureSuperAdminTenantContext::class,
             HandleInertiaRequests::class,
@@ -83,11 +86,11 @@ $app = Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectUsersTo(function (HttpRequest $request): string {
             $userId = (int) ($request->user()?->id ?? 0);
 
-            if ($userId > 0 && \App\Support\AccessControl::userIsSuperAdmin($userId)) {
+            if ($userId > 0 && AccessControl::userIsSuperAdmin($userId)) {
                 return route('platform.dashboard');
             }
 
-            if ($userId > 0 && \App\Support\AccessControl::can($userId, 'dashboard.view')) {
+            if ($userId > 0 && AccessControl::can($userId, 'dashboard.view')) {
                 return route('dashboard');
             }
 
@@ -112,7 +115,7 @@ if ($runningOnVercel) {
     // Isolate runtime caches per deployment so new routes are visible immediately.
     foreach (['app/public', 'framework/cache/data', 'framework/views', 'framework/sessions', 'logs', 'bootstrap/cache'] as $folder) {
         $path = $vercelStoragePath.'/'.$folder;
-        if (!is_dir($path)) {
+        if (! is_dir($path)) {
             @mkdir($path, 0777, true);
         }
     }

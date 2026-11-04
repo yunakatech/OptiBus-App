@@ -234,7 +234,7 @@
 </script>
 
 <AppHead title="Inbox Booking" />
-<div class="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
+<div class:mobile-page={true} class="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
     <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
             <p
@@ -246,7 +246,8 @@
                 Inbox Booking Publik
             </h1>
             <p class="mt-1 text-sm text-muted-foreground">
-                Request booking ditahan selama 24 jam sejak diterima sebelum kursi kembali tersedia.
+                Request booking ditahan selama 24 jam sejak diterima sebelum
+                kursi kembali tersedia.
             </p>
         </div>
         <button

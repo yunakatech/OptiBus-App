@@ -61,7 +61,11 @@ const nonPrefetchExactPaths = new Set([
     '/report',
 ]);
 
-const nonPrefetchPathPrefixes = ['/settings', '/platform/dashboard', '/platform/saas'];
+const nonPrefetchPathPrefixes = [
+    '/settings',
+    '/platform/dashboard',
+    '/platform/saas',
+];
 
 const normalizeNavigationPath = (href: string | null | undefined): string => {
     if (!href) {
@@ -237,7 +241,7 @@ const tenantNavItems: NavItem[] = [
         icon: CreditCard,
     },
     {
-        title: 'Users',
+        title: 'Pengguna',
         href: '/settings/users',
         icon: UserCog,
         permission: 'user.manage',
@@ -249,7 +253,7 @@ const tenantNavItems: NavItem[] = [
         permission: 'booking.public.manage',
     },
     {
-        title: 'Logs',
+        title: 'Log',
         href: '/settings/logs',
         icon: History,
         permission: 'logs.view',

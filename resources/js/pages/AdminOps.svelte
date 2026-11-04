@@ -1,4 +1,4 @@
-﻿<script module lang="ts">
+<script module lang="ts">
     export const layout = {
         breadcrumbs: [
             {
@@ -10,6 +10,8 @@
 </script>
 
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { page, router } from '@inertiajs/svelte';
     import {
         Armchair,
@@ -660,11 +662,11 @@
         }
 
         if (tab === 'users') {
-            return 'Users';
+            return 'Pengguna';
         }
 
         if (tab === 'logs') {
-            return 'Logs';
+            return 'Log';
         }
 
         return 'Laporan';
@@ -1009,7 +1011,6 @@
     });
 
     let customerSearch = $state('');
-    let customerFiltersExpanded = $state(false);
     let customerSuggestions = $state<CustomerRow[]>([]);
     let customerSuggestionsOpen = $state(false);
     let customerSuggestionsLoading = $state(false);
@@ -1050,7 +1051,6 @@
     let poolMonthlyTargetDirty = $state(false);
     let poolMonthlyTargetActiveMonthIndex = $state(currentMonthIndex);
     let userSearch = $state('');
-    let userFiltersExpanded = $state(false);
     const today = new Date().toISOString().slice(0, 10);
     let reportFrom = $state(today);
     let reportTo = $state(today);
@@ -4255,11 +4255,7 @@
                 ? page
                 : customerHistory.successful_departure_pagination.page;
 
-        void loadCustomerHistory(
-            customerId,
-            cancellationPage,
-            departurePage,
-        );
+        void loadCustomerHistory(customerId, cancellationPage, departurePage);
     };
 
     const jumpCustomerPage = async (page: number) => {
@@ -4448,7 +4444,8 @@
             );
             driverDetail = response.driver ?? null;
         } catch (e) {
-            error = e instanceof Error ? e.message : 'Gagal memuat detail driver.';
+            error =
+                e instanceof Error ? e.message : 'Gagal memuat detail driver.';
         } finally {
             driverDetailLoading = false;
         }
@@ -4480,10 +4477,7 @@
         setPoolManageAccess(Boolean(r.can_manage ?? true));
     };
 
-    const loadLogs = async (
-        page = 1,
-        perPage = activityLogsMeta.per_page,
-    ) => {
+    const loadLogs = async (page = 1, perPage = activityLogsMeta.per_page) => {
         activityLogsLoading = true;
 
         try {
@@ -6078,7 +6072,7 @@
 
 <AppHead title={`Admin Ops • ${tabTitle(activeTab)}`} />
 
-<div class="space-y-4 p-4">
+<div class:mobile-page={true} class="space-y-4 p-4">
     {#if !lockedMenuView}
         <div
             class="overflow-hidden rounded-lg border border-border/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.98),rgba(8,145,178,0.12))] shadow-sm"
@@ -6088,7 +6082,7 @@
             >
                 <div class="space-y-4 text-slate-50">
                     <div
-                        class="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100"
+                        class="inline-flex items-center rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs md:text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-100"
                     >
                         Admin Operations
                     </div>
@@ -6119,7 +6113,7 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
                             Rute
                         </p>
@@ -6129,7 +6123,7 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
                             Jadwal
                         </p>
@@ -6141,7 +6135,7 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
                             Driver
                         </p>
@@ -6153,7 +6147,7 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
                             Bagasi
                         </p>
@@ -6165,7 +6159,7 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
                             Segment
                         </p>
@@ -6177,7 +6171,7 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
                             Reguler
                         </p>
@@ -6189,7 +6183,7 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
                             Armada
                         </p>
@@ -6201,7 +6195,7 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
                             Pool
                         </p>
@@ -6211,9 +6205,9 @@
                         class="rounded-lg border border-white/10 bg-white/10 p-3 text-slate-50"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-slate-200/70"
                         >
-                            Logs
+                            Log
                         </p>
                         <p class="mt-1 text-lg font-semibold">
                             {stats.logs}
@@ -6343,7 +6337,7 @@
                             class="border-b border-border/70 bg-muted/20 px-5 py-4"
                         >
                             <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                             >
                                 Form Rute Induk
                             </p>
@@ -6419,61 +6413,608 @@
                     <div
                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div class="grid gap-3 p-3 md:hidden">
-                            {#if routes.length === 0}
-                                <div
-                                    class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
-                                >
-                                    Belum ada rute induk.
-                                </div>
-                            {/if}
-                            {#each routes as row (row.id)}
-                                {@const rowSegments = segmentsForRoute(
-                                    Number(row.id),
-                                )}
-                                <article
-                                    class="overflow-hidden rounded-lg border border-border/80 bg-card/95 shadow-sm"
-                                >
-                                    <div class="bg-muted/20 p-3">
-                                        <div
-                                            class="flex items-start justify-between gap-3"
-                                        >
-                                            <div class="min-w-0">
-                                                <p
-                                                    class="truncate text-sm font-semibold text-foreground"
-                                                >
-                                                    {row.name}
-                                                </p>
-                                                <p
-                                                    class="mt-0.5 text-xs text-muted-foreground"
-                                                >
-                                                    Rute master jadwal dan
-                                                    segment
-                                                </p>
-                                            </div>
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div class="grid gap-3 p-3 md:hidden">
+                                {#if routes.length === 0}
+                                    <div
+                                        class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
+                                    >
+                                        Belum ada rute induk.
+                                    </div>
+                                {/if}
+                                {#each routes as row (row.id)}
+                                    {@const rowSegments = segmentsForRoute(
+                                        Number(row.id),
+                                    )}
+                                    <article
+                                        class="overflow-hidden rounded-lg border border-border/80 bg-card/95 shadow-sm"
+                                    >
+                                        <div class="bg-muted/20 p-3">
                                             <div
-                                                class="flex shrink-0 items-center gap-1.5"
+                                                class="flex items-start justify-between gap-3"
                                             >
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    class="h-8 rounded-full px-3 text-[11px] font-semibold"
-                                                    onclick={() =>
-                                                        openRouteSegmentComposer(
-                                                            Number(row.id),
-                                                        )}
+                                                <div class="min-w-0">
+                                                    <p
+                                                        class="truncate text-sm font-semibold text-foreground"
+                                                    >
+                                                        {row.name}
+                                                    </p>
+                                                    <p
+                                                        class="mt-0.5 text-xs text-muted-foreground"
+                                                    >
+                                                        Rute master jadwal dan
+                                                        segment
+                                                    </p>
+                                                </div>
+                                                <div
+                                                    class="flex shrink-0 items-center gap-1.5"
                                                 >
-                                                    <Plus
-                                                        class="mr-1 h-3.5 w-3.5"
-                                                    />
-                                                    Segment
-                                                </Button>
-                                                <Button
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        class="h-8 rounded-full px-3 text-xs md:text-[11px] font-semibold"
+                                                        onclick={() =>
+                                                            openRouteSegmentComposer(
+                                                                Number(row.id),
+                                                            )}
+                                                    >
+                                                        <Plus
+                                                            class="mr-1 h-3.5 w-3.5"
+                                                        />
+                                                        Segment
+                                                    </Button>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-8 w-8 rounded-full border border-border/70 bg-background/80"
+                                                        onclick={() =>
+                                                            toggleRouteSegments(
+                                                                Number(row.id),
+                                                            )}
+                                                    >
+                                                        {#if selectedSegmentRouteId === row.id}
+                                                            <ChevronUp
+                                                                class="h-4 w-4"
+                                                            />
+                                                        {:else}
+                                                            <ChevronDown
+                                                                class="h-4 w-4"
+                                                            />
+                                                        {/if}
+                                                        <span class="sr-only">
+                                                            {selectedSegmentRouteId ===
+                                                            row.id
+                                                                ? 'Tutup detail segment'
+                                                                : 'Buka detail segment'}
+                                                        </span>
+                                                    </Button>
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
+                                                        >
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                class="h-8 w-8 rounded-full border border-border/70 bg-background/80"
+                                                            >
+                                                                <MoreHorizontal
+                                                                    class="h-4 w-4"
+                                                                />
+                                                                <span
+                                                                    class="sr-only"
+                                                                    >Aksi rute
+                                                                    induk</span
+                                                                >
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            sideOffset={8}
+                                                            class="z-[120] w-44"
+                                                        >
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    editRoute(
+                                                                        row,
+                                                                    )}
+                                                            >
+                                                                <Pencil
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void removeItem(
+                                                                        `/api/admin/routes/${row.id}`,
+                                                                        'Route deleted.',
+                                                                    )}
+                                                            >
+                                                                <Trash2
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                Hapus
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                class="mt-3 flex items-center gap-2 text-xs"
+                                            >
+                                                <span
+                                                    class="min-w-0 truncate rounded-full border border-border/70 bg-background/80 px-2.5 py-1 font-medium"
+                                                >
+                                                    {row.origin ??
+                                                        'Origin belum diatur'}
+                                                </span>
+                                                <span
+                                                    class="shrink-0 text-muted-foreground"
+                                                    >-</span
+                                                >
+                                                <span
+                                                    class="min-w-0 truncate rounded-full border border-border/70 bg-background/80 px-2.5 py-1 font-medium"
+                                                >
+                                                    {row.destination ??
+                                                        'Destination belum diatur'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </article>
+                                    {#if selectedSegmentRouteId === row.id}
+                                        <div
+                                            class="overflow-hidden rounded-lg border border-border/80 bg-background/95 shadow-sm"
+                                        >
+                                            <div class="space-y-4 p-3">
+                                                <div
+                                                    class="flex items-center justify-between gap-3"
+                                                >
+                                                    <div>
+                                                        <p
+                                                            class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                                        >
+                                                            Segment di bawah
+                                                            rute
+                                                        </p>
+                                                        <h4
+                                                            class="mt-1 text-sm font-semibold text-foreground"
+                                                        >
+                                                            {row.name}
+                                                        </h4>
+                                                    </div>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        class="rounded-full px-2.5 py-1 text-xs md:text-[11px]"
+                                                    >
+                                                        {rowSegments.length} segment
+                                                    </Badge>
+                                                </div>
+
+                                                {#if rowSegments.length === 0}
+                                                    <div
+                                                        class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-xs text-muted-foreground"
+                                                    >
+                                                        Belum ada segment pada
+                                                        rute ini.
+                                                    </div>
+                                                {:else}
+                                                    <div class="space-y-2">
+                                                        {#each rowSegments as segment (segment.id)}
+                                                            <article
+                                                                class="rounded-lg border border-border/70 bg-card/95 p-3 shadow-sm"
+                                                            >
+                                                                <div
+                                                                    class="flex items-start justify-between gap-3"
+                                                                >
+                                                                    <div
+                                                                        class="min-w-0"
+                                                                    >
+                                                                        <p
+                                                                            class="truncate text-sm font-semibold text-foreground"
+                                                                        >
+                                                                            {segment.rute}
+                                                                        </p>
+                                                                        <p
+                                                                            class="mt-0.5 text-xs text-muted-foreground"
+                                                                        >
+                                                                            {segmentDisplayName(
+                                                                                segment.origin ??
+                                                                                    '',
+                                                                                segment.destination ??
+                                                                                    '',
+                                                                                segment.rute,
+                                                                            ) ||
+                                                                                'Origin - Destination belum diatur'}
+                                                                        </p>
+                                                                        <p
+                                                                            class="mt-0.5 text-xs md:text-[11px] text-muted-foreground"
+                                                                        >
+                                                                            Jam:
+                                                                            {segmentJamSummary(
+                                                                                segment.jam_pickups,
+                                                                            ) ||
+                                                                                segmentJamLabel(
+                                                                                    segment.jam,
+                                                                                ) ||
+                                                                                '-'}
+                                                                        </p>
+                                                                    </div>
+                                                                    {#if canWriteTab('segments')}
+                                                                        <DropdownMenu
+                                                                        >
+                                                                            <DropdownMenuTrigger
+                                                                                asChild
+                                                                            >
+                                                                                <Button
+                                                                                    type="button"
+                                                                                    variant="ghost"
+                                                                                    size="icon"
+                                                                                    class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                                                                >
+                                                                                    <MoreHorizontal
+                                                                                        class="h-4 w-4"
+                                                                                    />
+                                                                                    <span
+                                                                                        class="sr-only"
+                                                                                        >Aksi
+                                                                                        segment</span
+                                                                                    >
+                                                                                </Button>
+                                                                            </DropdownMenuTrigger>
+                                                                            <DropdownMenuContent
+                                                                                align="end"
+                                                                                sideOffset={8}
+                                                                                class="z-[120] w-44"
+                                                                            >
+                                                                                <DropdownMenuItem
+                                                                                    onclick={() =>
+                                                                                        editSegment(
+                                                                                            segment,
+                                                                                        )}
+                                                                                >
+                                                                                    <Pencil
+                                                                                        class="mr-2 h-3.5 w-3.5"
+                                                                                    />
+                                                                                    Edit
+                                                                                </DropdownMenuItem>
+                                                                                <DropdownMenuItem
+                                                                                    onclick={() =>
+                                                                                        void removeItem(
+                                                                                            `/api/admin/segments/${segment.id}`,
+                                                                                            'Segment deleted.',
+                                                                                        )}
+                                                                                >
+                                                                                    <Trash2
+                                                                                        class="mr-2 h-3.5 w-3.5"
+                                                                                    />
+                                                                                    Hapus
+                                                                                </DropdownMenuItem>
+                                                                            </DropdownMenuContent>
+                                                                        </DropdownMenu>
+                                                                    {/if}
+                                                                </div>
+                                                                <div
+                                                                    class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3"
+                                                                >
+                                                                    {#if segment.public_booking_enabled}
+                                                                        <Badge
+                                                                            variant="secondary"
+                                                                            class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs md:text-[11px] text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
+                                                                        >
+                                                                            Tampil
+                                                                            publik
+                                                                        </Badge>
+                                                                    {:else}
+                                                                        <Badge
+                                                                            variant="secondary"
+                                                                            class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs md:text-[11px] text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+                                                                        >
+                                                                            Disembunyikan
+                                                                        </Badge>
+                                                                    {/if}
+                                                                    {#if canWriteTab('segments')}
+                                                                        <button
+                                                                            type="button"
+                                                                            role="switch"
+                                                                            aria-checked={segment.public_booking_enabled}
+                                                                            aria-label={`${segment.public_booking_enabled ? 'Sembunyikan' : 'Tampilkan'} ${segment.rute} dari public booking`}
+                                                                            title={segment.public_booking_enabled
+                                                                                ? 'Sembunyikan dari public booking'
+                                                                                : 'Tampilkan di public booking'}
+                                                                            disabled={segmentVisibilityUpdatingId ===
+                                                                                segment.id}
+                                                                            onclick={() =>
+                                                                                void toggleSegmentPublicBooking(
+                                                                                    segment,
+                                                                                    !segment.public_booking_enabled,
+                                                                                )}
+                                                                            class="inline-flex min-h-9 items-center gap-2 rounded-full border border-border/70 px-3 py-1 text-xs font-semibold transition hover:bg-muted/50 disabled:cursor-wait disabled:opacity-60"
+                                                                        >
+                                                                            <span
+                                                                                class:justify-end={segment.public_booking_enabled}
+                                                                                class="flex h-5 w-9 items-center rounded-full bg-slate-300 p-0.5 transition dark:bg-slate-700"
+                                                                            >
+                                                                                <span
+                                                                                    class="h-4 w-4 rounded-full bg-white shadow-sm transition"
+
+                                                                                ></span>
+                                                                            </span>
+                                                                            {segmentVisibilityUpdatingId ===
+                                                                            segment.id
+                                                                                ? 'Menyimpan...'
+                                                                                : segment.public_booking_enabled
+                                                                                  ? 'Publik'
+                                                                                  : 'Sembunyikan'}
+                                                                        </button>
+                                                                    {/if}
+                                                                </div>
+                                                                <div
+                                                                    class="mt-2 text-sm font-semibold text-amber-800 tabular-nums"
+                                                                >
+                                                                    {formatCurrency(
+                                                                        Number(
+                                                                            segment.harga ||
+                                                                                0,
+                                                                        ),
+                                                                    )}
+                                                                </div>
+                                                            </article>
+                                                        {/each}
+                                                    </div>
+                                                {/if}
+
+                                                {#if canWriteTab('segments')}
+                                                    <form
+                                                        class="space-y-3 rounded-lg border border-border/70 bg-card/95 p-3 shadow-sm"
+                                                        onsubmit={saveSegment}
+                                                    >
+                                                        <div
+                                                            class="flex items-center justify-between gap-3"
+                                                        >
+                                                            <div>
+                                                                <p
+                                                                    class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                                                >
+                                                                    Form segment
+                                                                    inline
+                                                                </p>
+                                                                <h4
+                                                                    class="mt-1 text-sm font-semibold text-foreground"
+                                                                >
+                                                                    {segmentForm.id
+                                                                        ? 'Perbarui segment'
+                                                                        : `Tambah segment di ${row.name}`}
+                                                                </h4>
+                                                            </div>
+                                                            <Badge
+                                                                variant="secondary"
+                                                                class="rounded-full px-2.5 py-1 text-xs md:text-[11px]"
+                                                            >
+                                                                {rowSegments.length}
+                                                                segment
+                                                            </Badge>
+                                                        </div>
+                                                        <input
+                                                            type="hidden"
+                                                            bind:value={
+                                                                segmentForm.route_id
+                                                            }
+                                                        />
+                                                        <div
+                                                            class="grid gap-3 md:grid-cols-3"
+                                                        >
+                                                            <label
+                                                                class="space-y-1.5"
+                                                            >
+                                                                <span
+                                                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                                >
+                                                                    Origin
+                                                                </span>
+                                                                <Input
+                                                                    placeholder="Origin"
+                                                                    bind:value={
+                                                                        segmentForm.origin
+                                                                    }
+                                                                    required
+                                                                    oninput={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateSegmentOrigin(
+                                                                            (
+                                                                                event.currentTarget as HTMLInputElement
+                                                                            )
+                                                                                .value,
+                                                                        )}
+                                                                />
+                                                            </label>
+                                                            <label
+                                                                class="space-y-1.5"
+                                                            >
+                                                                <span
+                                                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                                >
+                                                                    Destination
+                                                                </span>
+                                                                <Input
+                                                                    placeholder="Destination"
+                                                                    bind:value={
+                                                                        segmentForm.destination
+                                                                    }
+                                                                    required
+                                                                    oninput={(
+                                                                        event,
+                                                                    ) =>
+                                                                        updateSegmentDestination(
+                                                                            (
+                                                                                event.currentTarget as HTMLInputElement
+                                                                            )
+                                                                                .value,
+                                                                        )}
+                                                                />
+                                                            </label>
+                                                            <label
+                                                                class="space-y-1.5"
+                                                            >
+                                                                <span
+                                                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                                >
+                                                                    Harga
+                                                                    Segment
+                                                                </span>
+                                                                <Input
+                                                                    type="text"
+                                                                    inputmode="numeric"
+                                                                    placeholder="Harga segment"
+                                                                    value={formatRupiahInput(
+                                                                        segmentForm.harga,
+                                                                    )}
+                                                                    oninput={(
+                                                                        event,
+                                                                    ) => {
+                                                                        segmentForm.harga =
+                                                                            parseRupiahInput(
+                                                                                (
+                                                                                    event.currentTarget as HTMLInputElement
+                                                                                )
+                                                                                    .value,
+                                                                            );
+                                                                    }}
+                                                                    required
+                                                                />
+                                                            </label>
+                                                        </div>
+                                                        <div
+                                                            class="space-y-2 md:col-span-3"
+                                                        >
+                                                            <div
+                                                                class="flex items-center justify-between gap-3"
+                                                            >
+                                                                <span
+                                                                    class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                                                                >
+                                                                    Jam Pickup
+                                                                </span>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    class="h-8 rounded-full px-3 text-xs md:text-[11px]"
+                                                                    onclick={addSegmentJamPickup}
+                                                                >
+                                                                    Tambah jam
+                                                                </Button>
+                                                            </div>
+                                                            <div
+                                                                class="space-y-2"
+                                                            >
+                                                                {#each segmentForm.jam_pickups as jamValue, index (index)}
+                                                                    <div
+                                                                        class="flex items-center gap-2"
+                                                                    >
+                                                                        <label
+                                                                            class="mobile-field grid min-w-0 flex-1 gap-1.5 text-sm font-medium"
+                                                                            ><span
+                                                                                >Jam
+                                                                                jemput</span
+                                                                            ><input
+                                                                                data-segment-time="true"
+                                                                                data-segment-time-index={index}
+                                                                                type="text"
+                                                                                class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                                                placeholder={`Jam pickup ${index + 1}`}
+                                                                                value={jamValue}
+                                                                                oninput={(
+                                                                                    event,
+                                                                                ) =>
+                                                                                    updateSegmentJamPickup(
+                                                                                        index,
+                                                                                        (
+                                                                                            event.currentTarget as HTMLInputElement
+                                                                                        )
+                                                                                            .value,
+                                                                                    )}
+                                                                                required
+                                                                            /></label
+                                                                        >
+                                                                        {#if segmentForm.jam_pickups.length > 1}
+                                                                            <Button
+                                                                                type="button"
+                                                                                variant="outline"
+                                                                                class="h-9 rounded-full px-3 text-xs md:text-[11px]"
+                                                                                onclick={() =>
+                                                                                    removeSegmentJamPickup(
+                                                                                        index,
+                                                                                    )}
+                                                                            >
+                                                                                Hapus
+                                                                            </Button>
+                                                                        {/if}
+                                                                    </div>
+                                                                {/each}
+                                                            </div>
+                                                        </div>
+                                                        <div
+                                                            class="flex flex-wrap gap-2 border-t border-border/70 pt-3"
+                                                        >
+                                                            <LoadingButton
+                                                                type="submit"
+                                                                loading={isSubmitActive(
+                                                                    'segment',
+                                                                )}
+                                                                loadingText={segmentForm.id
+                                                                    ? 'Menyimpan segment...'
+                                                                    : 'Menambah segment...'}
+                                                            >
+                                                                {segmentForm.id
+                                                                    ? 'Update Segment'
+                                                                    : 'Tambah Segment'}
+                                                            </LoadingButton>
+                                                            <Button
+                                                                type="button"
+                                                                variant="outline"
+                                                                onclick={() =>
+                                                                    resetSegmentForm(
+                                                                        Number(
+                                                                            row.id,
+                                                                        ),
+                                                                    )}
+                                                            >
+                                                                Reset
+                                                            </Button>
+                                                        </div>
+                                                    </form>
+                                                {/if}
+                                            </div>
+                                        </div>
+                                    {/if}
+                                {/each}
+                            </div></ViewportOnly
+                        >
+                        <ViewportOnly minWidth={768}
+                            ><div class="hidden overflow-x-auto md:block">
+                                <DataTable
+                                    columns={routesColumns}
+                                    rows={routes}
+                                    class="min-w-[820px] w-full border-separate border-spacing-0 text-sm"
+                                    tone="default"
+                                    expandedRows={selectedSegmentRouteId > 0
+                                        ? [selectedSegmentRouteId]
+                                        : []}
+                                >
+                                    {#snippet row({ row, columns })}
+                                        <td
+                                            class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
+                                            style={`left: ${columns[0]?.leftOffset ?? '0px'}`}
+                                        >
+                                            <div class="flex items-start gap-2">
+                                                <button
                                                     type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    class="h-8 w-8 rounded-full border border-border/70 bg-background/80"
+                                                    class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background transition hover:bg-muted/40"
                                                     onclick={() =>
                                                         toggleRouteSegments(
                                                             Number(row.id),
@@ -6494,102 +7035,162 @@
                                                             ? 'Tutup detail segment'
                                                             : 'Buka detail segment'}
                                                     </span>
-                                                </Button>
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
+                                                </button>
+                                                <div
+                                                    class="flex items-center gap-1.5 sm:gap-2"
+                                                >
+                                                    <div
+                                                        class="font-semibold text-foreground"
                                                     >
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            class="h-8 w-8 rounded-full border border-border/70 bg-background/80"
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-4 w-4"
-                                                            />
-                                                            <span
-                                                                class="sr-only"
-                                                                >Aksi rute induk</span
-                                                            >
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44"
+                                                        {row.name}
+                                                    </div>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        class="rounded-full px-2 py-0.5 text-xs md:text-[10px]"
                                                     >
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                editRoute(row)}
-                                                        >
-                                                            <Pencil
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void removeItem(
-                                                                    `/api/admin/routes/${row.id}`,
-                                                                    'Route deleted.',
-                                                                )}
-                                                        >
-                                                            <Trash2
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                                        {routeSegmentCount(
+                                                            Number(row.id),
+                                                        )} segment
+                                                    </Badge>
+                                                </div>
                                             </div>
-                                        </div>
+                                            <div
+                                                class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                            >
+                                                Rute master untuk jadwal dan
+                                                segment
+                                            </div>
+                                        </td>
 
-                                        <div
-                                            class="mt-3 flex items-center gap-2 text-xs"
+                                        <td
+                                            class="sticky left-[220px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
+                                            style={`left: ${columns[1]?.leftOffset ?? '0px'}`}
                                         >
-                                            <span
-                                                class="min-w-0 truncate rounded-full border border-border/70 bg-background/80 px-2.5 py-1 font-medium"
+                                            <div
+                                                class="flex flex-wrap items-center gap-2"
                                             >
-                                                {row.origin ??
-                                                    'Origin belum diatur'}
-                                            </span>
-                                            <span
-                                                class="shrink-0 text-muted-foreground"
-                                                >-</span
+                                                <span
+                                                    class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
+                                                    >{row.origin ??
+                                                        'Origin belum diatur'}</span
+                                                >
+                                                <span
+                                                    class="text-muted-foreground"
+                                                    >-</span
+                                                >
+                                                <span
+                                                    class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
+                                                    >{row.destination ??
+                                                        'Destination belum diatur'}</span
+                                                >
+                                            </div>
+                                            <div
+                                                class="mt-2 flex flex-wrap items-center gap-2"
                                             >
-                                            <span
-                                                class="min-w-0 truncate rounded-full border border-border/70 bg-background/80 px-2.5 py-1 font-medium"
+                                                <Badge
+                                                    variant="secondary"
+                                                    class="rounded-full px-2.5 py-1 text-xs md:text-[11px]"
+                                                >
+                                                    {routeSegmentCount(
+                                                        Number(row.id),
+                                                    )} segment
+                                                </Badge>
+                                            </div>
+                                        </td>
+                                    {/snippet}
+
+                                    {#snippet actions({ row })}
+                                        <div
+                                            class="flex items-center justify-end gap-2"
+                                        >
+                                            <Button
+                                                type="button"
+                                                size="sm"
+                                                variant="outline"
+                                                class="h-8 rounded-full px-3 text-xs md:text-[11px] font-semibold"
+                                                onclick={() =>
+                                                    openRouteSegmentComposer(
+                                                        Number(row.id),
+                                                    )}
                                             >
-                                                {row.destination ??
-                                                    'Destination belum diatur'}
-                                            </span>
+                                                <Plus
+                                                    class="mr-1 h-3.5 w-3.5"
+                                                />
+                                                Segment
+                                            </Button>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-8 w-8 rounded-full border border-border/70"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-4 w-4"
+                                                        />
+                                                        <span class="sr-only"
+                                                            >Aksi rute induk</span
+                                                        >
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44"
+                                                >
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            editRoute(
+                                                                row as RouteRow,
+                                                            )}
+                                                    >
+                                                        <Pencil
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void removeItem(
+                                                                `/api/admin/routes/${row.id}`,
+                                                                'Route deleted.',
+                                                            )}
+                                                    >
+                                                        <Trash2
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Hapus
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
-                                    </div>
-                                </article>
-                                {#if selectedSegmentRouteId === row.id}
-                                    <div
-                                        class="overflow-hidden rounded-lg border border-border/80 bg-background/95 shadow-sm"
-                                    >
-                                        <div class="space-y-4 p-3">
+                                    {/snippet}
+
+                                    {#snippet detail({ row })}
+                                        {@const rowSegments = segmentsForRoute(
+                                            Number(row.id),
+                                        )}
+                                        <div class="space-y-4 px-2 py-3">
                                             <div
                                                 class="flex items-center justify-between gap-3"
                                             >
                                                 <div>
                                                     <p
-                                                        class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                                                     >
                                                         Segment di bawah rute
+                                                        induk
                                                     </p>
                                                     <h4
-                                                        class="mt-1 text-sm font-semibold text-foreground"
+                                                        class="mt-1 text-base font-semibold text-foreground"
                                                     >
                                                         {row.name}
                                                     </h4>
                                                 </div>
                                                 <Badge
                                                     variant="secondary"
-                                                    class="rounded-full px-2.5 py-1 text-[11px]"
+                                                    class="rounded-full px-3 py-1 text-xs md:text-[11px]"
                                                 >
                                                     {rowSegments.length} segment
                                                 </Badge>
@@ -6597,16 +7198,18 @@
 
                                             {#if rowSegments.length === 0}
                                                 <div
-                                                    class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-xs text-muted-foreground"
+                                                    class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
                                                 >
-                                                    Belum ada segment pada rute
+                                                    Belum ada segment untuk rute
                                                     ini.
                                                 </div>
                                             {:else}
-                                                <div class="space-y-2">
+                                                <div
+                                                    class="grid gap-2 xl:grid-cols-2"
+                                                >
                                                     {#each rowSegments as segment (segment.id)}
                                                         <article
-                                                            class="rounded-lg border border-border/70 bg-card/95 p-3 shadow-sm"
+                                                            class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
                                                         >
                                                             <div
                                                                 class="flex items-start justify-between gap-3"
@@ -6632,7 +7235,7 @@
                                                                             'Origin - Destination belum diatur'}
                                                                     </p>
                                                                     <p
-                                                                        class="mt-0.5 text-[11px] text-muted-foreground"
+                                                                        class="mt-0.5 text-xs md:text-[11px] text-muted-foreground"
                                                                     >
                                                                         Jam:
                                                                         {segmentJamSummary(
@@ -6654,7 +7257,7 @@
                                                                                 type="button"
                                                                                 variant="ghost"
                                                                                 size="icon"
-                                                                                class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                                                                class="h-8 w-8 rounded-full border border-border/70"
                                                                             >
                                                                                 <MoreHorizontal
                                                                                     class="h-4 w-4"
@@ -6704,7 +7307,7 @@
                                                                 {#if segment.public_booking_enabled}
                                                                     <Badge
                                                                         variant="secondary"
-                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
+                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs md:text-[11px] text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
                                                                     >
                                                                         Tampil
                                                                         publik
@@ -6712,7 +7315,7 @@
                                                                 {:else}
                                                                     <Badge
                                                                         variant="secondary"
-                                                                        class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
+                                                                        class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs md:text-[11px] text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
                                                                     >
                                                                         Disembunyikan
                                                                     </Badge>
@@ -6754,14 +7357,24 @@
                                                                 {/if}
                                                             </div>
                                                             <div
-                                                                class="mt-2 text-sm font-semibold text-amber-800 tabular-nums"
+                                                                class="mt-3 flex items-center justify-between gap-3"
                                                             >
-                                                                {formatCurrency(
-                                                                    Number(
-                                                                        segment.harga ||
-                                                                            0,
-                                                                    ),
-                                                                )}
+                                                                <p
+                                                                    class="text-xs md:text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
+                                                                >
+                                                                    Harga
+                                                                    segment
+                                                                </p>
+                                                                <p
+                                                                    class="text-sm font-semibold text-amber-800 tabular-nums"
+                                                                >
+                                                                    {formatCurrency(
+                                                                        Number(
+                                                                            segment.harga ||
+                                                                                0,
+                                                                        ),
+                                                                    )}
+                                                                </p>
                                                             </div>
                                                         </article>
                                                     {/each}
@@ -6770,7 +7383,7 @@
 
                                             {#if canWriteTab('segments')}
                                                 <form
-                                                    class="space-y-3 rounded-lg border border-border/70 bg-card/95 p-3 shadow-sm"
+                                                    class="space-y-3 rounded-lg border border-border/70 bg-muted/10 p-4"
                                                     onsubmit={saveSegment}
                                                 >
                                                     <div
@@ -6778,7 +7391,7 @@
                                                     >
                                                         <div>
                                                             <p
-                                                                class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                                                             >
                                                                 Form segment
                                                                 inline
@@ -6793,7 +7406,7 @@
                                                         </div>
                                                         <Badge
                                                             variant="secondary"
-                                                            class="rounded-full px-2.5 py-1 text-[11px]"
+                                                            class="rounded-full px-2.5 py-1 text-xs md:text-[11px]"
                                                         >
                                                             {rowSegments.length} segment
                                                         </Badge>
@@ -6900,7 +7513,7 @@
                                                                 type="button"
                                                                 variant="outline"
                                                                 size="sm"
-                                                                class="h-8 rounded-full px-3 text-[11px]"
+                                                                class="h-8 rounded-full px-3 text-xs md:text-[11px]"
                                                                 onclick={addSegmentJamPickup}
                                                             >
                                                                 Tambah jam
@@ -6911,30 +7524,36 @@
                                                                 <div
                                                                     class="flex items-center gap-2"
                                                                 >
-                                                                    <input
-                                                                        data-segment-time="true"
-                                                                        data-segment-time-index={index}
-                                                                        type="text"
-                                                                        class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                                                        placeholder={`Jam pickup ${index + 1}`}
-                                                                        value={jamValue}
-                                                                        oninput={(
-                                                                            event,
-                                                                        ) =>
-                                                                            updateSegmentJamPickup(
-                                                                                index,
-                                                                                (
-                                                                                    event.currentTarget as HTMLInputElement
-                                                                                )
-                                                                                    .value,
-                                                                            )}
-                                                                        required
-                                                                    />
+                                                                    <label
+                                                                        class="mobile-field grid min-w-0 flex-1 gap-1.5 text-sm font-medium"
+                                                                        ><span
+                                                                            >Jam
+                                                                            jemput</span
+                                                                        ><input
+                                                                            data-segment-time="true"
+                                                                            data-segment-time-index={index}
+                                                                            type="text"
+                                                                            class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                                            placeholder={`Jam pickup ${index + 1}`}
+                                                                            value={jamValue}
+                                                                            oninput={(
+                                                                                event,
+                                                                            ) =>
+                                                                                updateSegmentJamPickup(
+                                                                                    index,
+                                                                                    (
+                                                                                        event.currentTarget as HTMLInputElement
+                                                                                    )
+                                                                                        .value,
+                                                                                )}
+                                                                            required
+                                                                        /></label
+                                                                    >
                                                                     {#if segmentForm.jam_pickups.length > 1}
                                                                         <Button
                                                                             type="button"
                                                                             variant="outline"
-                                                                            class="h-9 rounded-full px-3 text-[11px]"
+                                                                            class="h-9 rounded-full px-3 text-xs md:text-[11px]"
                                                                             onclick={() =>
                                                                                 removeSegmentJamPickup(
                                                                                     index,
@@ -6979,587 +7598,10 @@
                                                 </form>
                                             {/if}
                                         </div>
-                                    </div>
-                                {/if}
-                            {/each}
-                        </div>
-                        <div class="hidden overflow-x-auto md:block">
-                            <DataTable
-                                columns={routesColumns}
-                                rows={routes}
-                                class="min-w-[820px] w-full border-separate border-spacing-0 text-sm"
-                                tone="default"
-                                expandedRows={selectedSegmentRouteId > 0
-                                    ? [selectedSegmentRouteId]
-                                    : []}
-                            >
-                                {#snippet row({ row, columns })}
-                                    <td
-                                        class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                        style={`left: ${columns[0]?.leftOffset ?? '0px'}`}
-                                    >
-                                        <div class="flex items-start gap-2">
-                                            <button
-                                                type="button"
-                                                class="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background transition hover:bg-muted/40"
-                                                onclick={() =>
-                                                    toggleRouteSegments(
-                                                        Number(row.id),
-                                                    )}
-                                            >
-                                                {#if selectedSegmentRouteId === row.id}
-                                                    <ChevronUp
-                                                        class="h-4 w-4"
-                                                    />
-                                                {:else}
-                                                    <ChevronDown
-                                                        class="h-4 w-4"
-                                                    />
-                                                {/if}
-                                                <span class="sr-only">
-                                                    {selectedSegmentRouteId ===
-                                                    row.id
-                                                        ? 'Tutup detail segment'
-                                                        : 'Buka detail segment'}
-                                                </span>
-                                            </button>
-                                            <div
-                                                class="flex items-center gap-1.5 sm:gap-2"
-                                            >
-                                                <div
-                                                    class="font-semibold text-foreground"
-                                                >
-                                                    {row.name}
-                                                </div>
-                                                <Badge
-                                                    variant="secondary"
-                                                    class="rounded-full px-2 py-0.5 text-[10px]"
-                                                >
-                                                    {routeSegmentCount(
-                                                        Number(row.id),
-                                                    )} segment
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="mt-1 text-[11px] text-muted-foreground"
-                                        >
-                                            Rute master untuk jadwal dan segment
-                                        </div>
-                                    </td>
-
-                                    <td
-                                        class="sticky left-[220px] z-20 border-b border-r border-border/60 bg-background px-4 py-4 align-top group-hover:bg-muted/15"
-                                        style={`left: ${columns[1]?.leftOffset ?? '0px'}`}
-                                    >
-                                        <div
-                                            class="flex flex-wrap items-center gap-2"
-                                        >
-                                            <span
-                                                class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
-                                                >{row.origin ??
-                                                    'Origin belum diatur'}</span
-                                            >
-                                            <span class="text-muted-foreground"
-                                                >-</span
-                                            >
-                                            <span
-                                                class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
-                                                >{row.destination ??
-                                                    'Destination belum diatur'}</span
-                                            >
-                                        </div>
-                                        <div
-                                            class="mt-2 flex flex-wrap items-center gap-2"
-                                        >
-                                            <Badge
-                                                variant="secondary"
-                                                class="rounded-full px-2.5 py-1 text-[11px]"
-                                            >
-                                                {routeSegmentCount(
-                                                    Number(row.id),
-                                                )} segment
-                                            </Badge>
-                                        </div>
-                                    </td>
-                                {/snippet}
-
-                                {#snippet actions({ row })}
-                                    <div
-                                        class="flex items-center justify-end gap-2"
-                                    >
-                                        <Button
-                                            type="button"
-                                            size="sm"
-                                            variant="outline"
-                                            class="h-8 rounded-full px-3 text-[11px] font-semibold"
-                                            onclick={() =>
-                                                openRouteSegmentComposer(
-                                                    Number(row.id),
-                                                )}
-                                        >
-                                            <Plus class="mr-1 h-3.5 w-3.5" />
-                                            Segment
-                                        </Button>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    class="h-8 w-8 rounded-full border border-border/70"
-                                                >
-                                                    <MoreHorizontal
-                                                        class="h-4 w-4"
-                                                    />
-                                                    <span class="sr-only"
-                                                        >Aksi rute induk</span
-                                                    >
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                sideOffset={8}
-                                                class="z-[120] w-44"
-                                            >
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        editRoute(
-                                                            row as RouteRow,
-                                                        )}
-                                                >
-                                                    <Pencil
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void removeItem(
-                                                            `/api/admin/routes/${row.id}`,
-                                                            'Route deleted.',
-                                                        )}
-                                                >
-                                                    <Trash2
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Hapus
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                {/snippet}
-
-                                {#snippet detail({ row })}
-                                    {@const rowSegments = segmentsForRoute(
-                                        Number(row.id),
-                                    )}
-                                    <div class="space-y-4 px-2 py-3">
-                                        <div
-                                            class="flex items-center justify-between gap-3"
-                                        >
-                                            <div>
-                                                <p
-                                                    class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
-                                                >
-                                                    Segment di bawah rute induk
-                                                </p>
-                                                <h4
-                                                    class="mt-1 text-base font-semibold text-foreground"
-                                                >
-                                                    {row.name}
-                                                </h4>
-                                            </div>
-                                            <Badge
-                                                variant="secondary"
-                                                class="rounded-full px-3 py-1 text-[11px]"
-                                            >
-                                                {rowSegments.length} segment
-                                            </Badge>
-                                        </div>
-
-                                        {#if rowSegments.length === 0}
-                                            <div
-                                                class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-3 text-sm text-muted-foreground"
-                                            >
-                                                Belum ada segment untuk rute
-                                                ini.
-                                            </div>
-                                        {:else}
-                                            <div
-                                                class="grid gap-2 xl:grid-cols-2"
-                                            >
-                                                {#each rowSegments as segment (segment.id)}
-                                                    <article
-                                                        class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm"
-                                                    >
-                                                        <div
-                                                            class="flex items-start justify-between gap-3"
-                                                        >
-                                                            <div
-                                                                class="min-w-0"
-                                                            >
-                                                                <p
-                                                                    class="truncate text-sm font-semibold text-foreground"
-                                                                >
-                                                                    {segment.rute}
-                                                                </p>
-                                                                <p
-                                                                    class="mt-0.5 text-xs text-muted-foreground"
-                                                                >
-                                                                    {segmentDisplayName(
-                                                                        segment.origin ??
-                                                                            '',
-                                                                        segment.destination ??
-                                                                            '',
-                                                                        segment.rute,
-                                                                    ) ||
-                                                                        'Origin - Destination belum diatur'}
-                                                                </p>
-                                                                <p
-                                                                    class="mt-0.5 text-[11px] text-muted-foreground"
-                                                                >
-                                                                    Jam:
-                                                                    {segmentJamSummary(
-                                                                        segment.jam_pickups,
-                                                                    ) ||
-                                                                        segmentJamLabel(
-                                                                            segment.jam,
-                                                                        ) ||
-                                                                        '-'}
-                                                                </p>
-                                                            </div>
-                                                            {#if canWriteTab('segments')}
-                                                                <DropdownMenu>
-                                                                    <DropdownMenuTrigger
-                                                                        asChild
-                                                                    >
-                                                                        <Button
-                                                                            type="button"
-                                                                            variant="ghost"
-                                                                            size="icon"
-                                                                            class="h-8 w-8 rounded-full border border-border/70"
-                                                                        >
-                                                                            <MoreHorizontal
-                                                                                class="h-4 w-4"
-                                                                            />
-                                                                            <span
-                                                                                class="sr-only"
-                                                                                >Aksi
-                                                                                segment</span
-                                                                            >
-                                                                        </Button>
-                                                                    </DropdownMenuTrigger>
-                                                                    <DropdownMenuContent
-                                                                        align="end"
-                                                                        sideOffset={8}
-                                                                        class="z-[120] w-44"
-                                                                    >
-                                                                        <DropdownMenuItem
-                                                                            onclick={() =>
-                                                                                editSegment(
-                                                                                    segment,
-                                                                                )}
-                                                                        >
-                                                                            <Pencil
-                                                                                class="mr-2 h-3.5 w-3.5"
-                                                                            />
-                                                                            Edit
-                                                                        </DropdownMenuItem>
-                                                                        <DropdownMenuItem
-                                                                            onclick={() =>
-                                                                                void removeItem(
-                                                                                    `/api/admin/segments/${segment.id}`,
-                                                                                    'Segment deleted.',
-                                                                                )}
-                                                                        >
-                                                                            <Trash2
-                                                                                class="mr-2 h-3.5 w-3.5"
-                                                                            />
-                                                                            Hapus
-                                                                        </DropdownMenuItem>
-                                                                    </DropdownMenuContent>
-                                                                </DropdownMenu>
-                                                            {/if}
-                                                        </div>
-                                                        <div
-                                                            class="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-3"
-                                                        >
-                                                            {#if segment.public_booking_enabled}
-                                                                <Badge
-                                                                    variant="secondary"
-                                                                    class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/50 dark:text-emerald-200"
-                                                                >
-                                                                    Tampil
-                                                                    publik
-                                                                </Badge>
-                                                            {:else}
-                                                                <Badge
-                                                                    variant="secondary"
-                                                                    class="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-[11px] text-amber-700 dark:border-amber-900 dark:bg-amber-950/50 dark:text-amber-200"
-                                                                >
-                                                                    Disembunyikan
-                                                                </Badge>
-                                                            {/if}
-                                                            {#if canWriteTab('segments')}
-                                                                <button
-                                                                    type="button"
-                                                                    role="switch"
-                                                                    aria-checked={segment.public_booking_enabled}
-                                                                    aria-label={`${segment.public_booking_enabled ? 'Sembunyikan' : 'Tampilkan'} ${segment.rute} dari public booking`}
-                                                                    title={segment.public_booking_enabled
-                                                                        ? 'Sembunyikan dari public booking'
-                                                                        : 'Tampilkan di public booking'}
-                                                                    disabled={segmentVisibilityUpdatingId ===
-                                                                        segment.id}
-                                                                    onclick={() =>
-                                                                        void toggleSegmentPublicBooking(
-                                                                            segment,
-                                                                            !segment.public_booking_enabled,
-                                                                        )}
-                                                                    class="inline-flex min-h-9 items-center gap-2 rounded-full border border-border/70 px-3 py-1 text-xs font-semibold transition hover:bg-muted/50 disabled:cursor-wait disabled:opacity-60"
-                                                                >
-                                                                    <span
-                                                                        class:justify-end={segment.public_booking_enabled}
-                                                                        class="flex h-5 w-9 items-center rounded-full bg-slate-300 p-0.5 transition dark:bg-slate-700"
-                                                                    >
-                                                                        <span
-                                                                            class="h-4 w-4 rounded-full bg-white shadow-sm transition"
-                                                                        ></span>
-                                                                    </span>
-                                                                    {segmentVisibilityUpdatingId ===
-                                                                    segment.id
-                                                                        ? 'Menyimpan...'
-                                                                        : segment.public_booking_enabled
-                                                                          ? 'Publik'
-                                                                          : 'Sembunyikan'}
-                                                                </button>
-                                                            {/if}
-                                                        </div>
-                                                        <div
-                                                            class="mt-3 flex items-center justify-between gap-3"
-                                                        >
-                                                            <p
-                                                                class="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
-                                                            >
-                                                                Harga segment
-                                                            </p>
-                                                            <p
-                                                                class="text-sm font-semibold text-amber-800 tabular-nums"
-                                                            >
-                                                                {formatCurrency(
-                                                                    Number(
-                                                                        segment.harga ||
-                                                                            0,
-                                                                    ),
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                    </article>
-                                                {/each}
-                                            </div>
-                                        {/if}
-
-                                        {#if canWriteTab('segments')}
-                                            <form
-                                                class="space-y-3 rounded-lg border border-border/70 bg-muted/10 p-4"
-                                                onsubmit={saveSegment}
-                                            >
-                                                <div
-                                                    class="flex items-center justify-between gap-3"
-                                                >
-                                                    <div>
-                                                        <p
-                                                            class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
-                                                        >
-                                                            Form segment inline
-                                                        </p>
-                                                        <h4
-                                                            class="mt-1 text-sm font-semibold text-foreground"
-                                                        >
-                                                            {segmentForm.id
-                                                                ? 'Perbarui segment'
-                                                                : `Tambah segment di ${row.name}`}
-                                                        </h4>
-                                                    </div>
-                                                    <Badge
-                                                        variant="secondary"
-                                                        class="rounded-full px-2.5 py-1 text-[11px]"
-                                                    >
-                                                        {rowSegments.length} segment
-                                                    </Badge>
-                                                </div>
-                                                <input
-                                                    type="hidden"
-                                                    bind:value={
-                                                        segmentForm.route_id
-                                                    }
-                                                />
-                                                <div
-                                                    class="grid gap-3 md:grid-cols-3"
-                                                >
-                                                    <label class="space-y-1.5">
-                                                        <span
-                                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >
-                                                            Origin
-                                                        </span>
-                                                        <Input
-                                                            placeholder="Origin"
-                                                            bind:value={
-                                                                segmentForm.origin
-                                                            }
-                                                            required
-                                                            oninput={(event) =>
-                                                                updateSegmentOrigin(
-                                                                    (
-                                                                        event.currentTarget as HTMLInputElement
-                                                                    ).value,
-                                                                )}
-                                                        />
-                                                    </label>
-                                                    <label class="space-y-1.5">
-                                                        <span
-                                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >
-                                                            Destination
-                                                        </span>
-                                                        <Input
-                                                            placeholder="Destination"
-                                                            bind:value={
-                                                                segmentForm.destination
-                                                            }
-                                                            required
-                                                            oninput={(event) =>
-                                                                updateSegmentDestination(
-                                                                    (
-                                                                        event.currentTarget as HTMLInputElement
-                                                                    ).value,
-                                                                )}
-                                                        />
-                                                    </label>
-                                                    <label class="space-y-1.5">
-                                                        <span
-                                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >
-                                                            Harga Segment
-                                                        </span>
-                                                        <Input
-                                                            type="text"
-                                                            inputmode="numeric"
-                                                            placeholder="Harga segment"
-                                                            value={formatRupiahInput(
-                                                                segmentForm.harga,
-                                                            )}
-                                                            oninput={(
-                                                                event,
-                                                            ) => {
-                                                                segmentForm.harga =
-                                                                    parseRupiahInput(
-                                                                        (
-                                                                            event.currentTarget as HTMLInputElement
-                                                                        ).value,
-                                                                    );
-                                                            }}
-                                                            required
-                                                        />
-                                                    </label>
-                                                </div>
-                                                <div
-                                                    class="space-y-2 md:col-span-3"
-                                                >
-                                                    <div
-                                                        class="flex items-center justify-between gap-3"
-                                                    >
-                                                        <span
-                                                            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                                                        >
-                                                            Jam Pickup
-                                                        </span>
-                                                        <Button
-                                                            type="button"
-                                                            variant="outline"
-                                                            size="sm"
-                                                            class="h-8 rounded-full px-3 text-[11px]"
-                                                            onclick={addSegmentJamPickup}
-                                                        >
-                                                            Tambah jam
-                                                        </Button>
-                                                    </div>
-                                                    <div class="space-y-2">
-                                                        {#each segmentForm.jam_pickups as jamValue, index (index)}
-                                                            <div
-                                                                class="flex items-center gap-2"
-                                                            >
-                                                                <input
-                                                                    data-segment-time="true"
-                                                                    data-segment-time-index={index}
-                                                                    type="text"
-                                                                    class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                                                    placeholder={`Jam pickup ${index + 1}`}
-                                                                    value={jamValue}
-                                                                    oninput={(
-                                                                        event,
-                                                                    ) =>
-                                                                        updateSegmentJamPickup(
-                                                                            index,
-                                                                            (
-                                                                                event.currentTarget as HTMLInputElement
-                                                                            )
-                                                                                .value,
-                                                                        )}
-                                                                    required
-                                                                />
-                                                                {#if segmentForm.jam_pickups.length > 1}
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="outline"
-                                                                        class="h-9 rounded-full px-3 text-[11px]"
-                                                                        onclick={() =>
-                                                                            removeSegmentJamPickup(
-                                                                                index,
-                                                                            )}
-                                                                    >
-                                                                        Hapus
-                                                                    </Button>
-                                                                {/if}
-                                                            </div>
-                                                        {/each}
-                                                    </div>
-                                                </div>
-                                                <div
-                                                    class="flex flex-wrap gap-2 border-t border-border/70 pt-3"
-                                                >
-                                                    <LoadingButton
-                                                        type="submit"
-                                                        loading={isSubmitActive(
-                                                            'segment',
-                                                        )}
-                                                        loadingText={segmentForm.id
-                                                            ? 'Menyimpan segment...'
-                                                            : 'Menambah segment...'}
-                                                    >
-                                                        {segmentForm.id
-                                                            ? 'Update Segment'
-                                                            : 'Tambah Segment'}
-                                                    </LoadingButton>
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        onclick={() =>
-                                                            resetSegmentForm(
-                                                                Number(row.id),
-                                                            )}
-                                                    >
-                                                        Reset
-                                                    </Button>
-                                                </div>
-                                            </form>
-                                        {/if}
-                                    </div>
-                                {/snippet}
-                            </DataTable>
-                        </div>
+                                    {/snippet}
+                                </DataTable>
+                            </div></ViewportOnly
+                        >
                     </div>
                 {/if}
             {/if}
@@ -7580,7 +7622,7 @@
                                 >
                                     <label class="min-w-0 space-y-1">
                                         <span
-                                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px] sm:tracking-[0.22em]"
+                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px] sm:tracking-[0.22em]"
                                             >Rute perjalanan</span
                                         >
                                         <select
@@ -7604,7 +7646,7 @@
                                             {/each}
                                         </select>
                                         <p
-                                            class="hidden text-[11px] text-muted-foreground sm:block"
+                                            class="hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                         >
                                             Jadwal ini akan berulang setiap
                                             minggu pada hari yang dipilih.
@@ -7643,7 +7685,7 @@
                                                 Langkah {scheduleFormStep} dari 3
                                             </p>
                                             <p
-                                                class="hidden text-[11px] text-muted-foreground sm:block"
+                                                class="hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                             >
                                                 Ikuti langkah berikut untuk
                                                 menyiapkan jadwal dengan mudah.
@@ -7662,12 +7704,12 @@
                                                         )}
                                                 >
                                                     <span
-                                                        class="block whitespace-nowrap text-[10px] font-semibold sm:text-[11px]"
+                                                        class="block whitespace-nowrap text-xs md:text-[10px] font-semibold sm:text-[11px]"
                                                     >
                                                         {step.number}. {step.title}
                                                     </span>
                                                     <span
-                                                        class="mt-0.5 hidden text-[10px] sm:block"
+                                                        class="mt-0.5 hidden text-xs md:text-[10px] sm:block"
                                                     >
                                                         {step.description}
                                                     </span>
@@ -7682,7 +7724,7 @@
                                     >
                                         <label class="min-w-0 space-y-1.5">
                                             <span
-                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
                                                 >Hari</span
                                             >
                                             <select
@@ -7698,7 +7740,7 @@
                                         </label>
                                         <label class="min-w-0 space-y-1.5">
                                             <span
-                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
                                                 >Jam</span
                                             >
                                             <input
@@ -7711,7 +7753,7 @@
                                                 class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                                             />
                                             <p
-                                                class="mt-1 hidden text-[11px] text-muted-foreground sm:block"
+                                                class="mt-1 hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                             >
                                                 Jam berangkat dapat diisi bebas.
                                                 Pilihan cepat hanya membantu
@@ -7724,7 +7766,7 @@
                                                     {#each scheduleRouteJamOptions() as jamOption (jamOption)}
                                                         <button
                                                             type="button"
-                                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
+                                                            class={`rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold transition ${
                                                                 scheduleForm.jam ===
                                                                 jamOption
                                                                     ? 'border-sky-500 bg-sky-50 text-sky-700'
@@ -7740,7 +7782,7 @@
                                                     {/each}
                                                 {:else}
                                                     <span
-                                                        class="hidden text-[11px] text-muted-foreground sm:block"
+                                                        class="hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                                     >
                                                         Jam tetap bisa diisi
                                                         manual bila route ini
@@ -7751,7 +7793,7 @@
                                         </label>
                                         <label class="min-w-0 space-y-1.5">
                                             <span
-                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
                                                 >Kendaraan</span
                                             >
                                             <Input
@@ -7771,7 +7813,7 @@
                                         </label>
                                         <label class="min-w-0 space-y-1.5">
                                             <span
-                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
                                                 >BOP</span
                                             >
                                             <Input
@@ -7791,7 +7833,7 @@
                                                 }}
                                             />
                                             <p
-                                                class="mt-1 hidden text-[11px] text-muted-foreground sm:block"
+                                                class="mt-1 hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                                 title="BOP adalah biaya operasional perjalanan."
                                             >
                                                 Biaya ini dipakai untuk
@@ -7826,7 +7868,7 @@
                                         >
                                             <div>
                                                 <p
-                                                    class="text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700 sm:text-[11px] sm:tracking-[0.22em]"
+                                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-700 sm:text-[11px] sm:tracking-[0.22em]"
                                                 >
                                                     Layanan atau Segment
                                                     Perjalanan
@@ -7843,7 +7885,7 @@
                                                 class="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:flex-none"
                                             >
                                                 <span
-                                                    class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-[11px] font-semibold text-sky-700"
+                                                    class="inline-flex items-center rounded-full bg-sky-100 px-2.5 py-1 text-xs md:text-[11px] font-semibold text-sky-700"
                                                 >
                                                     {scheduleConfiguredSegmentCount()}
                                                     layanan cocok
@@ -7852,7 +7894,7 @@
                                                     type="button"
                                                     variant="outline"
                                                     size="sm"
-                                                    class="h-8 rounded-lg px-2.5 text-[11px]"
+                                                    class="h-8 rounded-lg px-2.5 text-xs md:text-[11px]"
                                                     onclick={toggleScheduleManualSegments}
                                                 >
                                                     {scheduleManualSegments
@@ -7941,7 +7983,7 @@
                                                                         )}
                                                                 </p>
                                                                 <p
-                                                                    class="hidden text-[11px] text-muted-foreground sm:block"
+                                                                    class="hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                                                 >
                                                                     Pickup
                                                                     tersedia: {pickupOptions.join(
@@ -7957,30 +7999,38 @@
                                                             </div>
                                                         </label>
                                                         {#if isChecked && pickupOptions.length > 0}
-                                                            <select
-                                                                class="h-8 rounded-md border border-sky-300/70 bg-white px-2 text-[12px] font-semibold text-sky-800 shadow-sm dark:border-sky-500/30 dark:bg-slate-950/70 dark:text-sky-100"
-                                                                value={configEntry?.jam_pickup ??
-                                                                    pickupOptions[0]}
-                                                                onchange={(e) =>
-                                                                    updateScheduleSegmentJam(
-                                                                        Number(
-                                                                            seg.id,
-                                                                        ),
-                                                                        (
-                                                                            e.currentTarget as HTMLSelectElement
-                                                                        ).value,
-                                                                    )}
+                                                            <label
+                                                                class="mobile-field grid min-w-0 flex-1 gap-1.5 text-sm font-medium"
+                                                                ><span
+                                                                    >Jam jemput</span
+                                                                ><select
+                                                                    class="h-8 rounded-md border border-sky-300/70 bg-white px-2 text-[12px] font-semibold text-sky-800 shadow-sm dark:border-sky-500/30 dark:bg-slate-950/70 dark:text-sky-100"
+                                                                    value={configEntry?.jam_pickup ??
+                                                                        pickupOptions[0]}
+                                                                    onchange={(
+                                                                        e,
+                                                                    ) =>
+                                                                        updateScheduleSegmentJam(
+                                                                            Number(
+                                                                                seg.id,
+                                                                            ),
+                                                                            (
+                                                                                e.currentTarget as HTMLSelectElement
+                                                                            )
+                                                                                .value,
+                                                                        )}
+                                                                >
+                                                                    {#each pickupOptions as pickupJam (pickupJam)}
+                                                                        <option
+                                                                            value={pickupJam}
+                                                                            >{pickupJam}</option
+                                                                        >
+                                                                    {/each}
+                                                                </select></label
                                                             >
-                                                                {#each pickupOptions as pickupJam (pickupJam)}
-                                                                    <option
-                                                                        value={pickupJam}
-                                                                        >{pickupJam}</option
-                                                                    >
-                                                                {/each}
-                                                            </select>
                                                         {:else if isChecked}
                                                             <span
-                                                                class="rounded bg-sky-100 px-2 py-1 text-[11px] text-sky-600 dark:bg-sky-950/35 dark:text-sky-200"
+                                                                class="rounded bg-sky-100 px-2 py-1 text-xs md:text-[11px] text-sky-600 dark:bg-sky-950/35 dark:text-sky-200"
                                                             >
                                                                 {configEntry?.jam_pickup ??
                                                                     '-'}
@@ -8012,7 +8062,7 @@
                                                                         )}
                                                                 </p>
                                                                 <p
-                                                                    class="text-[11px] text-muted-foreground"
+                                                                    class="text-xs md:text-[11px] text-muted-foreground"
                                                                 >
                                                                     Pickup {segmentJamSummary(
                                                                         seg.jam_pickups,
@@ -8037,7 +8087,7 @@
                                                     {/each}
                                                 {:else}
                                                     <p
-                                                        class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-[11px] text-amber-700"
+                                                        class="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs md:text-[11px] text-amber-700"
                                                     >
                                                         Belum ada segment untuk
                                                         rute ini. Jadwal tetap
@@ -8048,7 +8098,7 @@
                                         {/if}
                                         {#if scheduleManualSegments && scheduleForm.segment_configs.length === 0}
                                             <p
-                                                class="mt-2.5 hidden text-[11px] text-amber-600 sm:block"
+                                                class="mt-2.5 hidden text-xs md:text-[11px] text-amber-600 sm:block"
                                             >
                                                 Belum ada segment manual
                                                 dipilih. Sistem tetap dapat
@@ -8072,7 +8122,7 @@
                                         class="rounded-lg border border-input/70 bg-muted/10 p-3 sm:p-4"
                                     >
                                         <p
-                                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px] sm:tracking-[0.22em]"
+                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:text-[11px] sm:tracking-[0.22em]"
                                         >
                                             Kendaraan yang Berangkat
                                         </p>
@@ -8101,7 +8151,7 @@
                                                 >
                                                     <label class="space-y-1.5">
                                                         <span
-                                                            class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                            class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
                                                             >Slot {idx + 1} · Label</span
                                                         >
                                                         <Input
@@ -8116,7 +8166,7 @@
                                                                 )}
                                                         />
                                                         <p
-                                                            class="hidden text-[11px] text-muted-foreground sm:block"
+                                                            class="hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                                         >
                                                             {selectedUnit?.kapasitas
                                                                 ? `${selectedUnit.kapasitas} kursi tersedia`
@@ -8125,7 +8175,7 @@
                                                     </label>
                                                     <label class="space-y-1.5">
                                                         <span
-                                                            class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
+                                                            class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground sm:text-xs"
                                                             >Layout kursi</span
                                                         >
                                                         <select
@@ -8166,7 +8216,7 @@
                                     </div>
 
                                     <div
-                                        class="rounded-xl border border-border/70 bg-muted/20 px-3 py-2.5 text-[11px] text-muted-foreground sm:px-4 sm:py-3 sm:text-xs"
+                                        class="rounded-xl border border-border/70 bg-muted/20 px-3 py-2.5 text-xs md:text-[11px] text-muted-foreground sm:px-4 sm:py-3 sm:text-xs"
                                     >
                                         {#if !scheduleLayoutIsReady()}
                                             Layout belum lengkap.
@@ -8215,7 +8265,7 @@
                                             Pemeriksaan jadwal
                                         </p>
                                         <div
-                                            class="mt-2 grid grid-cols-2 gap-2 text-[11px] sm:mt-3 sm:text-xs"
+                                            class="mt-2 grid grid-cols-2 gap-2 text-xs md:text-[11px] sm:mt-3 sm:text-xs"
                                         >
                                             <div
                                                 class="col-span-2 min-w-0 rounded-lg bg-background px-3 py-2 sm:col-span-1"
@@ -8404,7 +8454,7 @@
                                                     {days[day.dow]}
                                                 </p>
                                                 <p
-                                                    class="hidden text-[11px] text-muted-foreground sm:block"
+                                                    class="hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                                 >
                                                     {day.rows.length > 0
                                                         ? `${formatScheduleWindow(day.firstDeparture, day.lastDeparture)} • ${day.totalUnits} kendaraan`
@@ -8416,7 +8466,7 @@
                                             >
                                                 <Badge
                                                     variant="outline"
-                                                    class="rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    class="rounded-full px-2.5 py-1 text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                 >
                                                     {day.rows.length}
                                                 </Badge>
@@ -8490,13 +8540,13 @@
                                                                         {row.jam}
                                                                     </p>
                                                                     <span
-                                                                        class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
+                                                                        class="rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-sky-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
                                                                     >
                                                                         {row.units}
                                                                         kendaraan
                                                                     </span>
                                                                     <span
-                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
+                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-emerald-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
                                                                     >
                                                                         {Array.isArray(
                                                                             row.segment_matches,
@@ -8509,7 +8559,7 @@
                                                                     class="flex flex-wrap gap-1.5 sm:gap-2"
                                                                 >
                                                                     <span
-                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
+                                                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-emerald-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
                                                                     >
                                                                         BOP {formatCurrency(
                                                                             Number(
@@ -8519,7 +8569,7 @@
                                                                         )}
                                                                     </span>
                                                                     <span
-                                                                        class="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
+                                                                        class="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-violet-700 sm:px-2.5 sm:py-1 sm:text-[11px]"
                                                                     >
                                                                         {rowOptions.length >
                                                                         0
@@ -8528,7 +8578,7 @@
                                                                     </span>
                                                                 </div>
                                                                 <p
-                                                                    class="truncate text-[10px] text-muted-foreground sm:text-[11px]"
+                                                                    class="truncate text-xs md:text-[10px] text-muted-foreground sm:text-[11px]"
                                                                 >
                                                                     <span
                                                                         class="sr-only"
@@ -8602,12 +8652,12 @@
                                                                 class="flex min-w-0 items-center justify-between gap-2 sm:gap-3"
                                                             >
                                                                 <p
-                                                                    class="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:text-[11px] sm:tracking-[0.2em]"
+                                                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:text-[11px] sm:tracking-[0.2em]"
                                                                 >
                                                                     Kendaraan
                                                                 </p>
                                                                 <span
-                                                                    class="max-w-[48%] truncate text-[10px] text-muted-foreground sm:text-[11px]"
+                                                                    class="max-w-[48%] truncate text-xs md:text-[10px] text-muted-foreground sm:text-[11px]"
                                                                 >
                                                                     {row.unit_label ||
                                                                         row.unit_nama_kategori ||
@@ -8632,14 +8682,14 @@
                                                                                     {item.label}
                                                                                 </p>
                                                                                 <p
-                                                                                    class="hidden text-[11px] text-muted-foreground sm:block"
+                                                                                    class="hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                                                                 >
                                                                                     Layout
                                                                                     keberangkatan
                                                                                 </p>
                                                                             </div>
                                                                             <div
-                                                                                class="max-w-[45%] truncate text-right text-[10px] text-muted-foreground sm:text-[11px]"
+                                                                                class="max-w-[45%] truncate text-right text-xs md:text-[10px] text-muted-foreground sm:text-[11px]"
                                                                             >
                                                                                 {item.nama_kategori ||
                                                                                     'Layout belum dipilih'}
@@ -8649,7 +8699,7 @@
                                                                 </div>
                                                             {:else}
                                                                 <p
-                                                                    class="mt-2 text-[10px] text-muted-foreground sm:text-[11px]"
+                                                                    class="mt-2 text-xs md:text-[10px] text-muted-foreground sm:text-[11px]"
                                                                 >
                                                                     Layout
                                                                     default;
@@ -8876,7 +8926,7 @@
                             class="border-b border-border/70 bg-muted/20 px-5 py-4"
                         >
                             <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                             >
                                 Form Tarif Bagasi
                             </p>
@@ -8930,231 +8980,239 @@
                     <div
                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                     >
-                        <div class="grid gap-3 p-3 md:hidden">
-                            {#if services.length === 0}
-                                <div
-                                    class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
-                                >
-                                    Belum ada layanan bagasi.
-                                </div>
-                            {/if}
-                            {#each services as row (row.id)}
-                                <article
-                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
-                                >
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div class="grid gap-3 p-3 md:hidden">
+                                {#if services.length === 0}
                                     <div
-                                        class="flex items-start justify-between gap-3"
+                                        class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="truncate text-sm font-semibold text-foreground"
-                                            >
-                                                {row.name}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 text-xs text-muted-foreground"
-                                            >
-                                                Referensi tarif dan layanan
-                                                bagasi operasional.
-                                            </p>
-                                        </div>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    class="h-8 w-8 shrink-0 rounded-full border border-border/70"
-                                                >
-                                                    <MoreHorizontal
-                                                        class="h-4 w-4"
-                                                    />
-                                                    <span class="sr-only"
-                                                        >Aksi service</span
-                                                    >
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                sideOffset={8}
-                                                class="z-[120] w-44"
-                                            >
-                                                <DropdownMenuItem
-                                                    onclick={() => {
-                                                        serviceForm = {
-                                                            id: row.id,
-                                                            name: row.name,
-                                                        };
-                                                        setFormMode('form');
-                                                    }}
-                                                >
-                                                    <Pencil
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    disabled={pendingDeleteKey ===
-                                                        `service-${row.id}`}
-                                                    onclick={() =>
-                                                        void removeItem(
-                                                            `/api/admin/luggage-services/${row.id}`,
-                                                            'Service deleted.',
-                                                            {
-                                                                confirmMessage:
-                                                                    'Yakin ingin menghapus konfigurasi tarif bagasi ini?',
-                                                                loadingMessage:
-                                                                    'Menghapus konfigurasi tarif bagasi...',
-                                                                errorMessage:
-                                                                    'Gagal menghapus konfigurasi tarif bagasi.',
-                                                                pendingKey: `service-${row.id}`,
-                                                            },
-                                                        )}
-                                                >
-                                                    <Trash2
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    {pendingDeleteKey ===
-                                                    `service-${row.id}`
-                                                        ? 'Menghapus...'
-                                                        : 'Hapus'}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        Belum ada layanan bagasi.
                                     </div>
-                                    <div
-                                        class="mt-3 rounded-xl bg-emerald-50/70 px-3 py-2 text-xs dark:bg-emerald-950/25"
+                                {/if}
+                                {#each services as row (row.id)}
+                                    <article
+                                        class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                     >
-                                        <p
-                                            class="text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+                                        <div
+                                            class="flex items-start justify-between gap-3"
                                         >
-                                            Dipakai Untuk
-                                        </p>
-                                        <p
-                                            class="mt-1 font-medium text-emerald-800 dark:text-emerald-200"
-                                        >
-                                            Form transaksi dan laporan bagasi.
-                                        </p>
-                                    </div>
-                                </article>
-                            {/each}
-                        </div>
-                        <div class="hidden overflow-x-auto md:block">
-                            <table
-                                class="min-w-[720px] w-full border-separate border-spacing-0 text-sm"
-                            >
-                                <thead
-                                    class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
-                                >
-                                    <tr>
-                                        <th
-                                            class="w-[78%] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
-                                            >Nama Layanan</th
-                                        >
-                                        <th
-                                            class="w-[22%] border-b border-border/70 px-4 py-3 text-center font-semibold"
-                                            >Aksi</th
-                                        >
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each services as row (row.id)}
-                                        <tr
-                                            class="group transition hover:bg-muted/15"
-                                        >
-                                            <td
-                                                class="border-b border-r border-border/60 px-4 py-4"
-                                            >
-                                                <div
-                                                    class="font-semibold text-foreground"
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="truncate text-sm font-semibold text-foreground"
                                                 >
                                                     {row.name}
-                                                </div>
-                                                <div
-                                                    class="mt-1 text-[11px] text-muted-foreground"
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 text-xs text-muted-foreground"
                                                 >
-                                                    Digunakan untuk referensi
-                                                    tarif dan layanan bagasi
-                                                    operasional.
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="relative border-b border-border/60 px-4 py-4 text-center"
+                                                    Referensi tarif dan layanan
+                                                    bagasi operasional.
+                                                </p>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-4 w-4"
+                                                        />
+                                                        <span class="sr-only"
+                                                            >Aksi service</span
+                                                        >
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44"
+                                                >
+                                                    <DropdownMenuItem
+                                                        onclick={() => {
+                                                            serviceForm = {
+                                                                id: row.id,
+                                                                name: row.name,
+                                                            };
+                                                            setFormMode('form');
+                                                        }}
+                                                    >
+                                                        <Pencil
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        disabled={pendingDeleteKey ===
+                                                            `service-${row.id}`}
+                                                        onclick={() =>
+                                                            void removeItem(
+                                                                `/api/admin/luggage-services/${row.id}`,
+                                                                'Service deleted.',
+                                                                {
+                                                                    confirmMessage:
+                                                                        'Yakin ingin menghapus konfigurasi tarif bagasi ini?',
+                                                                    loadingMessage:
+                                                                        'Menghapus konfigurasi tarif bagasi...',
+                                                                    errorMessage:
+                                                                        'Gagal menghapus konfigurasi tarif bagasi.',
+                                                                    pendingKey: `service-${row.id}`,
+                                                                },
+                                                            )}
+                                                    >
+                                                        <Trash2
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        {pendingDeleteKey ===
+                                                        `service-${row.id}`
+                                                            ? 'Menghapus...'
+                                                            : 'Hapus'}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                        <div
+                                            class="mt-3 rounded-xl bg-emerald-50/70 px-3 py-2 text-xs dark:bg-emerald-950/25"
+                                        >
+                                            <p
+                                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
                                             >
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            class="h-8 w-8 rounded-full border border-border/70"
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-4 w-4"
-                                                            />
-                                                            <span
-                                                                class="sr-only"
-                                                                >Aksi service</span
-                                                            >
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            onclick={() => {
-                                                                serviceForm = {
-                                                                    id: row.id,
-                                                                    name: row.name,
-                                                                };
-                                                                setFormMode(
-                                                                    'form',
-                                                                );
-                                                            }}
-                                                        >
-                                                            <Pencil
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            disabled={pendingDeleteKey ===
-                                                                `service-${row.id}`}
-                                                            onclick={() =>
-                                                                void removeItem(
-                                                                    `/api/admin/luggage-services/${row.id}`,
-                                                                    'Service deleted.',
-                                                                    {
-                                                                        confirmMessage:
-                                                                            'Yakin ingin menghapus konfigurasi tarif bagasi ini?',
-                                                                        loadingMessage:
-                                                                            'Menghapus konfigurasi tarif bagasi...',
-                                                                        errorMessage:
-                                                                            'Gagal menghapus konfigurasi tarif bagasi.',
-                                                                        pendingKey: `service-${row.id}`,
-                                                                    },
-                                                                )}
-                                                        >
-                                                            <Trash2
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            {pendingDeleteKey ===
-                                                            `service-${row.id}`
-                                                                ? 'Menghapus...'
-                                                                : 'Hapus'}
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </td>
+                                                Dipakai Untuk
+                                            </p>
+                                            <p
+                                                class="mt-1 font-medium text-emerald-800 dark:text-emerald-200"
+                                            >
+                                                Form transaksi dan laporan
+                                                bagasi.
+                                            </p>
+                                        </div>
+                                    </article>
+                                {/each}
+                            </div></ViewportOnly
+                        >
+                        <ViewportOnly minWidth={768}
+                            ><div class="hidden overflow-x-auto md:block">
+                                <table
+                                    class="min-w-[720px] w-full border-separate border-spacing-0 text-sm"
+                                >
+                                    <thead
+                                        class="bg-muted/20 text-xs md:text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
+                                    >
+                                        <tr>
+                                            <th
+                                                class="w-[78%] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                                >Nama Layanan</th
+                                            >
+                                            <th
+                                                class="w-[22%] border-b border-border/70 px-4 py-3 text-center font-semibold"
+                                                >Aksi</th
+                                            >
                                         </tr>
-                                    {/each}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {#each services as row (row.id)}
+                                            <tr
+                                                class="group transition hover:bg-muted/15"
+                                            >
+                                                <td
+                                                    class="border-b border-r border-border/60 px-4 py-4"
+                                                >
+                                                    <div
+                                                        class="font-semibold text-foreground"
+                                                    >
+                                                        {row.name}
+                                                    </div>
+                                                    <div
+                                                        class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Digunakan untuk
+                                                        referensi tarif dan
+                                                        layanan bagasi
+                                                        operasional.
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    class="relative border-b border-border/60 px-4 py-4 text-center"
+                                                >
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
+                                                        >
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                class="h-8 w-8 rounded-full border border-border/70"
+                                                            >
+                                                                <MoreHorizontal
+                                                                    class="h-4 w-4"
+                                                                />
+                                                                <span
+                                                                    class="sr-only"
+                                                                    >Aksi
+                                                                    service</span
+                                                                >
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            sideOffset={8}
+                                                            class="z-[120] w-44"
+                                                        >
+                                                            <DropdownMenuItem
+                                                                onclick={() => {
+                                                                    serviceForm =
+                                                                        {
+                                                                            id: row.id,
+                                                                            name: row.name,
+                                                                        };
+                                                                    setFormMode(
+                                                                        'form',
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <Pencil
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                disabled={pendingDeleteKey ===
+                                                                    `service-${row.id}`}
+                                                                onclick={() =>
+                                                                    void removeItem(
+                                                                        `/api/admin/luggage-services/${row.id}`,
+                                                                        'Service deleted.',
+                                                                        {
+                                                                            confirmMessage:
+                                                                                'Yakin ingin menghapus konfigurasi tarif bagasi ini?',
+                                                                            loadingMessage:
+                                                                                'Menghapus konfigurasi tarif bagasi...',
+                                                                            errorMessage:
+                                                                                'Gagal menghapus konfigurasi tarif bagasi.',
+                                                                            pendingKey: `service-${row.id}`,
+                                                                        },
+                                                                    )}
+                                                            >
+                                                                <Trash2
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                {pendingDeleteKey ===
+                                                                `service-${row.id}`
+                                                                    ? 'Menghapus...'
+                                                                    : 'Hapus'}
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </td>
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </div></ViewportOnly
+                        >
                     </div>
                 {/if}
             {/if}
@@ -9164,20 +9222,24 @@
                     <div
                         class="grid gap-3 md:grid-cols-[minmax(240px,1fr)_auto]"
                     >
-                        <select
-                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                            bind:value={selectedSegmentRouteId}
-                            onchange={async () => {
-                                await changeSegmentRoute(
-                                    Number(selectedSegmentRouteId),
-                                );
-                            }}
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Rute</span>
+                            <select
+                                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                bind:value={selectedSegmentRouteId}
+                                onchange={async () => {
+                                    await changeSegmentRoute(
+                                        Number(selectedSegmentRouteId),
+                                    );
+                                }}
+                            >
+                                <option value={0}>Pilih rute induk</option>
+                                {#each routes as row (row.id)}
+                                    <option value={row.id}>{row.name}</option>
+                                {/each}
+                            </select></label
                         >
-                            <option value={0}>Pilih rute induk</option>
-                            {#each routes as row (row.id)}
-                                <option value={row.id}>{row.name}</option>
-                            {/each}
-                        </select>
                         <Button
                             type="button"
                             variant="outline"
@@ -9262,7 +9324,7 @@
                                                 type="button"
                                                 variant="outline"
                                                 size="sm"
-                                                class="h-8 rounded-full px-3 text-[11px]"
+                                                class="h-8 rounded-full px-3 text-xs md:text-[11px]"
                                                 onclick={addSegmentJamPickup}
                                             >
                                                 Tambah jam
@@ -9273,27 +9335,31 @@
                                                 <div
                                                     class="flex items-center gap-2"
                                                 >
-                                                    <input
-                                                        data-segment-time="true"
-                                                        data-segment-time-index={index}
-                                                        type="text"
-                                                        class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                                        placeholder={`Jam pickup ${index + 1}`}
-                                                        value={jamValue}
-                                                        oninput={(event) =>
-                                                            updateSegmentJamPickup(
-                                                                index,
-                                                                (
-                                                                    event.currentTarget as HTMLInputElement
-                                                                ).value,
-                                                            )}
-                                                        required
-                                                    />
+                                                    <label
+                                                        class="mobile-field grid min-w-0 flex-1 gap-1.5 text-sm font-medium"
+                                                        ><span>Jam jemput</span
+                                                        ><input
+                                                            data-segment-time="true"
+                                                            data-segment-time-index={index}
+                                                            type="text"
+                                                            class="flex h-9 min-w-0 flex-1 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                                            placeholder={`Jam pickup ${index + 1}`}
+                                                            value={jamValue}
+                                                            oninput={(event) =>
+                                                                updateSegmentJamPickup(
+                                                                    index,
+                                                                    (
+                                                                        event.currentTarget as HTMLInputElement
+                                                                    ).value,
+                                                                )}
+                                                            required
+                                                        /></label
+                                                    >
                                                     {#if segmentForm.jam_pickups.length > 1}
                                                         <Button
                                                             type="button"
                                                             variant="outline"
-                                                            class="h-9 rounded-full px-3 text-[11px]"
+                                                            class="h-9 rounded-full px-3 text-xs md:text-[11px]"
                                                             onclick={() =>
                                                                 removeSegmentJamPickup(
                                                                     index,
@@ -9366,7 +9432,7 @@
                             >
                                 <div>
                                     <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                                     >
                                         Segment Route
                                     </p>
@@ -9384,310 +9450,315 @@
                                 </div>
                                 <Badge
                                     variant="secondary"
-                                    class="w-fit rounded-full px-3 py-1 text-[11px] uppercase tracking-wide"
+                                    class="w-fit rounded-full px-3 py-1 text-xs md:text-[11px] uppercase tracking-wide"
                                 >
                                     {segments.length} segment aktif
                                 </Badge>
                             </div>
-                            <div class="grid gap-3 p-3 md:hidden">
-                                {#if segments.length === 0}
-                                    <div
-                                        class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
-                                    >
-                                        Belum ada segment untuk rute ini.
-                                    </div>
-                                {/if}
-                                {#each segments as row (row.id)}
-                                    <article
-                                        class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
-                                    >
+                            <ViewportOnly minWidth={0} maxWidth={767}
+                                ><div class="grid gap-3 p-3 md:hidden">
+                                    {#if segments.length === 0}
                                         <div
-                                            class="flex items-start justify-between gap-3"
+                                            class="rounded-lg border border-dashed border-border/80 bg-muted/20 p-4 text-sm text-muted-foreground"
                                         >
-                                            <div class="min-w-0">
+                                            Belum ada segment untuk rute ini.
+                                        </div>
+                                    {/if}
+                                    {#each segments as row (row.id)}
+                                        <article
+                                            class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
+                                        >
+                                            <div
+                                                class="flex items-start justify-between gap-3"
+                                            >
+                                                <div class="min-w-0">
+                                                    <p
+                                                        class="truncate text-sm font-semibold text-foreground"
+                                                    >
+                                                        {row.rute}
+                                                    </p>
+                                                    <p
+                                                        class="mt-0.5 truncate text-xs text-muted-foreground"
+                                                    >
+                                                        {row.route_name ??
+                                                            selectedSegmentRoute.name}
+                                                    </p>
+                                                </div>
+                                                {#if canWriteTab('segments')}
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
+                                                        >
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                                            >
+                                                                <MoreHorizontal
+                                                                    class="h-4 w-4"
+                                                                />
+                                                                <span
+                                                                    class="sr-only"
+                                                                    >Aksi
+                                                                    segment</span
+                                                                >
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            sideOffset={8}
+                                                            class="z-[120] w-44"
+                                                        >
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    editSegment(
+                                                                        row,
+                                                                    )}
+                                                            >
+                                                                <Pencil
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void removeItem(
+                                                                        `/api/admin/segments/${row.id}`,
+                                                                        'Segment deleted.',
+                                                                    )}
+                                                            >
+                                                                <Trash2
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                Hapus
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                {/if}
+                                            </div>
+
+                                            <div
+                                                class="mt-3 rounded-xl bg-amber-50/80 px-3 py-2 text-xs dark:bg-amber-950/25"
+                                            >
                                                 <p
-                                                    class="truncate text-sm font-semibold text-foreground"
+                                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
                                                 >
-                                                    {row.rute}
+                                                    Harga Segment
                                                 </p>
                                                 <p
-                                                    class="mt-0.5 truncate text-xs text-muted-foreground"
+                                                    class="mt-1 text-base font-semibold text-amber-800 dark:text-amber-200"
                                                 >
-                                                    {row.route_name ??
-                                                        selectedSegmentRoute.name}
+                                                    {formatCurrency(
+                                                        Number(row.harga || 0),
+                                                    )}
                                                 </p>
                                             </div>
-                                            {#if canWriteTab('segments')}
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            class="h-8 w-8 shrink-0 rounded-full border border-border/70"
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-4 w-4"
-                                                            />
-                                                            <span
-                                                                class="sr-only"
-                                                                >Aksi segment</span
-                                                            >
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                editSegment(
-                                                                    row,
-                                                                )}
-                                                        >
-                                                            <Pencil
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void removeItem(
-                                                                    `/api/admin/segments/${row.id}`,
-                                                                    'Segment deleted.',
-                                                                )}
-                                                        >
-                                                            <Trash2
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            {/if}
-                                        </div>
 
-                                        <div
-                                            class="mt-3 rounded-xl bg-amber-50/80 px-3 py-2 text-xs dark:bg-amber-950/25"
-                                        >
-                                            <p
-                                                class="text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
+                                            <div
+                                                class="mt-3 flex items-center gap-2 text-xs"
                                             >
-                                                Harga Segment
-                                            </p>
-                                            <p
-                                                class="mt-1 text-base font-semibold text-amber-800 dark:text-amber-200"
+                                                <span
+                                                    class="min-w-0 truncate rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 font-medium"
+                                                >
+                                                    {row.origin ??
+                                                        'Origin belum diatur'}
+                                                </span>
+                                                <span
+                                                    class="shrink-0 text-muted-foreground"
+                                                    >-</span
+                                                >
+                                                <span
+                                                    class="min-w-0 truncate rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 font-medium"
+                                                >
+                                                    {row.destination ??
+                                                        'Destination belum diatur'}
+                                                </span>
+                                            </div>
+                                            <div
+                                                class="mt-2 text-xs md:text-[11px] text-muted-foreground"
                                             >
-                                                {formatCurrency(
-                                                    Number(row.harga || 0),
-                                                )}
-                                            </p>
-                                        </div>
-
-                                        <div
-                                            class="mt-3 flex items-center gap-2 text-xs"
-                                        >
-                                            <span
-                                                class="min-w-0 truncate rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 font-medium"
-                                            >
-                                                {row.origin ??
-                                                    'Origin belum diatur'}
-                                            </span>
-                                            <span
-                                                class="shrink-0 text-muted-foreground"
-                                                >-</span
-                                            >
-                                            <span
-                                                class="min-w-0 truncate rounded-full border border-border/70 bg-muted/30 px-2.5 py-1 font-medium"
-                                            >
-                                                {row.destination ??
-                                                    'Destination belum diatur'}
-                                            </span>
-                                        </div>
-                                        <div
-                                            class="mt-2 text-[11px] text-muted-foreground"
-                                        >
-                                            Jam segment: {segmentJamSummary(
-                                                row.jam_pickups,
-                                            ) ||
-                                                segmentJamLabel(row.jam) ||
-                                                '-'}
-                                        </div>
-                                    </article>
-                                {/each}
-                            </div>
-                            <div class="hidden overflow-x-auto md:block">
-                                <table
-                                    class="min-w-[920px] w-full border-separate border-spacing-0 text-sm"
-                                >
-                                    <thead
-                                        class="bg-muted/20 text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
+                                                Jam segment: {segmentJamSummary(
+                                                    row.jam_pickups,
+                                                ) ||
+                                                    segmentJamLabel(row.jam) ||
+                                                    '-'}
+                                            </div>
+                                        </article>
+                                    {/each}
+                                </div></ViewportOnly
+                            >
+                            <ViewportOnly minWidth={768}
+                                ><div class="hidden overflow-x-auto md:block">
+                                    <table
+                                        class="min-w-[920px] w-full border-separate border-spacing-0 text-sm"
                                     >
-                                        <tr>
-                                            <th
-                                                class="w-[30%] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
-                                                >Segment</th
-                                            >
-                                            <th
-                                                class="w-[42%] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
-                                                >Arah Perjalanan</th
-                                            >
-                                            <th
-                                                class="w-[16%] border-b border-r border-border/70 px-4 py-3 text-right font-semibold"
-                                                >Harga</th
-                                            >
-                                            <th
-                                                class="w-[12%] border-b border-border/70 px-4 py-3 text-center font-semibold"
-                                                >Aksi</th
-                                            >
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {#if segments.length === 0}
+                                        <thead
+                                            class="bg-muted/20 text-xs md:text-[11px] uppercase tracking-[0.24em] text-muted-foreground"
+                                        >
                                             <tr>
-                                                <td
-                                                    class="border-b border-border/60 px-4 py-4 text-muted-foreground"
-                                                    colspan="4"
-                                                    >Belum ada segment untuk
-                                                    rute ini.</td
+                                                <th
+                                                    class="w-[30%] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                                    >Segment</th
+                                                >
+                                                <th
+                                                    class="w-[42%] border-b border-r border-border/70 px-4 py-3 text-left font-semibold"
+                                                    >Arah Perjalanan</th
+                                                >
+                                                <th
+                                                    class="w-[16%] border-b border-r border-border/70 px-4 py-3 text-right font-semibold"
+                                                    >Harga</th
+                                                >
+                                                <th
+                                                    class="w-[12%] border-b border-border/70 px-4 py-3 text-center font-semibold"
+                                                    >Aksi</th
                                                 >
                                             </tr>
-                                        {:else}
-                                            {#each segments as row (row.id)}
-                                                <tr
-                                                    class="group transition hover:bg-muted/15"
-                                                >
+                                        </thead>
+                                        <tbody>
+                                            {#if segments.length === 0}
+                                                <tr>
                                                     <td
-                                                        class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                                        class="border-b border-border/60 px-4 py-4 text-muted-foreground"
+                                                        colspan="4"
+                                                        >Belum ada segment untuk
+                                                        rute ini.</td
                                                     >
-                                                        <div
-                                                            class="font-semibold text-foreground"
-                                                        >
-                                                            {row.rute}
-                                                        </div>
-                                                        <div
-                                                            class="mt-1 text-[11px] text-muted-foreground"
-                                                        >
-                                                            Turunan dari rute
-                                                            induk {selectedSegmentRoute.name}
-                                                        </div>
-                                                        <div
-                                                            class="mt-1 text-[11px] text-muted-foreground"
-                                                        >
-                                                            Jam segment: {segmentJamSummary(
-                                                                row.jam_pickups,
-                                                            ) ||
-                                                                segmentJamLabel(
-                                                                    row.jam,
-                                                                ) ||
-                                                                '-'}
-                                                        </div>
-                                                    </td>
-                                                    <td
-                                                        class="border-b border-r border-border/60 px-4 py-4"
-                                                    >
-                                                        <div
-                                                            class="flex flex-wrap items-center gap-2"
-                                                        >
-                                                            <span
-                                                                class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
-                                                                >{row.origin ??
-                                                                    'Origin belum diatur'}</span
-                                                            >
-                                                            <span
-                                                                class="text-muted-foreground"
-                                                                >-</span
-                                                            >
-                                                            <span
-                                                                class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
-                                                                >{row.destination ??
-                                                                    'Destination belum diatur'}</span
-                                                            >
-                                                        </div>
-                                                    </td>
-                                                    <td
-                                                        class="border-b border-r border-border/60 bg-amber-50/50 px-4 py-4 text-right"
-                                                    >
-                                                        <div
-                                                            class="text-sm font-semibold text-amber-800 tabular-nums"
-                                                        >
-                                                            Rp {Number(
-                                                                row.harga,
-                                                            ).toLocaleString(
-                                                                'id-ID',
-                                                            )}
-                                                        </div>
-                                                        <div
-                                                            class="mt-1 text-[10px] uppercase tracking-wide text-amber-700/80"
-                                                        >
-                                                            Harga Segment
-                                                        </div>
-                                                    </td>
-                                                    <td
-                                                        class="relative border-b border-border/60 px-4 py-4 text-center"
-                                                    >
-                                                        {#if canWriteTab('segments')}
-                                                            <DropdownMenu>
-                                                                <DropdownMenuTrigger
-                                                                    asChild
-                                                                >
-                                                                    <Button
-                                                                        type="button"
-                                                                        variant="ghost"
-                                                                        size="icon"
-                                                                        class="h-8 w-8 rounded-full border border-border/70"
-                                                                    >
-                                                                        <MoreHorizontal
-                                                                            class="h-4 w-4"
-                                                                        />
-                                                                        <span
-                                                                            class="sr-only"
-                                                                            >Aksi
-                                                                            segment</span
-                                                                        >
-                                                                    </Button>
-                                                                </DropdownMenuTrigger>
-                                                                <DropdownMenuContent
-                                                                    align="end"
-                                                                    sideOffset={8}
-                                                                    class="z-[120] w-44"
-                                                                >
-                                                                    <DropdownMenuItem
-                                                                        onclick={() =>
-                                                                            editSegment(
-                                                                                row,
-                                                                            )}
-                                                                    >
-                                                                        <Pencil
-                                                                            class="mr-2 h-3.5 w-3.5"
-                                                                        />
-                                                                        Edit
-                                                                    </DropdownMenuItem>
-                                                                    <DropdownMenuItem
-                                                                        onclick={() =>
-                                                                            void removeItem(
-                                                                                `/api/admin/segments/${row.id}`,
-                                                                                'Segment deleted.',
-                                                                            )}
-                                                                    >
-                                                                        <Trash2
-                                                                            class="mr-2 h-3.5 w-3.5"
-                                                                        />
-                                                                        Hapus
-                                                                    </DropdownMenuItem>
-                                                                </DropdownMenuContent>
-                                                            </DropdownMenu>
-                                                        {/if}
-                                                    </td>
                                                 </tr>
-                                            {/each}
-                                        {/if}
-                                    </tbody>
-                                </table>
-                            </div>
+                                            {:else}
+                                                {#each segments as row (row.id)}
+                                                    <tr
+                                                        class="group transition hover:bg-muted/15"
+                                                    >
+                                                        <td
+                                                            class="border-b border-r border-border/60 px-4 py-4 align-top"
+                                                        >
+                                                            <div
+                                                                class="font-semibold text-foreground"
+                                                            >
+                                                                {row.rute}
+                                                            </div>
+                                                            <div
+                                                                class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                                            >
+                                                                Turunan dari
+                                                                rute induk {selectedSegmentRoute.name}
+                                                            </div>
+                                                            <div
+                                                                class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                                            >
+                                                                Jam segment: {segmentJamSummary(
+                                                                    row.jam_pickups,
+                                                                ) ||
+                                                                    segmentJamLabel(
+                                                                        row.jam,
+                                                                    ) ||
+                                                                    '-'}
+                                                            </div>
+                                                        </td>
+                                                        <td
+                                                            class="border-b border-r border-border/60 px-4 py-4"
+                                                        >
+                                                            <div
+                                                                class="flex flex-wrap items-center gap-2"
+                                                            >
+                                                                <span
+                                                                    class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
+                                                                    >{row.origin ??
+                                                                        'Origin belum diatur'}</span
+                                                                >
+                                                                <span
+                                                                    class="text-muted-foreground"
+                                                                    >-</span
+                                                                >
+                                                                <span
+                                                                    class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium"
+                                                                    >{row.destination ??
+                                                                        'Destination belum diatur'}</span
+                                                                >
+                                                            </div>
+                                                        </td>
+                                                        <td
+                                                            class="border-b border-r border-border/60 bg-amber-50/50 px-4 py-4 text-right"
+                                                        >
+                                                            <div
+                                                                class="text-sm font-semibold text-amber-800 tabular-nums"
+                                                            >
+                                                                Rp {Number(
+                                                                    row.harga,
+                                                                ).toLocaleString(
+                                                                    'id-ID',
+                                                                )}
+                                                            </div>
+                                                            <div
+                                                                class="mt-1 text-xs md:text-[10px] uppercase tracking-wide text-amber-700/80"
+                                                            >
+                                                                Harga Segment
+                                                            </div>
+                                                        </td>
+                                                        <td
+                                                            class="relative border-b border-border/60 px-4 py-4 text-center"
+                                                        >
+                                                            {#if canWriteTab('segments')}
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger
+                                                                        asChild
+                                                                    >
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="ghost"
+                                                                            size="icon"
+                                                                            class="h-8 w-8 rounded-full border border-border/70"
+                                                                        >
+                                                                            <MoreHorizontal
+                                                                                class="h-4 w-4"
+                                                                            />
+                                                                            <span
+                                                                                class="sr-only"
+                                                                                >Aksi
+                                                                                segment</span
+                                                                            >
+                                                                        </Button>
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent
+                                                                        align="end"
+                                                                        sideOffset={8}
+                                                                        class="z-[120] w-44"
+                                                                    >
+                                                                        <DropdownMenuItem
+                                                                            onclick={() =>
+                                                                                editSegment(
+                                                                                    row,
+                                                                                )}
+                                                                        >
+                                                                            <Pencil
+                                                                                class="mr-2 h-3.5 w-3.5"
+                                                                            />
+                                                                            Edit
+                                                                        </DropdownMenuItem>
+                                                                        <DropdownMenuItem
+                                                                            onclick={() =>
+                                                                                void removeItem(
+                                                                                    `/api/admin/segments/${row.id}`,
+                                                                                    'Segment deleted.',
+                                                                                )}
+                                                                        >
+                                                                            <Trash2
+                                                                                class="mr-2 h-3.5 w-3.5"
+                                                                            />
+                                                                            Hapus
+                                                                        </DropdownMenuItem>
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            {/if}
+                                                        </td>
+                                                    </tr>
+                                                {/each}
+                                            {/if}
+                                        </tbody>
+                                    </table>
+                                </div></ViewportOnly
+                            >
                         </div>
                     {/if}
                 </div>
@@ -9703,9 +9774,9 @@
                             class="border-b border-border/70 bg-muted/20 px-3 py-2.5"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                             >
-                                Form Customer Reguler
+                                Form Pelanggan Reguler
                             </p>
                             <h3 class="mt-1 text-base font-semibold">
                                 {customerForm.id
@@ -9713,7 +9784,7 @@
                                     : 'Tambah customer reguler baru'}
                             </h3>
                             <p
-                                class="mt-1 max-w-2xl text-[11px] leading-relaxed text-muted-foreground"
+                                class="mt-1 max-w-2xl text-xs md:text-[11px] leading-relaxed text-muted-foreground"
                             >
                                 Simpan data kontak, titik jemput, dan link Maps
                                 agar tim operasional tidak perlu mencari ulang
@@ -9726,7 +9797,7 @@
                             {#if isAllPoolMode}
                                 <label class="space-y-1">
                                     <span
-                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                        class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >Pool Target</span
                                     >
                                     <select
@@ -9745,7 +9816,7 @@
                             {:else}
                                 <div class="space-y-1">
                                     <span
-                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                        class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >Pool Aktif</span
                                     >
                                     <div
@@ -9757,11 +9828,11 @@
                             {/if}
                             <label class="space-y-1">
                                 <span
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                    >Nama Customer</span
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Nama Pelanggan</span
                                 >
                                 <Input
-                                    placeholder="Nama customer"
+                                    placeholder="Nama pelanggan"
                                     bind:value={customerForm.name}
                                     class="h-8 text-xs"
                                     required
@@ -9769,7 +9840,7 @@
                             </label>
                             <label class="space-y-1">
                                 <span
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                     >Phone</span
                                 >
                                 <Input
@@ -9781,8 +9852,8 @@
                             </label>
                             <label class="space-y-1">
                                 <span
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                    >Pickup Point</span
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                    >Titik jemput</span
                                 >
                                 <Input
                                     placeholder="Titik jemput utama"
@@ -9792,7 +9863,7 @@
                             </label>
                             <label class="space-y-1">
                                 <span
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                     >Google Maps URL</span
                                 >
                                 <Input
@@ -9839,9 +9910,9 @@
                                         class="flex flex-wrap items-center gap-2"
                                     >
                                         <p
-                                            class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                            class="text-xs md:text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                                         >
-                                            Customer Reguler
+                                            Pelanggan Reguler
                                         </p>
                                     </div>
                                     <h3 class="mt-1 text-sm font-semibold">
@@ -9851,13 +9922,13 @@
                                 <div class="flex flex-wrap items-center gap-2">
                                     <Badge
                                         variant="secondary"
-                                        class="w-fit rounded-full px-2.5 py-0.5 text-[9px] uppercase tracking-wide"
+                                        class="w-fit rounded-full px-2.5 py-0.5 text-xs md:text-[9px] uppercase tracking-wide"
                                     >
-                                        {customerMeta.total} customer
+                                        {customerMeta.total} pelanggan
                                     </Badge>
                                     <a
                                         href="/api/admin/customers/template"
-                                        class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-2.5 py-1.5 text-[11px] font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
+                                        class="inline-flex h-8 items-center justify-center rounded-md border border-input bg-background px-2.5 py-1.5 text-xs md:text-[11px] font-medium transition-colors hover:bg-accent hover:text-accent-foreground"
                                     >
                                         Download Template
                                     </a>
@@ -9874,77 +9945,85 @@
                                         loading={customerImporting}
                                         loadingText="Mengimpor..."
                                         onclick={openCustomerImportPicker}
-                                        class="h-8 px-2.5 text-[11px]"
+                                        class="h-8 px-2.5 text-xs md:text-[11px]"
                                     >
                                         Import Data
                                     </LoadingButton>
                                 </div>
                             </div>
-                            <div class="flex justify-end md:hidden">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    class="h-8 rounded-lg text-[10px]"
-                                    onclick={() =>
-                                        (customerFiltersExpanded =
-                                            !customerFiltersExpanded)}
-                                    aria-expanded={customerFiltersExpanded}
-                                >
-                                    {customerFiltersExpanded
-                                        ? 'Sembunyikan Filter'
-                                        : 'Tampilkan Filter'}
-                                </Button>
-                            </div>
+
                             <div
                                 data-customer-search
-                                class={customerFiltersExpanded
-                                    ? 'flex flex-col gap-1.5 md:w-[260px] md:flex-row md:items-center md:gap-3'
-                                    : 'hidden md:flex md:w-[260px] md:flex-row md:items-center md:gap-3'}
+                                class="flex w-full flex-col gap-2 md:w-[260px] md:flex-row md:items-end md:gap-3"
                             >
                                 <div class="relative min-w-0 flex-1">
-                                    <Input
-                                        placeholder="Cari nama, phone, atau pickup point"
-                                        bind:value={customerSearch}
-                                        oninput={(event) =>
-                                            scheduleCustomerSuggestions(
-                                                (event.currentTarget as HTMLInputElement).value,
-                                            )}
-                                        onfocus={() => {
-                                            if (customerSuggestions.length > 0) {
-                                                customerSuggestionsOpen = true;
-                                            }
-                                        }}
-                                        class="h-8 w-full text-[11px]"
-                                    />
+                                    <label
+                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                        ><span>Pencarian</span>
+                                        <Input
+                                        placeholder="Nama, nomor HP, atau titik jemput"
+                                            bind:value={customerSearch}
+                                            oninput={(event) =>
+                                                scheduleCustomerSuggestions(
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).value,
+                                                )}
+                                            onfocus={() => {
+                                                if (
+                                                    customerSuggestions.length >
+                                                    0
+                                                ) {
+                                                    customerSuggestionsOpen = true;
+                                                }
+                                            }}
+                                            class="h-8 w-full text-xs md:text-[11px]"
+                                        /></label
+                                    >
                                     {#if customerSuggestionsOpen}
                                         <div
                                             class="absolute left-0 right-0 top-9 z-[130] overflow-hidden rounded-md border border-border bg-background shadow-lg"
                                         >
                                             {#if customerSuggestionsLoading}
-                                                <p class="px-3 py-2 text-[11px] text-muted-foreground">
+                                                <p
+                                                    class="px-3 py-2 text-xs md:text-[11px] text-muted-foreground"
+                                                >
                                                     Mencari pelanggan...
                                                 </p>
                                             {:else if customerSuggestionsError}
-                                                <p class="px-3 py-2 text-[11px] text-destructive">
+                                                <p
+                                                    class="px-3 py-2 text-xs md:text-[11px] text-destructive"
+                                                >
                                                     {customerSuggestionsError}
                                                 </p>
                                             {:else if customerSuggestions.length === 0}
-                                                <p class="px-3 py-2 text-[11px] text-muted-foreground">
-                                                    Tidak ada pelanggan yang cocok.
+                                                <p
+                                                    class="px-3 py-2 text-xs md:text-[11px] text-muted-foreground"
+                                                >
+                                                    Tidak ada pelanggan yang
+                                                    cocok.
                                                 </p>
                                             {:else}
                                                 {#each customerSuggestions as suggestion (suggestion.id)}
                                                     <button
                                                         type="button"
                                                         class="block w-full border-b border-border/60 px-3 py-2 text-left last:border-0 hover:bg-muted/50"
-                                                        onclick={() => selectCustomerSuggestion(suggestion)}
+                                                        onclick={() =>
+                                                            selectCustomerSuggestion(
+                                                                suggestion,
+                                                            )}
                                                     >
-                                                        <span class="block truncate text-[11px] font-semibold">
+                                                        <span
+                                                            class="block truncate text-xs md:text-[11px] font-semibold"
+                                                        >
                                                             {suggestion.name}
                                                         </span>
-                                                        <span class="block truncate text-[10px] text-muted-foreground">
-                                                            {suggestion.phone}{suggestion.pickup_point ? ` · ${suggestion.pickup_point}` : ''}
+                                                        <span
+                                                            class="block truncate text-xs md:text-[10px] text-muted-foreground"
+                                                        >
+                                                            {suggestion.phone}{suggestion.pickup_point
+                                                                ? ` · ${suggestion.pickup_point}`
+                                                                : ''}
                                                         </span>
                                                     </button>
                                                 {/each}
@@ -9954,14 +10033,13 @@
                                 </div>
                                 <Button
                                     type="button"
-                                    class="h-8 px-3 text-[11px] md:ml-1 md:w-auto md:shrink-0"
-                                    onclick={submitCustomerSearch}
-                                    >Cari</Button
+                                    class="h-8 px-3 text-xs md:text-[11px] md:ml-1 md:w-auto md:shrink-0"
+                                    onclick={submitCustomerSearch}>Cari</Button
                                 >
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    class="h-8 px-3 text-[11px] md:w-auto md:shrink-0"
+                                    class="h-8 px-3 text-xs md:text-[11px] md:w-auto md:shrink-0"
                                     onclick={resetCustomerSearch}
                                 >
                                     Reset
@@ -9969,7 +10047,7 @@
                             </div>
                             {#if customerImportSummary}
                                 <div
-                                    class="rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-[11px] text-emerald-800"
+                                    class="rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 text-xs md:text-[11px] text-emerald-800"
                                 >
                                     <p class="font-semibold">
                                         Import selesai:
@@ -9981,7 +10059,7 @@
                                     </p>
                                     {#if customerImportSummary.errors.length > 0}
                                         <p
-                                            class="mt-1 text-[10px] text-emerald-700"
+                                            class="mt-1 text-xs md:text-[10px] text-emerald-700"
                                         >
                                             Catatan:
                                             {customerImportSummary.errors.join(
@@ -9992,346 +10070,370 @@
                                 </div>
                             {/if}
                         </div>
-                        <div class="grid gap-2 p-2 md:hidden">
-                            {#each customers as row (row.id)}
-                                <article
-                                    class="rounded-lg border border-border/80 bg-card/95 p-2 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-start justify-between gap-2.5"
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div class="grid gap-2 p-2 md:hidden">
+                                {#each customers as row (row.id)}
+                                    <article
+                                        class="rounded-lg border border-border/80 bg-card/95 p-2 shadow-sm"
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="truncate text-[13px] font-semibold text-foreground"
-                                            >
-                                                {row.name}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate text-[11px] text-muted-foreground"
-                                            >
-                                                {row.phone}
-                                            </p>
-                                            <Badge
-                                                variant="secondary"
-                                                class="mt-2 w-fit rounded-full px-2 py-0.5 text-[9px]"
-                                            >
-                                                {rowPoolName(row)}
-                                            </Badge>
-                                        </div>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    class="h-7 w-7 shrink-0 rounded-full border border-border/70"
-                                                >
-                                                    <MoreHorizontal
-                                                        class="h-3.5 w-3.5"
-                                                    />
-                                                    <span class="sr-only"
-                                                        >Aksi customer</span
-                                                    >
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                sideOffset={8}
-                                                class="z-[120] w-44"
-                                            >
-                                                <DropdownMenuItem
-                                                    onclick={() => void openCustomerHistory(row)}
-                                                >
-                                                    <Eye class="mr-2 h-3.5 w-3.5" />
-                                                    Detail Riwayat
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() => {
-                                                        customerForm = {
-                                                            id: row.id,
-                                                            name: row.name,
-                                                            phone: row.phone,
-                                                            pickup_point:
-                                                                row.pickup_point ??
-                                                                '',
-                                                            gmaps:
-                                                                row.gmaps ?? '',
-                                                            pool_id: Number(
-                                                                row.pool_id ??
-                                                                    defaultPoolId(),
-                                                            ),
-                                                        };
-                                                        setFormMode('form');
-                                                    }}
-                                                >
-                                                    <Pencil
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void removeItem(
-                                                            `/api/admin/customers/${row.id}`,
-                                                            'Customer deleted.',
-                                                        )}
-                                                >
-                                                    <Trash2
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Hapus
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-
-                                    <div class="mt-2 grid gap-1.5 text-[10px]">
                                         <div
-                                            class="rounded-xl bg-muted/30 px-2 py-1"
-                                        >
-                                            <p
-                                                class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Pickup Point
-                                            </p>
-                                            <p
-                                                class="mt-0.5 break-words font-medium text-foreground"
-                                            >
-                                                {row.pickup_point ?? '-'}
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="flex items-center justify-between gap-2 rounded-xl bg-muted/30 px-2 py-1"
+                                            class="flex items-start justify-between gap-2.5"
                                         >
                                             <div class="min-w-0">
                                                 <p
-                                                    class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                >
-                                                    Google Maps
-                                                </p>
-                                                <p
-                                                    class="mt-0.5 truncate font-medium text-foreground"
-                                                >
-                                                    {row.gmaps
-                                                        ? 'Link tersedia'
-                                                        : 'Belum ada link'}
-                                                </p>
-                                            </div>
-                                            {#if row.gmaps}
-                                                <a
-                                                    href={row.gmaps}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    class="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-2 py-0.5 text-[9px] font-semibold text-primary"
-                                                >
-                                                    Maps
-                                                </a>
-                                            {/if}
-                                        </div>
-                                    </div>
-                                </article>
-                            {/each}
-                        </div>
-                        <div class="hidden overflow-x-auto md:block">
-                            <table
-                                class="min-w-full w-full border-collapse border border-border/70 bg-background text-[10px]"
-                            >
-                                <thead
-                                    class="bg-muted/30 text-[8px] uppercase tracking-[0.16em] text-muted-foreground"
-                                >
-                                    <tr>
-                                        <th
-                                            class="w-[22%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
-                                            >Customer</th
-                                        >
-                                        <th
-                                            class="w-[15%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
-                                            >Phone</th
-                                        >
-                                        <th
-                                            class="w-[12%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
-                                            >Pool</th
-                                        >
-                                        <th
-                                            class="w-[31%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
-                                            >Pickup Point</th
-                                        >
-                                        <th
-                                            class="w-[12%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
-                                            >Google Maps</th
-                                        >
-                                        <th
-                                            class="w-[8%] border-b border-border/70 px-2 py-1.5 text-center font-semibold"
-                                            >Aksi</th
-                                        >
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each customers as row (row.id)}
-                                        <tr
-                                            class="transition hover:bg-muted/20 odd:bg-background even:bg-muted/10"
-                                        >
-                                            <td
-                                                class="border-r border-b border-border/60 px-2 py-1.5 align-top"
-                                            >
-                                                <div
-                                                    class="text-[11px] font-semibold leading-tight text-foreground"
+                                                    class="truncate text-[13px] font-semibold text-foreground"
                                                 >
                                                     {row.name}
-                                                </div>
-                                                <div
-                                                    class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
-                                                >
-                                                    Pelanggan reguler terdaftar
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-r border-b border-border/60 px-2 py-1.5"
-                                            >
-                                                <div
-                                                    class="text-[11px] font-medium leading-tight text-foreground"
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate text-xs md:text-[11px] text-muted-foreground"
                                                 >
                                                     {row.phone}
-                                                </div>
-                                                <div
-                                                    class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
-                                                >
-                                                    Kontak utama
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-r border-b border-border/60 px-2 py-1.5"
-                                            >
+                                                </p>
                                                 <Badge
                                                     variant="secondary"
-                                                    class="rounded-full px-1.5 py-0.5 text-[8px]"
+                                                    class="mt-2 w-fit rounded-full px-2 py-0.5 text-xs md:text-[9px]"
                                                 >
                                                     {rowPoolName(row)}
                                                 </Badge>
-                                            </td>
-                                            <td
-                                                class="border-r border-b border-border/60 px-2 py-1.5"
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-7 w-7 shrink-0 rounded-full border border-border/70"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-3.5 w-3.5"
+                                                        />
+                                                        <span class="sr-only"
+                                                            >Aksi pelanggan</span
+                                                        >
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44"
+                                                >
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void openCustomerHistory(
+                                                                row,
+                                                            )}
+                                                    >
+                                                        <Eye
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Detail Riwayat
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() => {
+                                                            customerForm = {
+                                                                id: row.id,
+                                                                name: row.name,
+                                                                phone: row.phone,
+                                                                pickup_point:
+                                                                    row.pickup_point ??
+                                                                    '',
+                                                                gmaps:
+                                                                    row.gmaps ??
+                                                                    '',
+                                                                pool_id: Number(
+                                                                    row.pool_id ??
+                                                                        defaultPoolId(),
+                                                                ),
+                                                            };
+                                                            setFormMode('form');
+                                                        }}
+                                                    >
+                                                        <Pencil
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void removeItem(
+                                                                `/api/admin/customers/${row.id}`,
+                                                                'Customer deleted.',
+                                                            )}
+                                                    >
+                                                        <Trash2
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Hapus
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+
+                                        <div
+                                            class="mt-2 grid gap-1.5 text-xs md:text-[10px]"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-muted/30 px-2 py-1"
                                             >
-                                                <div
-                                                    class="text-[11px] font-medium leading-tight text-foreground"
+                                                <p
+                                                    class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Titik jemput
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 break-words font-medium text-foreground"
                                                 >
                                                     {row.pickup_point ?? '-'}
-                                                </div>
-                                                <div
-                                                    class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
-                                                >
-                                                    Titik jemput operasional
-                                                </div>
-                                            </td>
-                                            <td
-                                                class="border-r border-b border-border/60 px-2 py-1.5"
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="flex items-center justify-between gap-2 rounded-xl bg-muted/30 px-2 py-1"
                                             >
+                                                <div class="min-w-0">
+                                                    <p
+                                                        class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Google Maps
+                                                    </p>
+                                                    <p
+                                                        class="mt-0.5 truncate font-medium text-foreground"
+                                                    >
+                                                        {row.gmaps
+                                                            ? 'Link tersedia'
+                                                            : 'Belum ada link'}
+                                                    </p>
+                                                </div>
                                                 {#if row.gmaps}
                                                     <a
                                                         href={row.gmaps}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        class="inline-flex rounded-full border border-primary/25 bg-primary/5 px-1.5 py-0.5 text-[8px] font-semibold text-primary transition hover:bg-primary/10"
+                                                        class="shrink-0 rounded-full border border-primary/25 bg-primary/5 px-2 py-0.5 text-xs md:text-[9px] font-semibold text-primary"
                                                     >
-                                                        Buka Maps
+                                                        Maps
                                                     </a>
-                                                {:else}
-                                                    <span
-                                                        class="text-muted-foreground"
-                                                        >Belum ada link</span
-                                                    >
                                                 {/if}
-                                            </td>
-                                            <td
-                                                class="border-b border-border/60 px-2 py-1.5 text-center"
+                                            </div>
+                                        </div>
+                                    </article>
+                                {/each}
+                            </div></ViewportOnly
+                        >
+                        <ViewportOnly minWidth={768}
+                            ><div class="hidden overflow-x-auto md:block">
+                                <table
+                                    class="min-w-full w-full border-collapse border border-border/70 bg-background text-xs md:text-[10px]"
+                                >
+                                    <thead
+                                        class="bg-muted/30 text-[8px] uppercase tracking-[0.16em] text-muted-foreground"
+                                    >
+                                        <tr>
+                                            <th
+                                                class="w-[22%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
+                                                >Pelanggan</th
                                             >
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger
-                                                        asChild
-                                                    >
-                                                        <Button
-                                                            type="button"
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            class="h-5 w-5 rounded-full border border-border/70"
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-2.5 w-2.5"
-                                                            />
-                                                            <span
-                                                                class="sr-only"
-                                                                >Aksi customer</span
-                                                            >
-                                                        </Button>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent
-                                                        align="end"
-                                                        sideOffset={8}
-                                                        class="z-[120] w-44"
-                                                    >
-                                                        <DropdownMenuItem
-                                                            onclick={() => void openCustomerHistory(row)}
-                                                        >
-                                                            <Eye class="mr-2 h-3.5 w-3.5" />
-                                                            Detail Riwayat
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() => {
-                                                                customerForm = {
-                                                                    id: row.id,
-                                                                    name: row.name,
-                                                                    phone: row.phone,
-                                                                    pickup_point:
-                                                                        row.pickup_point ??
-                                                                        '',
-                                                                    gmaps:
-                                                                        row.gmaps ??
-                                                                        '',
-                                                                    pool_id:
-                                                                        Number(
-                                                                            row.pool_id ??
-                                                                                defaultPoolId(),
-                                                                        ),
-                                                                };
-                                                                setFormMode(
-                                                                    'form',
-                                                                );
-                                                            }}
-                                                        >
-                                                            <Pencil
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void removeItem(
-                                                                    `/api/admin/customers/${row.id}`,
-                                                                    'Customer deleted.',
-                                                                )}
-                                                        >
-                                                            <Trash2
-                                                                class="mr-2 h-3.5 w-3.5"
-                                                            />
-                                                            Hapus
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
-                                            </td>
+                                            <th
+                                                class="w-[15%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
+                                                >Phone</th
+                                            >
+                                            <th
+                                                class="w-[12%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
+                                                >Pool</th
+                                            >
+                                            <th
+                                                class="w-[31%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
+                                                >Titik jemput</th
+                                            >
+                                            <th
+                                                class="w-[12%] border-b border-r border-border/70 px-2 py-1.5 text-left font-semibold"
+                                                >Google Maps</th
+                                            >
+                                            <th
+                                                class="w-[8%] border-b border-border/70 px-2 py-1.5 text-center font-semibold"
+                                                >Aksi</th
+                                            >
                                         </tr>
-                                    {/each}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {#each customers as row (row.id)}
+                                            <tr
+                                                class="transition hover:bg-muted/20 odd:bg-background even:bg-muted/10"
+                                            >
+                                                <td
+                                                    class="border-r border-b border-border/60 px-2 py-1.5 align-top"
+                                                >
+                                                    <div
+                                                        class="text-xs md:text-[11px] font-semibold leading-tight text-foreground"
+                                                    >
+                                                        {row.name}
+                                                    </div>
+                                                    <div
+                                                        class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
+                                                    >
+                                                        Pelanggan reguler
+                                                        terdaftar
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    class="border-r border-b border-border/60 px-2 py-1.5"
+                                                >
+                                                    <div
+                                                        class="text-xs md:text-[11px] font-medium leading-tight text-foreground"
+                                                    >
+                                                        {row.phone}
+                                                    </div>
+                                                    <div
+                                                        class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
+                                                    >
+                                                        Kontak utama
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    class="border-r border-b border-border/60 px-2 py-1.5"
+                                                >
+                                                    <Badge
+                                                        variant="secondary"
+                                                        class="rounded-full px-1.5 py-0.5 text-[8px]"
+                                                    >
+                                                        {rowPoolName(row)}
+                                                    </Badge>
+                                                </td>
+                                                <td
+                                                    class="border-r border-b border-border/60 px-2 py-1.5"
+                                                >
+                                                    <div
+                                                        class="text-xs md:text-[11px] font-medium leading-tight text-foreground"
+                                                    >
+                                                        {row.pickup_point ??
+                                                            '-'}
+                                                    </div>
+                                                    <div
+                                                        class="mt-0.5 text-[8px] leading-tight text-muted-foreground"
+                                                    >
+                                                        Titik jemput operasional
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    class="border-r border-b border-border/60 px-2 py-1.5"
+                                                >
+                                                    {#if row.gmaps}
+                                                        <a
+                                                            href={row.gmaps}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            class="inline-flex rounded-full border border-primary/25 bg-primary/5 px-1.5 py-0.5 text-[8px] font-semibold text-primary transition hover:bg-primary/10"
+                                                        >
+                                                            Buka Maps
+                                                        </a>
+                                                    {:else}
+                                                        <span
+                                                            class="text-muted-foreground"
+                                                            >Belum ada link</span
+                                                        >
+                                                    {/if}
+                                                </td>
+                                                <td
+                                                    class="border-b border-border/60 px-2 py-1.5 text-center"
+                                                >
+                                                    <DropdownMenu>
+                                                        <DropdownMenuTrigger
+                                                            asChild
+                                                        >
+                                                            <Button
+                                                                type="button"
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                class="h-5 w-5 rounded-full border border-border/70"
+                                                            >
+                                                                <MoreHorizontal
+                                                                    class="h-2.5 w-2.5"
+                                                                />
+                                                                <span
+                                                                    class="sr-only"
+                                                                    >Aksi
+                                                                    pelanggan</span
+                                                                >
+                                                            </Button>
+                                                        </DropdownMenuTrigger>
+                                                        <DropdownMenuContent
+                                                            align="end"
+                                                            sideOffset={8}
+                                                            class="z-[120] w-44"
+                                                        >
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void openCustomerHistory(
+                                                                        row,
+                                                                    )}
+                                                            >
+                                                                <Eye
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                Detail Riwayat
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onclick={() => {
+                                                                    customerForm =
+                                                                        {
+                                                                            id: row.id,
+                                                                            name: row.name,
+                                                                            phone: row.phone,
+                                                                            pickup_point:
+                                                                                row.pickup_point ??
+                                                                                '',
+                                                                            gmaps:
+                                                                                row.gmaps ??
+                                                                                '',
+                                                                            pool_id:
+                                                                                Number(
+                                                                                    row.pool_id ??
+                                                                                        defaultPoolId(),
+                                                                                ),
+                                                                        };
+                                                                    setFormMode(
+                                                                        'form',
+                                                                    );
+                                                                }}
+                                                            >
+                                                                <Pencil
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                Edit
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void removeItem(
+                                                                        `/api/admin/customers/${row.id}`,
+                                                                        'Customer deleted.',
+                                                                    )}
+                                                            >
+                                                                <Trash2
+                                                                    class="mr-2 h-3.5 w-3.5"
+                                                                />
+                                                                Hapus
+                                                            </DropdownMenuItem>
+                                                        </DropdownMenuContent>
+                                                    </DropdownMenu>
+                                                </td>
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </div></ViewportOnly
+                        >
                         <div
                             class="flex flex-col gap-2 border-t border-border/70 bg-muted/10 px-4 py-3 text-xs sm:flex-row sm:items-center sm:justify-between"
                         >
                             <p class="text-muted-foreground">
-                                Total {customerMeta.total} customer · halaman
+                                Total {customerMeta.total} pelanggan · halaman
                                 {customerMeta.page} dari
                                 {customerMeta.last_page}
                             </p>
-                            <div class="flex items-center gap-1.5">
+                            <div
+                                class:mobile-pagination={true}
+                                class="flex items-center gap-1.5"
+                            >
                                 <Button
                                     type="button"
                                     variant="outline"
@@ -10341,10 +10443,10 @@
                                     onclick={() =>
                                         void jumpCustomerPage(
                                             customerMeta.page - 1,
-                                        )}>Prev</Button
+                                        )}>Sebelumnya</Button
                                 >
                                 <span
-                                    class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-[11px] font-semibold text-foreground"
+                                    class="rounded-full border border-border/70 bg-background px-2.5 py-1 text-xs md:text-[11px] font-semibold text-foreground"
                                 >
                                     {customerMeta.page} / {customerMeta.last_page}
                                 </span>
@@ -10358,7 +10460,7 @@
                                     onclick={() =>
                                         void jumpCustomerPage(
                                             customerMeta.page + 1,
-                                        )}>Next</Button
+                                        )}>Berikutnya</Button
                                 >
                             </div>
                         </div>
@@ -10496,290 +10598,300 @@
                     />
                 {:else}
                     <div class="space-y-4">
-                        <div class="grid gap-3 lg:hidden">
-                            {#each units as row (row.id)}
-                                <div
-                                    class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm sm:p-4"
-                                >
+                        <ViewportOnly minWidth={0} maxWidth={1023}
+                            ><div class="grid gap-3 lg:hidden">
+                                {#each units as row (row.id)}
                                     <div
-                                        class="flex items-start justify-between gap-2.5"
-                                    >
-                                        <div>
-                                            <p
-                                                class="text-[13px] font-semibold"
-                                            >
-                                                {row.nama_kategori}
-                                            </p>
-                                            <div
-                                                class="mt-1.5 flex flex-wrap gap-1.5"
-                                            >
-                                                <span
-                                                    class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.category)}`}
-                                                    >{normalizeUnitCategory(
-                                                        row.category,
-                                                    )}</span
-                                                >
-                                                <Badge
-                                                    variant={row.status ===
-                                                    'Aktif'
-                                                        ? 'default'
-                                                        : 'secondary'}
-                                                    class="rounded-full px-2 py-0.5 text-[10px]"
-                                                >
-                                                    {row.status ?? '-'}
-                                                </Badge>
-                                                <Badge
-                                                    variant="secondary"
-                                                    class="rounded-full px-2 py-0.5 text-[10px]"
-                                                >
-                                                    {rowPoolName(row)}
-                                                </Badge>
-                                            </div>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                class="mt-3 h-8 w-full justify-center rounded-full px-3 text-xs"
-                                                onclick={() =>
-                                                    openLayoutEditor(row)}
-                                            >
-                                                <Armchair
-                                                    class="mr-2 h-3 w-3"
-                                                />
-                                                Atur Layout
-                                            </Button>
-                                        </div>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    class="h-7 w-7 rounded-full border border-border/70"
-                                                >
-                                                    <MoreHorizontal
-                                                        class="h-3.5 w-3.5"
-                                                    />
-                                                    <span class="sr-only"
-                                                        >Aksi kategori armada</span
-                                                    >
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                sideOffset={8}
-                                                class="z-[120] w-44"
-                                            >
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        openUnitEditor(row)}
-                                                >
-                                                    <Pencil
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void removeItem(
-                                                            `/api/admin/units/${row.id}`,
-                                                            'Kategori armada dihapus.',
-                                                        )}
-                                                >
-                                                    <Trash2
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Hapus
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                    <div
-                                        class="mt-3 grid grid-cols-2 gap-2.5 text-sm"
+                                        class="rounded-lg border border-border/70 bg-background/95 p-3 shadow-sm sm:p-4"
                                     >
                                         <div
-                                            class="rounded-xl border border-border/70 bg-muted/20 p-2.5"
+                                            class="flex items-start justify-between gap-2.5"
                                         >
-                                            <p
-                                                class="text-[10px] uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Kapasitas
-                                            </p>
-                                            <p
-                                                class="mt-0.5 text-[13px] font-semibold"
-                                            >
-                                                {row.kapasitas ?? 0} kursi
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="rounded-xl border border-border/70 bg-muted/20 p-2.5"
-                                        >
-                                            <p
-                                                class="text-[10px] uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Layout
-                                            </p>
-                                            <p
-                                                class="mt-0.5 text-[13px] font-semibold"
-                                            >
-                                                {unitSeatCount(row.layout)} aktif
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            {/each}
-                        </div>
-
-                        <div
-                            class="table-container hidden rounded-lg border border-border/70 bg-background/90 lg:block"
-                        >
-                            <table class="w-full table-fixed text-[10px]">
-                                <thead
-                                    class="bg-muted/40 text-[10px] uppercase tracking-wide text-muted-foreground"
-                                >
-                                    <tr>
-                                        <th
-                                            class="w-[32%] px-3 py-2.5 text-left"
-                                            >Nama Kategori Armada</th
-                                        >
-                                        <th
-                                            class="w-[18%] px-3 py-2.5 text-left"
-                                            >Kategori</th
-                                        >
-                                        <th
-                                            class="w-[18%] px-3 py-2.5 text-left"
-                                            >Kapasitas/Layout</th
-                                        >
-                                        <th
-                                            class="w-[14%] px-3 py-2.5 text-left"
-                                            >Status</th
-                                        >
-                                        <th
-                                            class="w-[18%] px-3 py-2.5 text-center"
-                                            >Aksi</th
-                                        >
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {#each units as row (row.id)}
-                                        <tr
-                                            class="border-t border-border/60 align-top transition hover:bg-muted/20"
-                                        >
-                                            <td class="px-3 py-2.5">
-                                                <div
-                                                    class="text-[11px] font-medium"
+                                            <div>
+                                                <p
+                                                    class="text-[13px] font-semibold"
                                                 >
                                                     {row.nama_kategori}
-                                                </div>
-                                            </td>
-                                            <td class="px-3 py-2.5">
-                                                <span
-                                                    class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${categoryTone(row.category)}`}
-                                                    >{normalizeUnitCategory(
-                                                        row.category,
-                                                    )}</span
-                                                >
-                                            </td>
-                                            <td class="px-3 py-2.5">
+                                                </p>
                                                 <div
-                                                    class="text-[11px] font-medium"
+                                                    class="mt-1.5 flex flex-wrap gap-1.5"
                                                 >
-                                                    {row.kapasitas ?? 0} kursi
+                                                    <span
+                                                        class={`rounded-full border px-2 py-0.5 text-xs md:text-[10px] font-semibold ${categoryTone(row.category)}`}
+                                                        >{normalizeUnitCategory(
+                                                            row.category,
+                                                        )}</span
+                                                    >
+                                                    <Badge
+                                                        variant={row.status ===
+                                                        'Aktif'
+                                                            ? 'default'
+                                                            : 'secondary'}
+                                                        class="rounded-full px-2 py-0.5 text-xs md:text-[10px]"
+                                                    >
+                                                        {row.status ?? '-'}
+                                                    </Badge>
+                                                    <Badge
+                                                        variant="secondary"
+                                                        class="rounded-full px-2 py-0.5 text-xs md:text-[10px]"
+                                                    >
+                                                        {rowPoolName(row)}
+                                                    </Badge>
                                                 </div>
-                                                <div
-                                                    class="text-[10px] text-muted-foreground"
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    class="mt-3 h-8 w-full justify-center rounded-full px-3 text-xs"
+                                                    onclick={() =>
+                                                        openLayoutEditor(row)}
                                                 >
-                                                    {unitSeatCount(row.layout)} kursi
-                                                    aktif di layout
-                                                </div>
-                                            </td>
-                                            <td class="px-3 py-2.5">
-                                                <Badge
-                                                    variant={row.status ===
-                                                    'Aktif'
-                                                        ? 'default'
-                                                        : 'secondary'}
-                                                    class="rounded-full px-2 py-0.5 text-[10px]"
-                                                >
-                                                    {row.status ?? '-'}
-                                                </Badge>
-                                            </td>
-                                            <td class="px-3 py-2.5 text-center">
-                                                <div
-                                                    class="flex items-center justify-center gap-1.5"
-                                                >
+                                                    <Armchair
+                                                        class="mr-2 h-3 w-3"
+                                                    />
+                                                    Atur Layout
+                                                </Button>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
                                                     <Button
                                                         type="button"
-                                                        variant="outline"
-                                                        size="sm"
-                                                        class="h-8 shrink-0 rounded-full px-3 text-xs"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-7 w-7 rounded-full border border-border/70"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-3.5 w-3.5"
+                                                        />
+                                                        <span class="sr-only"
+                                                            >Aksi kategori
+                                                            armada</span
+                                                        >
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44"
+                                                >
+                                                    <DropdownMenuItem
                                                         onclick={() =>
-                                                            openLayoutEditor(
-                                                                row,
+                                                            openUnitEditor(row)}
+                                                    >
+                                                        <Pencil
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void removeItem(
+                                                                `/api/admin/units/${row.id}`,
+                                                                'Kategori armada dihapus.',
                                                             )}
                                                     >
-                                                        <Armchair
-                                                            class="mr-2 h-3 w-3"
+                                                        <Trash2
+                                                            class="mr-2 h-3.5 w-3.5"
                                                         />
-                                                        Atur Layout
-                                                    </Button>
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
-                                                        >
-                                                            <Button
-                                                                type="button"
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                class="h-7 w-7 rounded-full border border-border/70"
-                                                            >
-                                                                <MoreHorizontal
-                                                                    class="h-3.5 w-3.5"
-                                                                />
-                                                                <span
-                                                                    class="sr-only"
-                                                                    >Aksi
-                                                                    kategori
-                                                                    armada</span
-                                                                >
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="end"
-                                                            sideOffset={8}
-                                                            class="z-[120] w-44"
-                                                        >
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    openUnitEditor(
-                                                                        row,
-                                                                    )}
-                                                            >
-                                                                <Pencil
-                                                                    class="mr-2 h-3.5 w-3.5"
-                                                                />
-                                                                Edit
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void removeItem(
-                                                                        `/api/admin/units/${row.id}`,
-                                                                        'Kategori armada dihapus.',
-                                                                    )}
-                                                            >
-                                                                <Trash2
-                                                                    class="mr-2 h-3.5 w-3.5"
-                                                                />
-                                                                Hapus
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </td>
+                                                        Hapus
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
+                                        <div
+                                            class="mt-3 grid grid-cols-2 gap-2.5 text-sm"
+                                        >
+                                            <div
+                                                class="rounded-xl border border-border/70 bg-muted/20 p-2.5"
+                                            >
+                                                <p
+                                                    class="text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Kapasitas
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 text-[13px] font-semibold"
+                                                >
+                                                    {row.kapasitas ?? 0} kursi
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-xl border border-border/70 bg-muted/20 p-2.5"
+                                            >
+                                                <p
+                                                    class="text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Layout
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 text-[13px] font-semibold"
+                                                >
+                                                    {unitSeatCount(row.layout)} aktif
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {/each}
+                            </div></ViewportOnly
+                        >
+
+                        <ViewportOnly minWidth={1024}
+                            ><div
+                                class="table-container hidden rounded-lg border border-border/70 bg-background/90 lg:block"
+                            >
+                                <table
+                                    class="w-full table-fixed text-xs md:text-[10px]"
+                                >
+                                    <thead
+                                        class="bg-muted/40 text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
+                                    >
+                                        <tr>
+                                            <th
+                                                class="w-[32%] px-3 py-2.5 text-left"
+                                                >Nama Kategori Armada</th
+                                            >
+                                            <th
+                                                class="w-[18%] px-3 py-2.5 text-left"
+                                                >Kategori</th
+                                            >
+                                            <th
+                                                class="w-[18%] px-3 py-2.5 text-left"
+                                                >Kapasitas/Layout</th
+                                            >
+                                            <th
+                                                class="w-[14%] px-3 py-2.5 text-left"
+                                                >Status</th
+                                            >
+                                            <th
+                                                class="w-[18%] px-3 py-2.5 text-center"
+                                                >Aksi</th
+                                            >
                                         </tr>
-                                    {/each}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody>
+                                        {#each units as row (row.id)}
+                                            <tr
+                                                class="border-t border-border/60 align-top transition hover:bg-muted/20"
+                                            >
+                                                <td class="px-3 py-2.5">
+                                                    <div
+                                                        class="text-xs md:text-[11px] font-medium"
+                                                    >
+                                                        {row.nama_kategori}
+                                                    </div>
+                                                </td>
+                                                <td class="px-3 py-2.5">
+                                                    <span
+                                                        class={`rounded-full border px-2 py-0.5 text-xs md:text-[10px] font-semibold ${categoryTone(row.category)}`}
+                                                        >{normalizeUnitCategory(
+                                                            row.category,
+                                                        )}</span
+                                                    >
+                                                </td>
+                                                <td class="px-3 py-2.5">
+                                                    <div
+                                                        class="text-xs md:text-[11px] font-medium"
+                                                    >
+                                                        {row.kapasitas ?? 0} kursi
+                                                    </div>
+                                                    <div
+                                                        class="text-xs md:text-[10px] text-muted-foreground"
+                                                    >
+                                                        {unitSeatCount(
+                                                            row.layout,
+                                                        )} kursi aktif di layout
+                                                    </div>
+                                                </td>
+                                                <td class="px-3 py-2.5">
+                                                    <Badge
+                                                        variant={row.status ===
+                                                        'Aktif'
+                                                            ? 'default'
+                                                            : 'secondary'}
+                                                        class="rounded-full px-2 py-0.5 text-xs md:text-[10px]"
+                                                    >
+                                                        {row.status ?? '-'}
+                                                    </Badge>
+                                                </td>
+                                                <td
+                                                    class="px-3 py-2.5 text-center"
+                                                >
+                                                    <div
+                                                        class="flex items-center justify-center gap-1.5"
+                                                    >
+                                                        <Button
+                                                            type="button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            class="h-8 shrink-0 rounded-full px-3 text-xs"
+                                                            onclick={() =>
+                                                                openLayoutEditor(
+                                                                    row,
+                                                                )}
+                                                        >
+                                                            <Armchair
+                                                                class="mr-2 h-3 w-3"
+                                                            />
+                                                            Atur Layout
+                                                        </Button>
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
+                                                            >
+                                                                <Button
+                                                                    type="button"
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    class="h-7 w-7 rounded-full border border-border/70"
+                                                                >
+                                                                    <MoreHorizontal
+                                                                        class="h-3.5 w-3.5"
+                                                                    />
+                                                                    <span
+                                                                        class="sr-only"
+                                                                        >Aksi
+                                                                        kategori
+                                                                        armada</span
+                                                                    >
+                                                                </Button>
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent
+                                                                align="end"
+                                                                sideOffset={8}
+                                                                class="z-[120] w-44"
+                                                            >
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openUnitEditor(
+                                                                            row,
+                                                                        )}
+                                                                >
+                                                                    <Pencil
+                                                                        class="mr-2 h-3.5 w-3.5"
+                                                                    />
+                                                                    Edit
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void removeItem(
+                                                                            `/api/admin/units/${row.id}`,
+                                                                            'Kategori armada dihapus.',
+                                                                        )}
+                                                                >
+                                                                    <Trash2
+                                                                        class="mr-2 h-3.5 w-3.5"
+                                                                    />
+                                                                    Hapus
+                                                                </DropdownMenuItem>
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        {/each}
+                                    </tbody>
+                                </table>
+                            </div></ViewportOnly
+                        >
                     </div>
                 {/if}
             {/if}
@@ -10800,7 +10912,7 @@
                                 class="rounded-lg border border-border/70 bg-background/90 p-4"
                             >
                                 <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                    class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                                 >
                                     Info Armada
                                 </p>
@@ -10950,7 +11062,7 @@
                                                                         >{unit.nama_kategori}</span
                                                                     >
                                                                     <span
-                                                                        class="block text-[11px] text-muted-foreground"
+                                                                        class="block text-xs md:text-[11px] text-muted-foreground"
                                                                         >{normalizeUnitCategory(
                                                                             unit.category,
                                                                         )} · {unitSeatCount(
@@ -11027,7 +11139,7 @@
                                 class="rounded-lg border border-border/70 bg-background/90 p-4"
                             >
                                 <p
-                                    class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                    class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                                 >
                                     Konfigurasi Finansial Armada
                                 </p>
@@ -11078,7 +11190,7 @@
                                     </label>
                                 </div>
                                 <p
-                                    class="mt-3 text-[11px] text-muted-foreground"
+                                    class="mt-3 text-xs md:text-[11px] text-muted-foreground"
                                 >
                                     Hasil finansial dihitung untuk bulan
                                     berjalan. Revenue otomatis dari carter,
@@ -11197,7 +11309,7 @@
                             class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(8,145,178,0.10),rgba(15,23,42,0.03))] px-5 py-4"
                         >
                             <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                             >
                                 Form Pool
                             </p>
@@ -11359,7 +11471,7 @@
                                             poolMonthlyTargetRowHasValue(row)}
                                         <button
                                             type="button"
-                                            class={`inline-flex min-w-[92px] shrink-0 items-center justify-between rounded-full border px-3 py-1.5 text-left text-[11px] font-semibold transition-all duration-200 ${
+                                            class={`inline-flex min-w-[92px] shrink-0 items-center justify-between rounded-full border px-3 py-1.5 text-left text-xs md:text-[11px] font-semibold transition-all duration-200 ${
                                                 monthIndex ===
                                                 poolMonthlyTargetActiveMonthIndex
                                                     ? 'border-cyan-300 bg-cyan-50 text-cyan-800 shadow-sm'
@@ -11380,79 +11492,226 @@
                                         </button>
                                     {/each}
                                 </div>
-                                <div class="mt-4 space-y-3 md:hidden">
-                                    {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
-                                        {@const row =
-                                            poolForm.monthly_targets?.[
-                                                monthIndex
-                                            ]}
-                                        {@const rowHasValue =
-                                            poolMonthlyTargetRowHasValue(row)}
-                                        <details
-                                            id={`pool-month-target-mobile-${monthIndex}`}
-                                            class={`group overflow-hidden rounded-lg border shadow-sm transition-all duration-200 ${
-                                                rowHasValue
-                                                    ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
-                                                    : 'border-border/70 bg-background/90'
-                                            } ${
-                                                monthIndex ===
-                                                poolMonthlyTargetActiveMonthIndex
-                                                    ? 'ring-2 ring-cyan-300/60'
-                                                    : ''
-                                            }`}
-                                            open={monthIndex ===
-                                                poolMonthlyTargetActiveMonthIndex}
-                                        >
-                                            <summary
-                                                class={`flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 transition-colors ${
+                                <ViewportOnly minWidth={0} maxWidth={767}
+                                    ><div class="mt-4 space-y-3 md:hidden">
+                                        {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
+                                            {@const row =
+                                                poolForm.monthly_targets?.[
+                                                    monthIndex
+                                                ]}
+                                            {@const rowHasValue =
+                                                poolMonthlyTargetRowHasValue(
+                                                    row,
+                                                )}
+                                            <details
+                                                id={`pool-month-target-mobile-${monthIndex}`}
+                                                class={`group overflow-hidden rounded-lg border shadow-sm transition-all duration-200 ${
                                                     rowHasValue
-                                                        ? 'bg-emerald-50/30'
+                                                        ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
+                                                        : 'border-border/70 bg-background/90'
+                                                } ${
+                                                    monthIndex ===
+                                                    poolMonthlyTargetActiveMonthIndex
+                                                        ? 'ring-2 ring-cyan-300/60'
                                                         : ''
                                                 }`}
-                                                onclick={() => {
-                                                    poolMonthlyTargetActiveMonthIndex =
-                                                        monthIndex;
-                                                }}
+                                                open={monthIndex ===
+                                                    poolMonthlyTargetActiveMonthIndex}
                                             >
-                                                <div class="min-w-0">
-                                                    <p
-                                                        class="truncate text-sm font-semibold text-foreground"
-                                                    >
-                                                        {monthOption.label}
-                                                    </p>
-                                                    <p
-                                                        class="mt-0.5 text-[11px] text-muted-foreground"
-                                                    >
-                                                        {poolForm.target_year} - {rowHasValue
-                                                            ? 'Sudah diisi'
-                                                            : 'Belum diisi'}
-                                                    </p>
-                                                </div>
-                                                <div
-                                                    class="flex items-center gap-2"
+                                                <summary
+                                                    class={`flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 transition-colors ${
+                                                        rowHasValue
+                                                            ? 'bg-emerald-50/30'
+                                                            : ''
+                                                    }`}
+                                                    onclick={() => {
+                                                        poolMonthlyTargetActiveMonthIndex =
+                                                            monthIndex;
+                                                    }}
                                                 >
+                                                    <div class="min-w-0">
+                                                        <p
+                                                            class="truncate text-sm font-semibold text-foreground"
+                                                        >
+                                                            {monthOption.label}
+                                                        </p>
+                                                        <p
+                                                            class="mt-0.5 text-xs md:text-[11px] text-muted-foreground"
+                                                        >
+                                                            {poolForm.target_year}
+                                                            - {rowHasValue
+                                                                ? 'Sudah diisi'
+                                                                : 'Belum diisi'}
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        class="flex items-center gap-2"
+                                                    >
+                                                        <Badge
+                                                            variant={rowHasValue
+                                                                ? 'default'
+                                                                : 'secondary'}
+                                                            class="rounded-full"
+                                                        >
+                                                            {rowHasValue
+                                                                ? 'Terisi'
+                                                                : 'Kosong'}
+                                                        </Badge>
+                                                        <ChevronDown
+                                                            class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${monthIndex === poolMonthlyTargetActiveMonthIndex ? 'rotate-180' : ''}`}
+                                                        />
+                                                    </div>
+                                                </summary>
+                                                <div
+                                                    class="border-t border-border/70 px-4 pb-4 pt-3"
+                                                >
+                                                    <div class="grid gap-3">
+                                                        <label
+                                                            class="space-y-1.5"
+                                                        >
+                                                            <span
+                                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                            >
+                                                                Booking
+                                                            </span>
+                                                            <Input
+                                                                placeholder="Rp 0"
+                                                                value={row?.booking_target ??
+                                                                    ''}
+                                                                oninput={(
+                                                                    event,
+                                                                ) => {
+                                                                    updatePoolMonthlyTargetField(
+                                                                        row?.target_month ??
+                                                                            `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                        'booking_target',
+                                                                        (
+                                                                            event.currentTarget as HTMLInputElement
+                                                                        ).value,
+                                                                    );
+                                                                }}
+                                                                disabled={!canManagePools}
+                                                            />
+                                                        </label>
+                                                        <label
+                                                            class="space-y-1.5"
+                                                        >
+                                                            <span
+                                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                            >
+                                                                Bagasi
+                                                            </span>
+                                                            <Input
+                                                                placeholder="Rp 0"
+                                                                value={row?.bagasi_target ??
+                                                                    ''}
+                                                                oninput={(
+                                                                    event,
+                                                                ) => {
+                                                                    updatePoolMonthlyTargetField(
+                                                                        row?.target_month ??
+                                                                            `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                        'bagasi_target',
+                                                                        (
+                                                                            event.currentTarget as HTMLInputElement
+                                                                        ).value,
+                                                                    );
+                                                                }}
+                                                                disabled={!canManagePools}
+                                                            />
+                                                        </label>
+                                                        <label
+                                                            class="space-y-1.5"
+                                                        >
+                                                            <span
+                                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                            >
+                                                                Carter
+                                                            </span>
+                                                            <Input
+                                                                placeholder="Rp 0"
+                                                                value={row?.carter_target ??
+                                                                    ''}
+                                                                oninput={(
+                                                                    event,
+                                                                ) => {
+                                                                    updatePoolMonthlyTargetField(
+                                                                        row?.target_month ??
+                                                                            `${poolForm.target_year}-${monthOption.month}-01`,
+                                                                        'carter_target',
+                                                                        (
+                                                                            event.currentTarget as HTMLInputElement
+                                                                        ).value,
+                                                                    );
+                                                                }}
+                                                                disabled={!canManagePools}
+                                                            />
+                                                        </label>
+                                                    </div>
+                                                    <div
+                                                        class={`mt-3 h-1.5 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                                    ></div>
+                                                </div>
+                                            </details>
+                                        {/each}
+                                    </div></ViewportOnly
+                                >
+                                <ViewportOnly minWidth={768}
+                                    ><div
+                                        class="mt-4 hidden gap-2 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
+                                    >
+                                        {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
+                                            {@const row =
+                                                poolForm.monthly_targets?.[
+                                                    monthIndex
+                                                ]}
+                                            {@const rowHasValue =
+                                                poolMonthlyTargetRowHasValue(
+                                                    row,
+                                                )}
+                                            <div
+                                                id={`pool-month-target-desktop-${monthIndex}`}
+                                                class={`rounded-lg border p-2.5 shadow-sm transition-all duration-200 ${
+                                                    rowHasValue
+                                                        ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
+                                                        : 'border-border/70 bg-background/90'
+                                                } ${
+                                                    monthIndex ===
+                                                    poolMonthlyTargetActiveMonthIndex
+                                                        ? 'ring-2 ring-cyan-300/60'
+                                                        : ''
+                                                }`}
+                                            >
+                                                <div
+                                                    class="flex items-start justify-between gap-2"
+                                                >
+                                                    <div>
+                                                        <p
+                                                            class="text-[13px] font-semibold text-foreground"
+                                                        >
+                                                            {monthOption.label}
+                                                        </p>
+                                                        <p
+                                                            class="text-xs md:text-[11px] text-muted-foreground"
+                                                        >
+                                                            Target {poolForm.target_year}
+                                                        </p>
+                                                    </div>
                                                     <Badge
                                                         variant={rowHasValue
                                                             ? 'default'
                                                             : 'secondary'}
-                                                        class="rounded-full"
+                                                        class="rounded-full px-2 py-0.5 text-xs md:text-[10px]"
                                                     >
                                                         {rowHasValue
                                                             ? 'Terisi'
                                                             : 'Kosong'}
                                                     </Badge>
-                                                    <ChevronDown
-                                                        class={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${monthIndex === poolMonthlyTargetActiveMonthIndex ? 'rotate-180' : ''}`}
-                                                    />
                                                 </div>
-                                            </summary>
-                                            <div
-                                                class="border-t border-border/70 px-4 pb-4 pt-3"
-                                            >
-                                                <div class="grid gap-3">
+                                                <div class="mt-2.5 space-y-2.5">
                                                     <label class="space-y-1.5">
                                                         <span
-                                                            class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                         >
                                                             Booking
                                                         </span>
@@ -11477,7 +11736,7 @@
                                                     </label>
                                                     <label class="space-y-1.5">
                                                         <span
-                                                            class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                         >
                                                             Bagasi
                                                         </span>
@@ -11502,7 +11761,7 @@
                                                     </label>
                                                     <label class="space-y-1.5">
                                                         <span
-                                                            class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                         >
                                                             Carter
                                                         </span>
@@ -11527,138 +11786,12 @@
                                                     </label>
                                                 </div>
                                                 <div
-                                                    class={`mt-3 h-1.5 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-200'}`}
+                                                    class={`mt-2.5 h-1.5 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-200'}`}
                                                 ></div>
                                             </div>
-                                        </details>
-                                    {/each}
-                                </div>
-                                <div
-                                    class="mt-4 hidden gap-2 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
+                                        {/each}
+                                    </div></ViewportOnly
                                 >
-                                    {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
-                                        {@const row =
-                                            poolForm.monthly_targets?.[
-                                                monthIndex
-                                            ]}
-                                        {@const rowHasValue =
-                                            poolMonthlyTargetRowHasValue(row)}
-                                        <div
-                                            id={`pool-month-target-desktop-${monthIndex}`}
-                                            class={`rounded-lg border p-2.5 shadow-sm transition-all duration-200 ${
-                                                rowHasValue
-                                                    ? 'border-emerald-300 bg-emerald-50/70 shadow-emerald-100/50'
-                                                    : 'border-border/70 bg-background/90'
-                                            } ${
-                                                monthIndex ===
-                                                poolMonthlyTargetActiveMonthIndex
-                                                    ? 'ring-2 ring-cyan-300/60'
-                                                    : ''
-                                            }`}
-                                        >
-                                            <div
-                                                class="flex items-start justify-between gap-2"
-                                            >
-                                                <div>
-                                                    <p
-                                                        class="text-[13px] font-semibold text-foreground"
-                                                    >
-                                                        {monthOption.label}
-                                                    </p>
-                                                    <p
-                                                        class="text-[11px] text-muted-foreground"
-                                                    >
-                                                        Target {poolForm.target_year}
-                                                    </p>
-                                                </div>
-                                                <Badge
-                                                    variant={rowHasValue
-                                                        ? 'default'
-                                                        : 'secondary'}
-                                                    class="rounded-full px-2 py-0.5 text-[10px]"
-                                                >
-                                                    {rowHasValue
-                                                        ? 'Terisi'
-                                                        : 'Kosong'}
-                                                </Badge>
-                                            </div>
-                                            <div class="mt-2.5 space-y-2.5">
-                                                <label class="space-y-1.5">
-                                                    <span
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                    >
-                                                        Booking
-                                                    </span>
-                                                    <Input
-                                                        placeholder="Rp 0"
-                                                        value={row?.booking_target ??
-                                                            ''}
-                                                        oninput={(event) => {
-                                                            updatePoolMonthlyTargetField(
-                                                                row?.target_month ??
-                                                                    `${poolForm.target_year}-${monthOption.month}-01`,
-                                                                'booking_target',
-                                                                (
-                                                                    event.currentTarget as HTMLInputElement
-                                                                ).value,
-                                                            );
-                                                        }}
-                                                        disabled={!canManagePools}
-                                                    />
-                                                </label>
-                                                <label class="space-y-1.5">
-                                                    <span
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                    >
-                                                        Bagasi
-                                                    </span>
-                                                    <Input
-                                                        placeholder="Rp 0"
-                                                        value={row?.bagasi_target ??
-                                                            ''}
-                                                        oninput={(event) => {
-                                                            updatePoolMonthlyTargetField(
-                                                                row?.target_month ??
-                                                                    `${poolForm.target_year}-${monthOption.month}-01`,
-                                                                'bagasi_target',
-                                                                (
-                                                                    event.currentTarget as HTMLInputElement
-                                                                ).value,
-                                                            );
-                                                        }}
-                                                        disabled={!canManagePools}
-                                                    />
-                                                </label>
-                                                <label class="space-y-1.5">
-                                                    <span
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                    >
-                                                        Carter
-                                                    </span>
-                                                    <Input
-                                                        placeholder="Rp 0"
-                                                        value={row?.carter_target ??
-                                                            ''}
-                                                        oninput={(event) => {
-                                                            updatePoolMonthlyTargetField(
-                                                                row?.target_month ??
-                                                                    `${poolForm.target_year}-${monthOption.month}-01`,
-                                                                'carter_target',
-                                                                (
-                                                                    event.currentTarget as HTMLInputElement
-                                                                ).value,
-                                                            );
-                                                        }}
-                                                        disabled={!canManagePools}
-                                                    />
-                                                </label>
-                                            </div>
-                                            <div
-                                                class={`mt-2.5 h-1.5 rounded-full ${rowHasValue ? 'bg-emerald-500' : 'bg-slate-200'}`}
-                                            ></div>
-                                        </div>
-                                    {/each}
-                                </div>
                             </div>
                             <label class="space-y-1.5">
                                 <span
@@ -11849,7 +11982,7 @@
                             class="border-b border-border/70 bg-[linear-gradient(135deg,rgba(168,85,247,0.08),rgba(15,23,42,0.03))] px-5 py-4"
                         >
                             <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                             >
                                 Form User
                             </p>
@@ -12097,36 +12230,22 @@
                         <div
                             class="flex flex-col gap-3 border-b border-border/70 bg-[linear-gradient(135deg,rgba(168,85,247,0.05),rgba(15,23,42,0.03))] px-5 py-4"
                         >
-                            <div class="flex justify-end md:hidden">
-                                <Button
-                                    type="button"
-                                    size="sm"
-                                    variant="outline"
-                                    class="h-8 rounded-lg text-xs"
-                                    onclick={() =>
-                                        (userFiltersExpanded =
-                                            !userFiltersExpanded)}
-                                    aria-expanded={userFiltersExpanded}
-                                >
-                                    {userFiltersExpanded
-                                        ? 'Sembunyikan Filter'
-                                        : 'Tampilkan Filter'}
-                                </Button>
-                            </div>
                             <div
-                                class={userFiltersExpanded
-                                    ? 'flex flex-col gap-2 md:flex-row'
-                                    : 'hidden md:flex md:flex-row'}
+                                class="flex flex-col gap-2 md:flex-row md:items-end"
                             >
-                                <Input
-                                    placeholder="Cari nama atau email"
-                                    bind:value={userSearch}
-                                />
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Pencarian</span>
+                                    <Input
+                                        placeholder="Cari nama atau email"
+                                        bind:value={userSearch}
+                                    /></label
+                                >
                                 <Button
                                     type="button"
                                     class="md:min-w-[120px]"
                                     onclick={() => void loadUsers()}
-                                    >Search</Button
+                                    >Cari</Button
                                 >
                             </div>
                         </div>
@@ -12139,7 +12258,7 @@
                             >
                                 <div class="mb-3">
                                     <p
-                                        class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                                     >
                                         Undang User Google
                                     </p>
@@ -12179,7 +12298,7 @@
                                             class="mb-2 flex items-center justify-between gap-2"
                                         >
                                             <span
-                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                 >Role</span
                                             >
                                             <Badge
@@ -12224,7 +12343,7 @@
                                             class="mb-2 flex items-center justify-between gap-2"
                                         >
                                             <span
-                                                class="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                 >Pool</span
                                             >
                                             <Badge
@@ -12296,7 +12415,7 @@
                                 >
                                     <div>
                                         <p
-                                            class="text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
+                                            class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                                         >
                                             Invitation
                                         </p>
@@ -12352,7 +12471,7 @@
                                                         </p>
                                                     </div>
                                                     <span
-                                                        class={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold ${invitationStatusClass(invitation.status)}`}
+                                                        class={`shrink-0 rounded-full border px-2 py-0.5 text-xs md:text-[10px] font-semibold ${invitationStatusClass(invitation.status)}`}
                                                     >
                                                         {invitationStatusLabel(
                                                             invitation.status,
@@ -12391,7 +12510,7 @@
                                                     class="mt-2 flex flex-wrap items-center justify-between gap-2"
                                                 >
                                                     <span
-                                                        class="text-[11px] text-muted-foreground"
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
                                                     >
                                                         Expires: {invitation.expires_at ||
                                                             '-'}
@@ -12433,38 +12552,396 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="grid gap-2.5 p-2.5 md:hidden">
-                            {#each users as row (row.id)}
-                                {@const rolePreview = compactListPreview(
-                                    row.role_names,
-                                    2,
-                                )}
-                                {@const poolPreview = userPoolPreview(row, 2)}
-                                <article
-                                    class="rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-start justify-between gap-2.5"
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div class="grid gap-2.5 p-2.5 md:hidden">
+                                {#each users as row (row.id)}
+                                    {@const rolePreview = compactListPreview(
+                                        row.role_names,
+                                        2,
+                                    )}
+                                    {@const poolPreview = userPoolPreview(
+                                        row,
+                                        2,
+                                    )}
+                                    <article
+                                        class="rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm"
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="truncate text-[13px] font-semibold text-foreground"
-                                            >
-                                                {row.name}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate text-[11px] text-muted-foreground"
-                                            >
-                                                {row.email}
-                                            </p>
+                                        <div
+                                            class="flex items-start justify-between gap-2.5"
+                                        >
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="truncate text-[13px] font-semibold text-foreground"
+                                                >
+                                                    {row.name}
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate text-xs md:text-[11px] text-muted-foreground"
+                                                >
+                                                    {row.email}
+                                                </p>
+                                            </div>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-7 w-7 shrink-0 rounded-full border border-border/70"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-3.5 w-3.5"
+                                                        />
+                                                        <span class="sr-only"
+                                                            >Aksi user</span
+                                                        >
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44"
+                                                >
+                                                    <DropdownMenuItem
+                                                        onclick={() => {
+                                                            userForm = {
+                                                                id: row.id,
+                                                                name: row.name,
+                                                                email: row.email,
+                                                                password: '',
+                                                                is_super_admin:
+                                                                    Boolean(
+                                                                        row.is_super_admin,
+                                                                    ),
+                                                                default_pool_id:
+                                                                    Number(
+                                                                        row.default_pool_id ??
+                                                                            0,
+                                                                    ),
+                                                                pool_ids: [
+                                                                    ...(row.pool_ids ??
+                                                                        []),
+                                                                ],
+                                                                role_ids: [
+                                                                    ...(row.role_ids ??
+                                                                        []),
+                                                                ],
+                                                            };
+                                                            setFormMode('form');
+                                                        }}
+                                                    >
+                                                        <Pencil
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    {#if row.email_verified_at}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void runUserVerificationAction(
+                                                                    row,
+                                                                    'unverify',
+                                                                )}
+                                                        >
+                                                            <MailX
+                                                                class="mr-2 h-3.5 w-3.5"
+                                                            />
+                                                            Unverify
+                                                        </DropdownMenuItem>
+                                                    {:else}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void runUserVerificationAction(
+                                                                    row,
+                                                                    'verify',
+                                                                )}
+                                                        >
+                                                            <CheckCircle2
+                                                                class="mr-2 h-3.5 w-3.5"
+                                                            />
+                                                            Verify
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void runUserVerificationAction(
+                                                                    row,
+                                                                    'send-verification',
+                                                                )}
+                                                        >
+                                                            <Send
+                                                                class="mr-2 h-3.5 w-3.5"
+                                                            />
+                                                            Kirim Link
+                                                        </DropdownMenuItem>
+                                                    {/if}
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void removeItem(
+                                                                `/api/admin/users/${row.id}`,
+                                                                'User deleted.',
+                                                            )}
+                                                    >
+                                                        <Trash2
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Hapus
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
                                         </div>
+
+                                        <div
+                                            class="mt-2.5 flex flex-wrap gap-1"
+                                        >
+                                            <span
+                                                class={`rounded-full border px-2 py-0.5 text-xs md:text-[10px] font-semibold ${row.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
+                                            >
+                                                {row.email_verified_at
+                                                    ? 'Verified'
+                                                    : 'Belum Verified'}
+                                            </span>
+                                            <span
+                                                class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-foreground"
+                                            >
+                                                {row.is_super_admin
+                                                    ? 'Super Admin'
+                                                    : 'User Pool'}
+                                            </span>
+                                        </div>
+
+                                        <div
+                                            class="mt-2.5 grid gap-1.5 text-xs"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-muted/20 px-2.5 py-2"
+                                            >
+                                                <p
+                                                    class="text-xs md:text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Role
+                                                </p>
+                                                <div
+                                                    class="mt-1 flex flex-wrap gap-1"
+                                                >
+                                                    {#if rolePreview.items.length > 0}
+                                                        {#each rolePreview.items as roleName (roleName)}
+                                                            <span
+                                                                class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-xs md:text-[10px] font-medium text-foreground"
+                                                            >
+                                                                <span
+                                                                    class="truncate"
+                                                                    >{roleName}</span
+                                                                >
+                                                            </span>
+                                                        {/each}
+                                                        {#if rolePreview.overflow > 0}
+                                                            <span
+                                                                class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-xs md:text-[10px] font-semibold text-muted-foreground"
+                                                            >
+                                                                +{rolePreview.overflow}
+                                                            </span>
+                                                        {/if}
+                                                    {:else}
+                                                        <span
+                                                            class="text-xs md:text-[10px] text-muted-foreground"
+                                                            >Belum ada role</span
+                                                        >
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-muted/20 px-2.5 py-2"
+                                            >
+                                                <p
+                                                    class="text-xs md:text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Pool
+                                                </p>
+                                                <div
+                                                    class="mt-1 flex flex-wrap gap-1"
+                                                >
+                                                    {#if poolPreview.items.length > 0}
+                                                        {#each poolPreview.items as poolName (poolName)}
+                                                            <span
+                                                                class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-xs md:text-[10px] font-medium text-foreground"
+                                                            >
+                                                                <span
+                                                                    class="truncate"
+                                                                    >{poolName}</span
+                                                                >
+                                                            </span>
+                                                        {/each}
+                                                        {#if poolPreview.overflow > 0}
+                                                            <span
+                                                                class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-xs md:text-[10px] font-semibold text-muted-foreground"
+                                                            >
+                                                                +{poolPreview.overflow}
+                                                            </span>
+                                                        {/if}
+                                                    {:else}
+                                                        <span
+                                                            class="text-xs md:text-[10px] text-muted-foreground"
+                                                            >Belum dimapping</span
+                                                        >
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </article>
+                                {/each}
+                            </div></ViewportOnly
+                        >
+                        <ViewportOnly minWidth={768}
+                            ><div class="hidden md:block">
+                                <DataTable
+                                    columns={usersColumns}
+                                    rows={users}
+                                    density="compact"
+                                    class="w-full"
+                                >
+                                    {#snippet row({ row, columns })}
+                                        {@const user = row as UserRow}
+                                        {@const rolePreview =
+                                            compactListPreview(
+                                                user.role_names,
+                                                2,
+                                            )}
+                                        {@const poolPreview = userPoolPreview(
+                                            user,
+                                            2,
+                                        )}
+
+                                        <td
+                                            class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-2.5 py-1.5 align-top group-hover:bg-muted/15"
+                                            style={`left: ${columns[0]?.leftOffset ?? '0px'}`}
+                                        >
+                                            <div
+                                                class="truncate text-xs md:text-[11px] font-semibold leading-4 text-foreground"
+                                            >
+                                                {user.name}
+                                            </div>
+                                            <div
+                                                class="mt-0.5 truncate text-xs md:text-[10px] text-muted-foreground"
+                                            >
+                                                {user.is_super_admin
+                                                    ? 'Super Admin'
+                                                    : 'User Pool'}
+                                            </div>
+                                        </td>
+
+                                        <td
+                                            class="border-b border-r border-border/60 px-2.5 py-1.5 align-top"
+                                        >
+                                            <div
+                                                class="truncate text-xs md:text-[11px] font-medium leading-4 text-foreground"
+                                            >
+                                                {user.email}
+                                            </div>
+                                            <div
+                                                class="mt-0.5 truncate text-xs md:text-[10px] text-muted-foreground"
+                                            >
+                                                Alamat email login
+                                            </div>
+                                        </td>
+
+                                        <td
+                                            class="border-b border-r border-border/60 px-2.5 py-1.5 text-center"
+                                        >
+                                            <span
+                                                class={`inline-flex rounded-full border px-1.5 py-0.5 text-xs md:text-[9px] font-semibold ${user.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
+                                            >
+                                                {user.email_verified_at
+                                                    ? 'Sudah diverifikasi'
+                                                    : 'Belum diverifikasi'}
+                                            </span>
+                                        </td>
+
+                                        <td
+                                            class="border-b border-r border-border/60 px-2.5 py-1.5 align-top"
+                                        >
+                                            <div
+                                                class="flex max-w-[220px] flex-wrap gap-1"
+                                            >
+                                                {#if rolePreview.items.length > 0}
+                                                    {#each rolePreview.items as roleName (roleName)}
+                                                        <span
+                                                            class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-xs md:text-[10px] font-medium leading-4 text-foreground"
+                                                        >
+                                                            <span
+                                                                class="truncate"
+                                                                >{roleName}</span
+                                                            >
+                                                        </span>
+                                                    {/each}
+                                                    {#if rolePreview.overflow > 0}
+                                                        <span
+                                                            class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-xs md:text-[10px] font-semibold text-muted-foreground"
+                                                        >
+                                                            +{rolePreview.overflow}
+                                                        </span>
+                                                    {/if}
+                                                {:else}
+                                                    <span
+                                                        class="text-xs md:text-[10px] text-muted-foreground"
+                                                        >Belum ada role</span
+                                                    >
+                                                {/if}
+                                            </div>
+                                            <div
+                                                class="mt-0.5 truncate text-xs md:text-[10px] text-muted-foreground"
+                                            >
+                                                Hak akses menu dan aksi
+                                            </div>
+                                        </td>
+
+                                        <td
+                                            class="border-b border-r border-border/60 px-2.5 py-1.5 align-top"
+                                        >
+                                            <div
+                                                class="flex max-w-[220px] flex-wrap gap-1"
+                                            >
+                                                {#if poolPreview.items.length > 0}
+                                                    {#each poolPreview.items as poolName (poolName)}
+                                                        <span
+                                                            class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-xs md:text-[10px] font-medium leading-4 text-foreground"
+                                                        >
+                                                            <span
+                                                                class="truncate"
+                                                                >{poolName}</span
+                                                            >
+                                                        </span>
+                                                    {/each}
+                                                    {#if poolPreview.overflow > 0}
+                                                        <span
+                                                            class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-xs md:text-[10px] font-semibold text-muted-foreground"
+                                                        >
+                                                            +{poolPreview.overflow}
+                                                        </span>
+                                                    {/if}
+                                                {:else}
+                                                    <span
+                                                        class="text-xs md:text-[10px] text-muted-foreground"
+                                                        >Belum dimapping</span
+                                                    >
+                                                {/if}
+                                            </div>
+                                            <div
+                                                class="mt-0.5 truncate text-xs md:text-[10px] text-muted-foreground"
+                                            >
+                                                Akses data operasional
+                                            </div>
+                                        </td>
+                                    {/snippet}
+
+                                    {#snippet actions({ row })}
+                                        {@const user = row as UserRow}
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button
                                                     type="button"
                                                     variant="ghost"
                                                     size="icon"
-                                                    class="h-7 w-7 shrink-0 rounded-full border border-border/70"
+                                                    class="h-7 w-7 rounded-full border border-border/70"
                                                 >
                                                     <MoreHorizontal
                                                         class="h-3.5 w-3.5"
@@ -12482,25 +12959,25 @@
                                                 <DropdownMenuItem
                                                     onclick={() => {
                                                         userForm = {
-                                                            id: row.id,
-                                                            name: row.name,
-                                                            email: row.email,
+                                                            id: user.id,
+                                                            name: user.name,
+                                                            email: user.email,
                                                             password: '',
                                                             is_super_admin:
                                                                 Boolean(
-                                                                    row.is_super_admin,
+                                                                    user.is_super_admin,
                                                                 ),
                                                             default_pool_id:
                                                                 Number(
-                                                                    row.default_pool_id ??
+                                                                    user.default_pool_id ??
                                                                         0,
                                                                 ),
                                                             pool_ids: [
-                                                                ...(row.pool_ids ??
+                                                                ...(user.pool_ids ??
                                                                     []),
                                                             ],
                                                             role_ids: [
-                                                                ...(row.role_ids ??
+                                                                ...(user.role_ids ??
                                                                     []),
                                                             ],
                                                         };
@@ -12512,11 +12989,11 @@
                                                     />
                                                     Edit
                                                 </DropdownMenuItem>
-                                                {#if row.email_verified_at}
+                                                {#if user.email_verified_at}
                                                     <DropdownMenuItem
                                                         onclick={() =>
                                                             void runUserVerificationAction(
-                                                                row,
+                                                                user,
                                                                 'unverify',
                                                             )}
                                                     >
@@ -12529,7 +13006,7 @@
                                                     <DropdownMenuItem
                                                         onclick={() =>
                                                             void runUserVerificationAction(
-                                                                row,
+                                                                user,
                                                                 'verify',
                                                             )}
                                                     >
@@ -12541,7 +13018,7 @@
                                                     <DropdownMenuItem
                                                         onclick={() =>
                                                             void runUserVerificationAction(
-                                                                row,
+                                                                user,
                                                                 'send-verification',
                                                             )}
                                                     >
@@ -12554,7 +13031,7 @@
                                                 <DropdownMenuItem
                                                     onclick={() =>
                                                         void removeItem(
-                                                            `/api/admin/users/${row.id}`,
+                                                            `/api/admin/users/${user.id}`,
                                                             'User deleted.',
                                                         )}
                                                 >
@@ -12565,352 +13042,10 @@
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
-                                    </div>
-
-                                    <div class="mt-2.5 flex flex-wrap gap-1">
-                                        <span
-                                            class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${row.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
-                                        >
-                                            {row.email_verified_at
-                                                ? 'Verified'
-                                                : 'Belum Verified'}
-                                        </span>
-                                        <span
-                                            class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold text-foreground"
-                                        >
-                                            {row.is_super_admin
-                                                ? 'Super Admin'
-                                                : 'User Pool'}
-                                        </span>
-                                    </div>
-
-                                    <div class="mt-2.5 grid gap-1.5 text-xs">
-                                        <div
-                                            class="rounded-xl bg-muted/20 px-2.5 py-2"
-                                        >
-                                            <p
-                                                class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Role
-                                            </p>
-                                            <div
-                                                class="mt-1 flex flex-wrap gap-1"
-                                            >
-                                                {#if rolePreview.items.length > 0}
-                                                    {#each rolePreview.items as roleName (roleName)}
-                                                        <span
-                                                            class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[10px] font-medium text-foreground"
-                                                        >
-                                                            <span
-                                                                class="truncate"
-                                                                >{roleName}</span
-                                                            >
-                                                        </span>
-                                                    {/each}
-                                                    {#if rolePreview.overflow > 0}
-                                                        <span
-                                                            class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                                                        >
-                                                            +{rolePreview.overflow}
-                                                        </span>
-                                                    {/if}
-                                                {:else}
-                                                    <span
-                                                        class="text-[10px] text-muted-foreground"
-                                                        >Belum ada role</span
-                                                    >
-                                                {/if}
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="rounded-xl bg-muted/20 px-2.5 py-2"
-                                        >
-                                            <p
-                                                class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Pool
-                                            </p>
-                                            <div
-                                                class="mt-1 flex flex-wrap gap-1"
-                                            >
-                                                {#if poolPreview.items.length > 0}
-                                                    {#each poolPreview.items as poolName (poolName)}
-                                                        <span
-                                                            class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[10px] font-medium text-foreground"
-                                                        >
-                                                            <span
-                                                                class="truncate"
-                                                                >{poolName}</span
-                                                            >
-                                                        </span>
-                                                    {/each}
-                                                    {#if poolPreview.overflow > 0}
-                                                        <span
-                                                            class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                                                        >
-                                                            +{poolPreview.overflow}
-                                                        </span>
-                                                    {/if}
-                                                {:else}
-                                                    <span
-                                                        class="text-[10px] text-muted-foreground"
-                                                        >Belum dimapping</span
-                                                    >
-                                                {/if}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </article>
-                            {/each}
-                        </div>
-                        <div class="hidden md:block">
-                            <DataTable
-                                columns={usersColumns}
-                                rows={users}
-                                density="compact"
-                                class="w-full"
-                            >
-                                {#snippet row({ row, columns })}
-                                    {@const user = row as UserRow}
-                                    {@const rolePreview = compactListPreview(
-                                        user.role_names,
-                                        2,
-                                    )}
-                                    {@const poolPreview = userPoolPreview(
-                                        user,
-                                        2,
-                                    )}
-
-                                    <td
-                                        class="sticky left-0 z-20 border-b border-r border-border/60 bg-background px-2.5 py-1.5 align-top group-hover:bg-muted/15"
-                                        style={`left: ${columns[0]?.leftOffset ?? '0px'}`}
-                                    >
-                                        <div
-                                            class="truncate text-[11px] font-semibold leading-4 text-foreground"
-                                        >
-                                            {user.name}
-                                        </div>
-                                        <div
-                                            class="mt-0.5 truncate text-[10px] text-muted-foreground"
-                                        >
-                                            {user.is_super_admin
-                                                ? 'Super Admin'
-                                                : 'User Pool'}
-                                        </div>
-                                    </td>
-
-                                    <td
-                                        class="border-b border-r border-border/60 px-2.5 py-1.5 align-top"
-                                    >
-                                        <div
-                                            class="truncate text-[11px] font-medium leading-4 text-foreground"
-                                        >
-                                            {user.email}
-                                        </div>
-                                        <div
-                                            class="mt-0.5 truncate text-[10px] text-muted-foreground"
-                                        >
-                                            Alamat email login
-                                        </div>
-                                    </td>
-
-                                    <td
-                                        class="border-b border-r border-border/60 px-2.5 py-1.5 text-center"
-                                    >
-                                        <span
-                                            class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${user.email_verified_at ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
-                                        >
-                                            {user.email_verified_at
-                                                ? 'Sudah diverifikasi'
-                                                : 'Belum diverifikasi'}
-                                        </span>
-                                    </td>
-
-                                    <td
-                                        class="border-b border-r border-border/60 px-2.5 py-1.5 align-top"
-                                    >
-                                        <div
-                                            class="flex max-w-[220px] flex-wrap gap-1"
-                                        >
-                                            {#if rolePreview.items.length > 0}
-                                                {#each rolePreview.items as roleName (roleName)}
-                                                    <span
-                                                        class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[10px] font-medium leading-4 text-foreground"
-                                                    >
-                                                        <span class="truncate"
-                                                            >{roleName}</span
-                                                        >
-                                                    </span>
-                                                {/each}
-                                                {#if rolePreview.overflow > 0}
-                                                    <span
-                                                        class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                                                    >
-                                                        +{rolePreview.overflow}
-                                                    </span>
-                                                {/if}
-                                            {:else}
-                                                <span
-                                                    class="text-[10px] text-muted-foreground"
-                                                    >Belum ada role</span
-                                                >
-                                            {/if}
-                                        </div>
-                                        <div
-                                            class="mt-0.5 truncate text-[10px] text-muted-foreground"
-                                        >
-                                            Hak akses menu dan aksi
-                                        </div>
-                                    </td>
-
-                                    <td
-                                        class="border-b border-r border-border/60 px-2.5 py-1.5 align-top"
-                                    >
-                                        <div
-                                            class="flex max-w-[220px] flex-wrap gap-1"
-                                        >
-                                            {#if poolPreview.items.length > 0}
-                                                {#each poolPreview.items as poolName (poolName)}
-                                                    <span
-                                                        class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[10px] font-medium leading-4 text-foreground"
-                                                    >
-                                                        <span class="truncate"
-                                                            >{poolName}</span
-                                                        >
-                                                    </span>
-                                                {/each}
-                                                {#if poolPreview.overflow > 0}
-                                                    <span
-                                                        class="inline-flex rounded-full border border-dashed border-border/70 bg-background px-2 py-0.5 text-[10px] font-semibold text-muted-foreground"
-                                                    >
-                                                        +{poolPreview.overflow}
-                                                    </span>
-                                                {/if}
-                                            {:else}
-                                                <span
-                                                    class="text-[10px] text-muted-foreground"
-                                                    >Belum dimapping</span
-                                                >
-                                            {/if}
-                                        </div>
-                                        <div
-                                            class="mt-0.5 truncate text-[10px] text-muted-foreground"
-                                        >
-                                            Akses data operasional
-                                        </div>
-                                    </td>
-                                {/snippet}
-
-                                {#snippet actions({ row })}
-                                    {@const user = row as UserRow}
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                class="h-7 w-7 rounded-full border border-border/70"
-                                            >
-                                                <MoreHorizontal
-                                                    class="h-3.5 w-3.5"
-                                                />
-                                                <span class="sr-only"
-                                                    >Aksi user</span
-                                                >
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent
-                                            align="end"
-                                            sideOffset={8}
-                                            class="z-[120] w-44"
-                                        >
-                                            <DropdownMenuItem
-                                                onclick={() => {
-                                                    userForm = {
-                                                        id: user.id,
-                                                        name: user.name,
-                                                        email: user.email,
-                                                        password: '',
-                                                        is_super_admin: Boolean(
-                                                            user.is_super_admin,
-                                                        ),
-                                                        default_pool_id: Number(
-                                                            user.default_pool_id ??
-                                                                0,
-                                                        ),
-                                                        pool_ids: [
-                                                            ...(user.pool_ids ??
-                                                                []),
-                                                        ],
-                                                        role_ids: [
-                                                            ...(user.role_ids ??
-                                                                []),
-                                                        ],
-                                                    };
-                                                    setFormMode('form');
-                                                }}
-                                            >
-                                                <Pencil
-                                                    class="mr-2 h-3.5 w-3.5"
-                                                />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            {#if user.email_verified_at}
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void runUserVerificationAction(
-                                                            user,
-                                                            'unverify',
-                                                        )}
-                                                >
-                                                    <MailX
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Unverify
-                                                </DropdownMenuItem>
-                                            {:else}
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void runUserVerificationAction(
-                                                            user,
-                                                            'verify',
-                                                        )}
-                                                >
-                                                    <CheckCircle2
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Verify
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    onclick={() =>
-                                                        void runUserVerificationAction(
-                                                            user,
-                                                            'send-verification',
-                                                        )}
-                                                >
-                                                    <Send
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Kirim Link
-                                                </DropdownMenuItem>
-                                            {/if}
-                                            <DropdownMenuItem
-                                                onclick={() =>
-                                                    void removeItem(
-                                                        `/api/admin/users/${user.id}`,
-                                                        'User deleted.',
-                                                    )}
-                                            >
-                                                <Trash2
-                                                    class="mr-2 h-3.5 w-3.5"
-                                                />
-                                                Hapus
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                {/snippet}
-                            </DataTable>
-                        </div>
+                                    {/snippet}
+                                </DataTable>
+                            </div></ViewportOnly
+                        >
                     </div>
                 {/if}
             {/if}
@@ -12941,179 +13076,205 @@
                             <Button
                                 type="submit"
                                 size="sm"
-                                disabled={activityLogsLoading}
-                            >Cari</Button>
+                                disabled={activityLogsLoading}>Cari</Button
+                            >
                             <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                disabled={activityLogsLoading || activityLogsSearch.trim() === ''}
+                                disabled={activityLogsLoading ||
+                                    activityLogsSearch.trim() === ''}
                                 onclick={() => {
                                     activityLogsSearch = '';
                                     void loadLogs(1);
-                                }}
-                            >Reset</Button>
+                                }}>Reset</Button
+                            >
                         </div>
                     </form>
                     {#if activityLogsLoading}
-                        <p class="px-3 pt-3 text-xs text-muted-foreground" role="status">
+                        <p
+                            class="px-3 pt-3 text-xs text-muted-foreground"
+                            role="status"
+                        >
                             Memuat aktivitas...
                         </p>
                     {/if}
-                    <div class="grid gap-2 p-2 md:hidden">
-                        {#each activityLogs as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
-                            <article
-                                class="rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm"
-                            >
-                                <div
-                                    class="flex items-start justify-between gap-2"
+                    <ViewportOnly minWidth={0} maxWidth={767}
+                        ><div class="grid gap-2 p-2 md:hidden">
+                            {#each activityLogs as row (`mobile-${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
+                                <article
+                                    class="rounded-lg border border-border/80 bg-card/95 p-2.5 shadow-sm"
                                 >
-                                    <div class="min-w-0">
-                                        <p
-                                            class="line-clamp-2 text-[13px] font-semibold text-foreground"
-                                        >
-                                            {row.title || '-'}
-                                        </p>
-                                        <p
-                                            class="mt-0.5 truncate text-[11px] text-muted-foreground"
-                                        >
-                                            {row.created_at || '-'}
-                                        </p>
-                                    </div>
-                                    <span
-                                        class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                                    >
-                                        {row.tag || '-'}
-                                    </span>
-                                </div>
-                                <div class="mt-2 grid gap-1.5 text-xs">
                                     <div
-                                        class="rounded-lg bg-muted/30 px-2.5 py-1.5"
+                                        class="flex items-start justify-between gap-2"
                                     >
-                                        <p
-                                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                        >
-                                            Detail
-                                        </p>
-                                        <p
-                                            class="mt-0.5 break-words font-medium text-foreground"
-                                        >
-                                            {row.meta || '-'}
-                                        </p>
-                                    </div>
-                                    <div
-                                        class="rounded-lg bg-muted/30 px-2.5 py-1.5"
-                                    >
-                                        <p
-                                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                        >
-                                            Akun pelaku
-                                        </p>
-                                        <p
-                                            class="mt-0.5 break-words font-medium text-foreground"
-                                        >
-                                            {row.actor || 'Akun tidak tercatat'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </article>
-                        {/each}
-                    </div>
-                    <div class="hidden overflow-x-auto md:block">
-                        <table
-                            class="min-w-[980px] w-full border-separate border-spacing-0 text-xs"
-                        >
-                            <thead
-                                class="bg-muted/20 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
-                            >
-                                <tr>
-                                    <th
-                                        class="w-[150px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
-                                        >Waktu</th
-                                    >
-                                    <th
-                                        class="w-[100px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
-                                        >Tag</th
-                                    >
-                                    <th
-                                        class="w-[250px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
-                                        >Aktivitas</th
-                                    >
-                                    <th
-                                        class="w-[300px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
-                                        >Detail</th
-                                    >
-                                    <th
-                                        class="w-[180px] border-b border-border/70 px-3 py-2 text-left font-semibold"
-                                        >Akun pelaku</th
-                                    >
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {#each activityLogs as row (`${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
-                                    <tr
-                                        class="group transition hover:bg-muted/15"
-                                    >
-                                        <td
-                                            class="border-b border-r border-border/60 px-3 py-2.5 align-top"
-                                        >
-                                            <div
-                                                class="font-medium text-foreground"
-                                            >
-                                                {row.created_at || '-'}
-                                            </div>
-                                        </td>
-                                        <td
-                                            class="border-b border-r border-border/60 px-3 py-2.5 align-top"
-                                        >
-                                            <span
-                                                class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[10px] font-semibold text-slate-700"
-                                            >
-                                                {row.tag || '-'}
-                                            </span>
-                                        </td>
-                                        <td
-                                            class="border-b border-r border-border/60 px-3 py-2.5 align-top"
-                                        >
-                                            <div
-                                                class="font-semibold text-foreground"
+                                        <div class="min-w-0">
+                                            <p
+                                                class="line-clamp-2 text-[13px] font-semibold text-foreground"
                                             >
                                                 {row.title || '-'}
-                                            </div>
-                                        </td>
-                                        <td
-                                            class="border-b border-r border-border/60 px-3 py-2.5 align-top text-xs text-muted-foreground"
-                                        >
-                                            {row.meta || '-'}
-                                        </td>
-                                        <td
-                                            class="border-b border-border/60 px-3 py-2.5 align-top"
-                                        >
-                                            <div
-                                                class="font-medium text-foreground"
+                                            </p>
+                                            <p
+                                                class="mt-0.5 truncate text-xs md:text-[11px] text-muted-foreground"
                                             >
-                                                {row.actor || 'Akun tidak tercatat'}
-                                            </div>
-                                        </td>
+                                                {row.created_at || '-'}
+                                            </p>
+                                        </div>
+                                        <span
+                                            class="shrink-0 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                                        >
+                                            {row.tag || '-'}
+                                        </span>
+                                    </div>
+                                    <div class="mt-2 grid gap-1.5 text-xs">
+                                        <div
+                                            class="rounded-lg bg-muted/30 px-2.5 py-1.5"
+                                        >
+                                            <p
+                                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Detail
+                                            </p>
+                                            <p
+                                                class="mt-0.5 break-words font-medium text-foreground"
+                                            >
+                                                {row.meta || '-'}
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="rounded-lg bg-muted/30 px-2.5 py-1.5"
+                                        >
+                                            <p
+                                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Akun pelaku
+                                            </p>
+                                            <p
+                                                class="mt-0.5 break-words font-medium text-foreground"
+                                            >
+                                                {row.actor ||
+                                                    'Akun tidak tercatat'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div></ViewportOnly
+                    >
+                    <ViewportOnly minWidth={768}
+                        ><div class="hidden overflow-x-auto md:block">
+                            <table
+                                class="min-w-[980px] w-full border-separate border-spacing-0 text-xs"
+                            >
+                                <thead
+                                    class="bg-muted/20 text-xs md:text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                                >
+                                    <tr>
+                                        <th
+                                            class="w-[150px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
+                                            >Waktu</th
+                                        >
+                                        <th
+                                            class="w-[100px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
+                                            >Tag</th
+                                        >
+                                        <th
+                                            class="w-[250px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
+                                            >Aktivitas</th
+                                        >
+                                        <th
+                                            class="w-[300px] border-b border-r border-border/70 px-3 py-2 text-left font-semibold"
+                                            >Detail</th
+                                        >
+                                        <th
+                                            class="w-[180px] border-b border-border/70 px-3 py-2 text-left font-semibold"
+                                            >Akun pelaku</th
+                                        >
                                     </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {#each activityLogs as row (`${row.created_at}-${row.tag}-${row.title}-${row.actor}`)}
+                                        <tr
+                                            class="group transition hover:bg-muted/15"
+                                        >
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-2.5 align-top"
+                                            >
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.created_at || '-'}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-2.5 align-top"
+                                            >
+                                                <span
+                                                    class="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-slate-700"
+                                                >
+                                                    {row.tag || '-'}
+                                                </span>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-2.5 align-top"
+                                            >
+                                                <div
+                                                    class="font-semibold text-foreground"
+                                                >
+                                                    {row.title || '-'}
+                                                </div>
+                                            </td>
+                                            <td
+                                                class="border-b border-r border-border/60 px-3 py-2.5 align-top text-xs text-muted-foreground"
+                                            >
+                                                {row.meta || '-'}
+                                            </td>
+                                            <td
+                                                class="border-b border-border/60 px-3 py-2.5 align-top"
+                                            >
+                                                <div
+                                                    class="font-medium text-foreground"
+                                                >
+                                                    {row.actor ||
+                                                        'Akun tidak tercatat'}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div></ViewportOnly
+                    >
                     {#if !activityLogsLoading && activityLogs.length === 0}
-                        <p class="px-4 py-8 text-center text-sm text-muted-foreground">
+                        <p
+                            class="px-4 py-8 text-center text-sm text-muted-foreground"
+                        >
                             {activityLogsSearch.trim() === ''
                                 ? 'Tidak ada aktivitas dalam 14 hari terakhir.'
                                 : 'Tidak ada aktivitas yang cocok dalam 14 hari terakhir.'}
                         </p>
                     {/if}
-                    <div class="flex flex-col gap-3 border-t border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div class="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+                    <div
+                        class="flex flex-col gap-3 border-t border-border/70 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <div
+                            class="flex flex-wrap items-center gap-3 text-xs text-muted-foreground"
+                        >
                             <span>
-                                14 hari terakhir · {activityLogsMeta.total === 0 ? 0 : (activityLogsMeta.page - 1) * activityLogsMeta.per_page + 1}–{Math.min(activityLogsMeta.page * activityLogsMeta.per_page, activityLogsMeta.total)} dari {activityLogsMeta.total} aktivitas
+                                14 hari terakhir · {activityLogsMeta.total === 0
+                                    ? 0
+                                    : (activityLogsMeta.page - 1) *
+                                          activityLogsMeta.per_page +
+                                      1}–{Math.min(
+                                    activityLogsMeta.page *
+                                        activityLogsMeta.per_page,
+                                    activityLogsMeta.total,
+                                )} dari {activityLogsMeta.total} aktivitas
                             </span>
                             {#if activityLogsSearch.trim() !== ''}
-                                <span class="rounded-full bg-muted px-2 py-1 text-foreground">
+                                <span
+                                    class="rounded-full bg-muted px-2 py-1 text-foreground"
+                                >
                                     Filter: “{activityLogsSearch.trim()}”
                                 </span>
                             {/if}
@@ -13124,7 +13285,10 @@
                                     value={activityLogsMeta.per_page}
                                     disabled={activityLogsLoading}
                                     onchange={(event) =>
-                                        void loadLogs(1, Number(event.currentTarget.value))}
+                                        void loadLogs(
+                                            1,
+                                            Number(event.currentTarget.value),
+                                        )}
                                 >
                                     <option value="20">20</option>
                                     <option value="50">50</option>
@@ -13132,24 +13296,36 @@
                                 </select>
                             </label>
                         </div>
-                        <div class="flex items-center gap-2 self-end sm:self-auto">
+                        <div
+                            class:mobile-pagination={true}
+                            class="flex items-center gap-2 self-end sm:self-auto"
+                        >
                             <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                disabled={activityLogsLoading || activityLogsMeta.page <= 1}
-                                onclick={() => void loadLogs(activityLogsMeta.page - 1)}
-                            >Sebelumnya</Button>
-                            <span class="min-w-[5rem] text-center text-xs text-muted-foreground">
+                                disabled={activityLogsLoading ||
+                                    activityLogsMeta.page <= 1}
+                                onclick={() =>
+                                    void loadLogs(activityLogsMeta.page - 1)}
+                                >Sebelumnya</Button
+                            >
+                            <span
+                                class="min-w-[5rem] text-center text-xs text-muted-foreground"
+                            >
                                 {activityLogsMeta.page} / {activityLogsMeta.last_page}
                             </span>
                             <Button
                                 type="button"
                                 size="sm"
                                 variant="outline"
-                                disabled={activityLogsLoading || activityLogsMeta.page >= activityLogsMeta.last_page}
-                                onclick={() => void loadLogs(activityLogsMeta.page + 1)}
-                            >Berikutnya</Button>
+                                disabled={activityLogsLoading ||
+                                    activityLogsMeta.page >=
+                                        activityLogsMeta.last_page}
+                                onclick={() =>
+                                    void loadLogs(activityLogsMeta.page + 1)}
+                                >Berikutnya</Button
+                            >
                         </div>
                     </div>
                 </div>
@@ -13195,7 +13371,10 @@
                     <p class="text-xs text-muted-foreground">
                         Total {settingsMeta.total} data
                     </p>
-                    <div class="flex items-center gap-2">
+                    <div
+                        class:mobile-pagination={true}
+                        class="flex items-center gap-2"
+                    >
                         <Button
                             type="button"
                             size="sm"
@@ -13206,7 +13385,7 @@
                                     settingsMeta.page - 1,
                                 )}
                         >
-                            Prev
+                            Sebelumnya
                         </Button>
                         <span
                             class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground"
@@ -13224,7 +13403,7 @@
                                     settingsMeta.page + 1,
                                 )}
                         >
-                            Next
+                            Berikutnya
                         </Button>
                     </div>
                 </div>
@@ -13236,7 +13415,8 @@
             <div class="space-y-1">
                 <DialogTitle>Detail Riwayat Pelanggan</DialogTitle>
                 <DialogDescription>
-                    Riwayat pembatalan dan keberangkatan yang telah tiba pada tahun berjalan.
+                    Riwayat pembatalan dan keberangkatan yang telah tiba pada
+                    tahun berjalan.
                 </DialogDescription>
             </div>
 
@@ -13273,7 +13453,8 @@
                                 pembatalan
                             </Badge>
                             <Badge variant="secondary">
-                                {customerHistory.summary.successful_departure_count}
+                                {customerHistory.summary
+                                    .successful_departure_count}
                                 keberangkatan sukses
                             </Badge>
                         </div>
@@ -13304,18 +13485,22 @@
                                                 {item.rute}
                                             </p>
                                             <span
-                                                class="text-[11px] text-muted-foreground"
+                                                class="text-xs md:text-[11px] text-muted-foreground"
                                             >
-                                                {item.tanggal} · {item.jam.slice(0, 5)}
+                                                {item.tanggal} · {item.jam.slice(
+                                                    0,
+                                                    5,
+                                                )}
                                             </span>
                                         </div>
                                         <p
-                                            class="mt-1 text-[11px] text-muted-foreground"
+                                            class="mt-1 text-xs md:text-[11px] text-muted-foreground"
                                         >
                                             Unit {item.unit} · Kursi {item.seat}
                                         </p>
                                         <p class="mt-1 text-xs">
-                                            Alasan: {item.reason?.trim() || 'Tidak dicantumkan'}
+                                            Alasan: {item.reason?.trim() ||
+                                                'Tidak dicantumkan'}
                                         </p>
                                     </article>
                                 {/each}
@@ -13324,27 +13509,56 @@
                                 <div
                                     class="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
                                 >
-                                    <span class="text-[11px] text-muted-foreground">
-                                        Halaman {customerHistory.cancellation_pagination.page} dari {customerHistory.cancellation_pagination.last_page}
-                                        · {customerHistory.cancellation_pagination.total} data
+                                    <span
+                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                    >
+                                        Halaman {customerHistory
+                                            .cancellation_pagination.page} dari {customerHistory
+                                            .cancellation_pagination.last_page}
+                                        · {customerHistory
+                                            .cancellation_pagination.total} data
                                     </span>
-                                    <div class="flex items-center gap-1.5">
+                                    <div
+                                        class:mobile-pagination={true}
+                                        class="flex items-center gap-1.5"
+                                    >
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            class="h-7 px-2 text-[11px]"
-                                            disabled={customerHistoryLoading || (customerHistory?.cancellation_pagination.page ?? 1) <= 1}
-                                            onclick={() => changeCustomerHistoryPage('cancellations', (customerHistory?.cancellation_pagination.page ?? 1) - 1)}
-                                        >Sebelumnya</Button>
+                                            class="h-7 px-2 text-xs md:text-[11px]"
+                                            disabled={customerHistoryLoading ||
+                                                (customerHistory
+                                                    ?.cancellation_pagination
+                                                    .page ?? 1) <= 1}
+                                            onclick={() =>
+                                                changeCustomerHistoryPage(
+                                                    'cancellations',
+                                                    (customerHistory
+                                                        ?.cancellation_pagination
+                                                        .page ?? 1) - 1,
+                                                )}>Sebelumnya</Button
+                                        >
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            class="h-7 px-2 text-[11px]"
-                                            disabled={customerHistoryLoading || (customerHistory?.cancellation_pagination.page ?? 1) >= (customerHistory?.cancellation_pagination.last_page ?? 1)}
-                                            onclick={() => changeCustomerHistoryPage('cancellations', (customerHistory?.cancellation_pagination.page ?? 1) + 1)}
-                                        >Berikutnya</Button>
+                                            class="h-7 px-2 text-xs md:text-[11px]"
+                                            disabled={customerHistoryLoading ||
+                                                (customerHistory
+                                                    ?.cancellation_pagination
+                                                    .page ?? 1) >=
+                                                    (customerHistory
+                                                        ?.cancellation_pagination
+                                                        .last_page ?? 1)}
+                                            onclick={() =>
+                                                changeCustomerHistoryPage(
+                                                    'cancellations',
+                                                    (customerHistory
+                                                        ?.cancellation_pagination
+                                                        .page ?? 1) + 1,
+                                                )}>Berikutnya</Button
+                                        >
                                     </div>
                                 </div>
                             {/if}
@@ -13374,9 +13588,12 @@
                                                 {item.rute}
                                             </p>
                                             <p
-                                                class="mt-1 text-[11px] text-muted-foreground"
+                                                class="mt-1 text-xs md:text-[11px] text-muted-foreground"
                                             >
-                                                {item.tanggal} · {item.jam.slice(0, 5)} · Unit {item.unit}
+                                                {item.tanggal} · {item.jam.slice(
+                                                    0,
+                                                    5,
+                                                )} · Unit {item.unit}
                                             </p>
                                         </div>
                                         <Badge variant="secondary">Tiba</Badge>
@@ -13387,27 +13604,59 @@
                                 <div
                                     class="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2"
                                 >
-                                    <span class="text-[11px] text-muted-foreground">
-                                        Halaman {customerHistory.successful_departure_pagination.page} dari {customerHistory.successful_departure_pagination.last_page}
-                                        · {customerHistory.successful_departure_pagination.total} data
+                                    <span
+                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                    >
+                                        Halaman {customerHistory
+                                            .successful_departure_pagination
+                                            .page} dari {customerHistory
+                                            .successful_departure_pagination
+                                            .last_page}
+                                        · {customerHistory
+                                            .successful_departure_pagination
+                                            .total} data
                                     </span>
-                                    <div class="flex items-center gap-1.5">
+                                    <div
+                                        class:mobile-pagination={true}
+                                        class="flex items-center gap-1.5"
+                                    >
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            class="h-7 px-2 text-[11px]"
-                                            disabled={customerHistoryLoading || (customerHistory?.successful_departure_pagination.page ?? 1) <= 1}
-                                            onclick={() => changeCustomerHistoryPage('departures', (customerHistory?.successful_departure_pagination.page ?? 1) - 1)}
-                                        >Sebelumnya</Button>
+                                            class="h-7 px-2 text-xs md:text-[11px]"
+                                            disabled={customerHistoryLoading ||
+                                                (customerHistory
+                                                    ?.successful_departure_pagination
+                                                    .page ?? 1) <= 1}
+                                            onclick={() =>
+                                                changeCustomerHistoryPage(
+                                                    'departures',
+                                                    (customerHistory
+                                                        ?.successful_departure_pagination
+                                                        .page ?? 1) - 1,
+                                                )}>Sebelumnya</Button
+                                        >
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            class="h-7 px-2 text-[11px]"
-                                            disabled={customerHistoryLoading || (customerHistory?.successful_departure_pagination.page ?? 1) >= (customerHistory?.successful_departure_pagination.last_page ?? 1)}
-                                            onclick={() => changeCustomerHistoryPage('departures', (customerHistory?.successful_departure_pagination.page ?? 1) + 1)}
-                                        >Berikutnya</Button>
+                                            class="h-7 px-2 text-xs md:text-[11px]"
+                                            disabled={customerHistoryLoading ||
+                                                (customerHistory
+                                                    ?.successful_departure_pagination
+                                                    .page ?? 1) >=
+                                                    (customerHistory
+                                                        ?.successful_departure_pagination
+                                                        .last_page ?? 1)}
+                                            onclick={() =>
+                                                changeCustomerHistoryPage(
+                                                    'departures',
+                                                    (customerHistory
+                                                        ?.successful_departure_pagination
+                                                        .page ?? 1) + 1,
+                                                )}>Berikutnya</Button
+                                        >
                                     </div>
                                 </div>
                             {/if}

@@ -12,7 +12,7 @@ const pageByPath: Record<string, string> = {
     '/booking-console': 'BookingConsole',
     '/bookings': 'Bookings',
     '/charters': 'AdminOpsFlows',
-    '/luggages': 'AdminOpsFlows',
+    '/luggages': 'Luggages',
     '/payments': 'Payments',
 };
 
@@ -29,7 +29,10 @@ function canPreload(): boolean {
         navigator as Navigator & { connection?: ConnectionInformation }
     ).connection;
 
-    return !connection?.saveData && connection?.effectiveType !== 'slow-2g';
+    return (
+        !connection?.saveData &&
+        !['slow-2g', '2g'].includes(connection?.effectiveType ?? '')
+    );
 }
 
 export function preloadPage(pageName: string): void {
@@ -46,7 +49,9 @@ export function preloadPage(pageName: string): void {
 
     pendingLoads.set(
         path,
-        loader().catch(() => undefined),
+        loader().catch(() => {
+            pendingLoads.delete(path);
+        }),
     );
 }
 

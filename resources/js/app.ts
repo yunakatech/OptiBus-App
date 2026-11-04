@@ -8,10 +8,15 @@ import { initializeInertiaLoading } from '@/lib/inertia-loading';
 import { initializeMobileRuntime } from '@/lib/mobile-runtime';
 import { registerPageLoaders } from '@/lib/page-preload';
 import { initializeTheme } from '@/lib/theme.svelte';
+import {
+    initializeNavigationMetrics,
+    measurePageModule,
+} from '@/lib/navigation-metrics';
 
 const appName = import.meta.env.VITE_APP_NAME || 'OptiBus';
 const pages = import.meta.glob<ResolvedComponent>('./pages/**/*.svelte');
 registerPageLoaders(pages);
+initializeNavigationMetrics();
 
 createInertiaApp({
     resolve: async (name) => {
@@ -21,7 +26,7 @@ createInertiaApp({
             throw new Error(`Inertia page not found: ${name}`);
         }
 
-        return await pageModule();
+        return await measurePageModule(name, pageModule);
     },
     title: (title) => (title ? `${title} - ${appName}` : appName),
     layout: (name) => {

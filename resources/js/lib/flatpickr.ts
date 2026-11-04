@@ -9,13 +9,19 @@ export type { FlatpickrInstance };
 
 export const loadFlatpickr = async (): Promise<FlatpickrFactory> => {
     if (flatpickrLoader === null) {
-        flatpickrLoader = Promise.all([import('flatpickr'), import('flatpickr/dist/flatpickr.css')]).then(
-            ([module]) => {
+        flatpickrLoader = Promise.all([
+            import('flatpickr'),
+            import('flatpickr/dist/flatpickr.css'),
+        ])
+            .then(([module]) => {
                 const fp = module.default;
                 fp.localize(Indonesian);
                 return fp;
-            }
-        );
+            })
+            .catch((error) => {
+                flatpickrLoader = null;
+                throw error;
+            });
     }
 
     return flatpickrLoader;

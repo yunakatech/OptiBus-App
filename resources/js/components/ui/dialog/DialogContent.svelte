@@ -17,7 +17,7 @@
         <button
             type="button"
             class="fixed inset-0 bg-black/50"
-            aria-label="Close"
+            aria-label="Tutup dialog"
             onclick={close}
         ></button>
         <div

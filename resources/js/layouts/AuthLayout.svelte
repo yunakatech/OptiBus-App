@@ -1,6 +1,7 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
     import AuthLayout from '@/layouts/auth/AuthSimpleLayout.svelte';
+    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
 
     let {
         title = '',
@@ -14,5 +15,6 @@
 </script>
 
 <AuthLayout {title} {description}>
+    <NavigationMetrics />
     {@render children?.()}
 </AuthLayout>

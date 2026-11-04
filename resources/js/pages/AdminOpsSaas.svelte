@@ -10,6 +10,8 @@
 </script>
 
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { page } from '@inertiajs/svelte';
     import {
         AlertTriangle,
@@ -768,6 +770,7 @@
 <AppHead title="SaaS Management" />
 
 <div
+    class:mobile-page={true}
     class="min-h-screen overflow-x-hidden bg-[#f1eee5] dark:bg-slate-950"
 >
     <div
@@ -810,13 +813,15 @@
 
             <!-- Header -->
             <section class={shellClass}>
-                <div class="relative isolate overflow-hidden rounded-xl bg-[#173a34] text-white dark:bg-[#101f1c]">
+                <div
+                    class="relative isolate overflow-hidden rounded-xl bg-[#173a34] text-white dark:bg-[#101f1c]"
+                >
                     <div
                         class="relative grid gap-5 p-4 sm:gap-6 sm:p-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-end"
                     >
                         <div class="space-y-4">
                             <div
-                                class="inline-flex items-center gap-2 border-l-2 border-[#d9a477] pl-2 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f0c59f]"
+                                class="inline-flex items-center gap-2 border-l-2 border-[#d9a477] pl-2 py-1 text-xs md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f0c59f]"
                             >
                                 <ShieldCheck class="h-3.5 w-3.5 text-sky-500" />
                                 Administrasi SaaS
@@ -859,7 +864,7 @@
                                     >
                                         <div>
                                             <p
-                                            class="text-[11px] font-semibold tracking-wide text-muted-foreground"
+                                                class="text-xs md:text-[11px] font-semibold tracking-wide text-muted-foreground"
                                             >
                                                 {item.label}
                                             </p>
@@ -874,7 +879,9 @@
                                                 {item.note}
                                             </p>
                                         </div>
-                                        <div class={`border-l-2 p-2 ${item.tone}`}>
+                                        <div
+                                            class={`border-l-2 p-2 ${item.tone}`}
+                                        >
                                             <item.icon class="h-4 w-4" />
                                         </div>
                                     </div>
@@ -910,7 +917,7 @@
                                 />
                                 <span class="truncate">{tab.label}</span>
                                 <span
-                                    class={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold sm:px-2.5 sm:text-[11px] ${activeTab === tab.key ? 'bg-white/15 text-white dark:bg-slate-900/10 dark:text-slate-950' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}
+                                    class={`ml-auto shrink-0 rounded-full px-2 py-0.5 text-xs md:text-[10px] font-semibold sm:px-2.5 sm:text-[11px] ${activeTab === tab.key ? 'bg-white/15 text-white dark:bg-slate-900/10 dark:text-slate-950' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}
                                 >
                                     {tab.meta}
                                 </span>
@@ -947,12 +954,15 @@
                                 <Search
                                     class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                                 />
-                                <Input
-                                    class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
-                                    placeholder="Cari tenant..."
-                                    bind:value={searchQuery}
-                                    onchange={() => loadTenants()}
-                                />
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Pencarian</span><Input
+                                        class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
+                                        placeholder="Cari tenant..."
+                                        bind:value={searchQuery}
+                                        onchange={() => loadTenants()}
+                                    /></label
+                                >
                             </div>
                             <Button
                                 variant="outline"
@@ -987,68 +997,95 @@
                                 >
                                     <div>
                                         <Label>Nama</Label>
-                                        <Input
-                                            bind:value={tenantForm.name}
-                                            onchange={() =>
-                                                slugFromName(tenantForm.name)}
-                                            placeholder="Nama perusahaan/agency"
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Nama</span><Input
+                                                bind:value={tenantForm.name}
+                                                onchange={() =>
+                                                    slugFromName(
+                                                        tenantForm.name,
+                                                    )}
+                                                placeholder="Nama perusahaan/agency"
+                                            /></label
+                                        >
                                     </div>
                                     <div>
                                         <Label>Slug</Label>
-                                        <Input
-                                            bind:value={tenantForm.slug}
-                                            placeholder="slug-unik"
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Alamat booking</span><Input
+                                                bind:value={tenantForm.slug}
+                                                placeholder="slug-unik"
+                                            /></label
+                                        >
                                     </div>
                                     <div>
                                         <Label>Email</Label>
-                                        <Input
-                                            type="email"
-                                            bind:value={tenantForm.email}
-                                            placeholder="opsional"
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Email</span><Input
+                                                type="email"
+                                                bind:value={tenantForm.email}
+                                                placeholder="opsional"
+                                            /></label
+                                        >
                                     </div>
                                     <div>
                                         <Label>Phone</Label>
-                                        <Input
-                                            bind:value={tenantForm.phone}
-                                            placeholder="opsional"
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Nomor HP</span><Input
+                                                bind:value={tenantForm.phone}
+                                                placeholder="opsional"
+                                            /></label
+                                        >
                                     </div>
                                     <div class="md:col-span-2">
                                         <Label>Alamat</Label>
-                                        <Input
-                                            bind:value={tenantForm.address}
-                                            placeholder="opsional"
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Alamat</span><Input
+                                                bind:value={tenantForm.address}
+                                                placeholder="opsional"
+                                            /></label
+                                        >
                                     </div>
                                     {#if !editingTenant}
                                         <div>
                                             <Label>Paket Awal</Label>
-                                            <select
-                                                bind:value={tenantForm.plan_id}
-                                                class="w-full rounded-md border px-3 py-2 text-sm"
+                                            <label
+                                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                ><span>Paket</span><select
+                                                    bind:value={
+                                                        tenantForm.plan_id
+                                                    }
+                                                    class="w-full rounded-md border px-3 py-2 text-sm"
+                                                >
+                                                    {#each tenantPlans as plan}
+                                                        <option value={plan.id}
+                                                            >{plan.name} ({formatRupiah(
+                                                                plan.price_monthly,
+                                                            )})</option
+                                                        >
+                                                    {/each}
+                                                </select></label
                                             >
-                                                {#each tenantPlans as plan}
-                                                    <option value={plan.id}
-                                                        >{plan.name} ({formatRupiah(
-                                                            plan.price_monthly,
-                                                        )})</option
-                                                    >
-                                                {/each}
-                                            </select>
                                         </div>
                                         <div>
                                             <Label>Masa Trial (hari)</Label>
-                                            <Input
-                                                type="number"
-                                                bind:value={
-                                                    tenantForm.trial_days
-                                                }
-                                                min="0"
-                                                max="90"
-                                            />
+                                            <label
+                                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                ><span
+                                                    >Masa uji coba (hari)</span
+                                                ><Input
+                                                    type="number"
+                                                    bind:value={
+                                                        tenantForm.trial_days
+                                                    }
+                                                    min="0"
+                                                    max="90"
+                                                /></label
+                                            >
                                         </div>
                                     {/if}
                                 </div>
@@ -1101,7 +1138,7 @@
                                     <div
                                         class="grid grid-cols-2 gap-2 sm:grid-cols-4"
                                     >
-                                        {#each [{ key: 'users', label: 'User' }, { key: 'pools', label: 'Pool' }, { key: 'bookings', label: 'Booking' }, { key: 'luggages', label: 'Bagasi' }, { key: 'charters', label: 'Carter' }, { key: 'drivers', label: 'Driver' }, { key: 'armadas', label: 'Armada' }, { key: 'schedules', label: 'Jadwal' }, { key: 'routes', label: 'Rute' }, { key: 'customers', label: 'Customer' }, { key: 'invoice_subscriptions', label: 'Invoice' }, { key: 'activity_logs', label: 'Log' }] as item}
+                                        {#each [{ key: 'users', label: 'User' }, { key: 'pools', label: 'Pool' }, { key: 'bookings', label: 'Booking' }, { key: 'luggages', label: 'Bagasi' }, { key: 'charters', label: 'Carter' }, { key: 'drivers', label: 'Driver' }, { key: 'armadas', label: 'Armada' }, { key: 'schedules', label: 'Jadwal' }, { key: 'routes', label: 'Rute' }, { key: 'customers', label: 'Pelanggan' }, { key: 'invoice_subscriptions', label: 'Invoice' }, { key: 'activity_logs', label: 'Log' }] as item}
                                             <div
                                                 class="rounded-lg border bg-muted/30 p-3"
                                             >
@@ -1230,309 +1267,331 @@
                     <!-- Tenant Table -->
                     <Card class={tableShellClass}>
                         <CardContent class="p-0">
-                            <div class="grid gap-3 p-3 md:hidden">
-                                {#each tenants as t}
-                                    <article
-                                        class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
-                                    >
-                                        <div
-                                            class="flex items-start justify-between gap-3"
-                                        >
-                                            <div class="min-w-0">
-                                                <h3
-                                                    class="truncate font-semibold text-foreground"
-                                                >
-                                                    {t.name}
-                                                </h3>
-                                                <p
-                                                    class="mt-0.5 truncate text-xs text-muted-foreground"
-                                                >
-                                                    {t.slug}
-                                                </p>
-                                            </div>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        class="h-9 w-9 rounded-xl"
-                                                    >
-                                                        <MoreHorizontal
-                                                            class="h-4 w-4"
-                                                        />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            openTenantForm(t)}
-                                                    >
-                                                        <Edit3
-                                                            class="h-4 w-4 mr-2"
-                                                        />Edit
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            toggleTenantStatus(
-                                                                t,
-                                                            )}
-                                                    >
-                                                        {#if t.status === 'active'}<Ban
-                                                                class="h-4 w-4 mr-2"
-                                                            />Suspend{:else}<RotateCcw
-                                                                class="h-4 w-4 mr-2"
-                                                            />Re-activate{/if}
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            archiveTenant(t.id)}
-                                                        class="text-destructive"
-                                                    >
-                                                        <Archive
-                                                            class="h-4 w-4 mr-2"
-                                                        />Arsipkan Tenant
-                                                    </DropdownMenuItem>
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            openPurgeModal(t)}
-                                                        class="text-destructive"
-                                                    >
-                                                        <Trash2
-                                                            class="h-4 w-4 mr-2"
-                                                        />Hapus Permanen
-                                                    </DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                        <div
-                                            class="mt-4 grid grid-cols-2 gap-2"
+                            <ViewportOnly minWidth={0} maxWidth={767}
+                                ><div class="grid gap-3 p-3 md:hidden">
+                                    {#each tenants as t}
+                                        <article
+                                            class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                                         >
                                             <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                class="flex items-start justify-between gap-3"
                                             >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Paket
-                                                </p>
-                                                <div class="mt-1">
-                                                    <Badge variant="outline"
-                                                        >{t.plan_name}</Badge
+                                                <div class="min-w-0">
+                                                    <h3
+                                                        class="truncate font-semibold text-foreground"
                                                     >
-                                                </div>
-                                            </div>
-                                            <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
-                                            >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Status
-                                                </p>
-                                                <div class="mt-1">
-                                                    <Badge
-                                                        variant={statusBadge(
-                                                            t.status,
-                                                        ).variant}
-                                                    >
-                                                        {statusBadge(t.status)
-                                                            .label}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                            <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
-                                            >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Users
-                                                </p>
-                                                <p class="mt-1 font-semibold">
-                                                    {t.user_count}
-                                                </p>
-                                            </div>
-                                            <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
-                                            >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Pools
-                                                </p>
-                                                <p class="mt-1 font-semibold">
-                                                    {t.pool_count}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <p
-                                            class="mt-3 text-xs text-muted-foreground"
-                                        >
-                                            Berakhir: {t.ends_at
-                                                ? formatDate(t.ends_at)
-                                                : '-'}
-                                        </p>
-                                    </article>
-                                {:else}
-                                    <div
-                                        class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
-                                    >
-                                        Belum ada tenant.
-                                    </div>
-                                {/each}
-                            </div>
-                            <div class="hidden overflow-x-auto md:block">
-                                <table class="w-full text-sm">
-                                    <thead
-                                        class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"
-                                    >
-                                        <tr
-                                            class="border-b border-slate-200 text-left dark:border-slate-800"
-                                        >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Nama</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Paket</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Status</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground text-right"
-                                                >Users</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground text-right"
-                                                >Pools</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Berlangganan</th
-                                            >
-                                            <th class="px-4 py-3 w-16"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {#each tenants as t}
-                                            <tr
-                                                class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
-                                            >
-                                                <td class="px-4 py-2.5">
-                                                    <div class="font-medium">
                                                         {t.name}
-                                                    </div>
-                                                    <div
-                                                        class="text-xs text-muted-foreground"
+                                                    </h3>
+                                                    <p
+                                                        class="mt-0.5 truncate text-xs text-muted-foreground"
                                                     >
                                                         {t.slug}
-                                                    </div>
-                                                </td>
-                                                <td class="px-4 py-2.5">
-                                                    <Badge variant="outline"
-                                                        >{t.plan_name}</Badge
-                                                    >
-                                                </td>
-                                                <td class="px-4 py-2.5">
-                                                    <Badge
-                                                        variant={statusBadge(
-                                                            t.status,
-                                                        ).variant}
-                                                    >
-                                                        {statusBadge(t.status)
-                                                            .label}
-                                                    </Badge>
-                                                </td>
-                                                <td
-                                                    class="px-4 py-2.5 text-right"
-                                                    >{t.user_count}</td
-                                                >
-                                                <td
-                                                    class="px-4 py-2.5 text-right"
-                                                    >{t.pool_count}</td
-                                                >
-                                                <td
-                                                    class="px-4 py-2.5 text-xs text-muted-foreground"
-                                                >
-                                                    {#if t.ends_at}
-                                                        {formatDate(t.ends_at)}
-                                                    {:else}
-                                                        â€”
-                                                    {/if}
-                                                </td>
-                                                <td class="px-4 py-2.5">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            ><Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                ><MoreHorizontal
-                                                                    class="h-4 w-4"
-                                                                /></Button
-                                                            ></DropdownMenuTrigger
+                                                    </p>
+                                                </div>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            class="h-9 w-9 rounded-xl"
                                                         >
-                                                        <DropdownMenuContent>
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    openTenantForm(
-                                                                        t,
-                                                                    )}
-                                                                ><Edit3
+                                                            <MoreHorizontal
+                                                                class="h-4 w-4"
+                                                            />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                openTenantForm(
+                                                                    t,
+                                                                )}
+                                                        >
+                                                            <Edit3
+                                                                class="h-4 w-4 mr-2"
+                                                            />Edit
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                toggleTenantStatus(
+                                                                    t,
+                                                                )}
+                                                        >
+                                                            {#if t.status === 'active'}<Ban
                                                                     class="h-4 w-4 mr-2"
-                                                                />Edit</DropdownMenuItem
-                                                            >
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    toggleTenantStatus(
-                                                                        t,
-                                                                    )}
-                                                            >
-                                                                {#if t.status === 'active'}<Ban
-                                                                        class="h-4 w-4 mr-2"
-                                                                    />Suspend{:else}<RotateCcw
-                                                                        class="h-4 w-4 mr-2"
-                                                                    />Re-activate{/if}
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    archiveTenant(
-                                                                        t.id,
-                                                                    )}
-                                                                class="text-destructive"
-                                                                ><XCircle
+                                                                />Suspend{:else}<RotateCcw
                                                                     class="h-4 w-4 mr-2"
-                                                                />Arsipkan
-                                                                Tenant</DropdownMenuItem
-                                                            >
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    openPurgeModal(
-                                                                        t,
-                                                                    )}
-                                                                class="text-destructive"
-                                                                ><Trash2
-                                                                    class="h-4 w-4 mr-2"
-                                                                />Hapus Permanen</DropdownMenuItem
-                                                            >
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </td>
-                                            </tr>
-                                        {:else}
-                                            <tr
-                                                ><td
-                                                    colspan="7"
-                                                    class="px-4 py-8 text-center text-muted-foreground"
-                                                    >Belum ada tenant.</td
-                                                ></tr
+                                                                />Re-activate{/if}
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                archiveTenant(
+                                                                    t.id,
+                                                                )}
+                                                            class="text-destructive"
+                                                        >
+                                                            <Archive
+                                                                class="h-4 w-4 mr-2"
+                                                            />Arsipkan Tenant
+                                                        </DropdownMenuItem>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                openPurgeModal(
+                                                                    t,
+                                                                )}
+                                                            class="text-destructive"
+                                                        >
+                                                            <Trash2
+                                                                class="h-4 w-4 mr-2"
+                                                            />Hapus Permanen
+                                                        </DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                            <div
+                                                class="mt-4 grid grid-cols-2 gap-2"
                                             >
-                                        {/each}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Paket
+                                                    </p>
+                                                    <div class="mt-1">
+                                                        <Badge variant="outline"
+                                                            >{t.plan_name}</Badge
+                                                        >
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Status
+                                                    </p>
+                                                    <div class="mt-1">
+                                                        <Badge
+                                                            variant={statusBadge(
+                                                                t.status,
+                                                            ).variant}
+                                                        >
+                                                            {statusBadge(
+                                                                t.status,
+                                                            ).label}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Pengguna
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-semibold"
+                                                    >
+                                                        {t.user_count}
+                                                    </p>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Pools
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-semibold"
+                                                    >
+                                                        {t.pool_count}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <p
+                                                class="mt-3 text-xs text-muted-foreground"
+                                            >
+                                                Berakhir: {t.ends_at
+                                                    ? formatDate(t.ends_at)
+                                                    : '-'}
+                                            </p>
+                                        </article>
+                                    {:else}
+                                        <div
+                                            class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
+                                        >
+                                            Belum ada tenant.
+                                        </div>
+                                    {/each}
+                                </div></ViewportOnly
+                            >
+                            <ViewportOnly minWidth={768}
+                                ><div class="hidden overflow-x-auto md:block">
+                                    <table class="w-full text-sm">
+                                        <thead
+                                            class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"
+                                        >
+                                            <tr
+                                                class="border-b border-slate-200 text-left dark:border-slate-800"
+                                            >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Nama</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Paket</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Status</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground text-right"
+                                                    >Pengguna</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground text-right"
+                                                    >Pools</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Berlangganan</th
+                                                >
+                                                <th class="px-4 py-3 w-16"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {#each tenants as t}
+                                                <tr
+                                                    class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
+                                                >
+                                                    <td class="px-4 py-2.5">
+                                                        <div
+                                                            class="font-medium"
+                                                        >
+                                                            {t.name}
+                                                        </div>
+                                                        <div
+                                                            class="text-xs text-muted-foreground"
+                                                        >
+                                                            {t.slug}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5">
+                                                        <Badge variant="outline"
+                                                            >{t.plan_name}</Badge
+                                                        >
+                                                    </td>
+                                                    <td class="px-4 py-2.5">
+                                                        <Badge
+                                                            variant={statusBadge(
+                                                                t.status,
+                                                            ).variant}
+                                                        >
+                                                            {statusBadge(
+                                                                t.status,
+                                                            ).label}
+                                                        </Badge>
+                                                    </td>
+                                                    <td
+                                                        class="px-4 py-2.5 text-right"
+                                                        >{t.user_count}</td
+                                                    >
+                                                    <td
+                                                        class="px-4 py-2.5 text-right"
+                                                        >{t.pool_count}</td
+                                                    >
+                                                    <td
+                                                        class="px-4 py-2.5 text-xs text-muted-foreground"
+                                                    >
+                                                        {#if t.ends_at}
+                                                            {formatDate(
+                                                                t.ends_at,
+                                                            )}
+                                                        {:else}
+                                                            â€”
+                                                        {/if}
+                                                    </td>
+                                                    <td class="px-4 py-2.5">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                ><Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    ><MoreHorizontal
+                                                                        class="h-4 w-4"
+                                                                    /></Button
+                                                                ></DropdownMenuTrigger
+                                                            >
+                                                            <DropdownMenuContent
+                                                            >
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openTenantForm(
+                                                                            t,
+                                                                        )}
+                                                                    ><Edit3
+                                                                        class="h-4 w-4 mr-2"
+                                                                    />Edit</DropdownMenuItem
+                                                                >
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        toggleTenantStatus(
+                                                                            t,
+                                                                        )}
+                                                                >
+                                                                    {#if t.status === 'active'}<Ban
+                                                                            class="h-4 w-4 mr-2"
+                                                                        />Suspend{:else}<RotateCcw
+                                                                            class="h-4 w-4 mr-2"
+                                                                        />Re-activate{/if}
+                                                                </DropdownMenuItem>
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        archiveTenant(
+                                                                            t.id,
+                                                                        )}
+                                                                    class="text-destructive"
+                                                                    ><XCircle
+                                                                        class="h-4 w-4 mr-2"
+                                                                    />Arsipkan
+                                                                    Tenant</DropdownMenuItem
+                                                                >
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openPurgeModal(
+                                                                            t,
+                                                                        )}
+                                                                    class="text-destructive"
+                                                                    ><Trash2
+                                                                        class="h-4 w-4 mr-2"
+                                                                    />Hapus
+                                                                    Permanen</DropdownMenuItem
+                                                                >
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </td>
+                                                </tr>
+                                            {:else}
+                                                <tr
+                                                    ><td
+                                                        colspan="7"
+                                                        class="px-4 py-8 text-center text-muted-foreground"
+                                                        >Belum ada tenant.</td
+                                                    ></tr
+                                                >
+                                            {/each}
+                                        </tbody>
+                                    </table>
+                                </div></ViewportOnly
+                            >
                             {#if tenantPagination?.last_page > 1}
                                 <div
                                     class="flex items-center justify-between px-4 py-3 border-t"
@@ -1541,7 +1600,10 @@
                                         >Page {tenantPagination.page} of {tenantPagination.last_page}
                                         ({tenantPagination.total} total)</span
                                     >
-                                    <div class="flex gap-1">
+                                    <div
+                                        class:mobile-pagination={true}
+                                        class="flex gap-1"
+                                    >
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -1550,7 +1612,7 @@
                                             onclick={() =>
                                                 loadTenants(
                                                     tenantPagination.page - 1,
-                                                )}>Prev</Button
+                                                )}>Sebelumnya</Button
                                         >
                                         <Button
                                             variant="outline"
@@ -1560,7 +1622,7 @@
                                             onclick={() =>
                                                 loadTenants(
                                                     tenantPagination.page + 1,
-                                                )}>Next</Button
+                                                )}>Berikutnya</Button
                                         >
                                     </div>
                                 </div>
@@ -1597,28 +1659,34 @@
                                 <Search
                                     class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                                 />
-                                <Input
-                                    class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
-                                    placeholder="Cari tenant..."
-                                    bind:value={searchQuery}
-                                    onchange={() => loadSubscriptions()}
-                                />
-                            </div>
-                            <select
-                                bind:value={statusFilter}
-                                onchange={() => loadSubscriptions()}
-                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:h-9 sm:w-auto sm:rounded-full"
-                            >
-                                <option value="">Semua Status</option>
-                                <option value="pending_payment"
-                                    >Pending Payment</option
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Pencarian</span><Input
+                                        class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
+                                        placeholder="Cari tenant..."
+                                        bind:value={searchQuery}
+                                        onchange={() => loadSubscriptions()}
+                                    /></label
                                 >
-                                <option value="trial">Trial</option>
-                                <option value="active">Active</option>
-                                <option value="past_due">Past Due</option>
-                                <option value="suspended">Suspended</option>
-                                <option value="canceled">Canceled</option>
-                            </select>
+                            </div>
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Status</span><select
+                                    bind:value={statusFilter}
+                                    onchange={() => loadSubscriptions()}
+                                    class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:h-9 sm:w-auto sm:rounded-full"
+                                >
+                                    <option value="">Semua Status</option>
+                                    <option value="pending_payment"
+                                        >Pending Payment</option
+                                    >
+                                    <option value="trial">Trial</option>
+                                    <option value="active">Active</option>
+                                    <option value="past_due">Past Due</option>
+                                    <option value="suspended">Suspended</option>
+                                    <option value="canceled">Canceled</option>
+                                </select></label
+                            >
                             <Button
                                 variant="outline"
                                 size="icon"
@@ -1654,80 +1722,102 @@
                                     {#if !editingSub}
                                         <div>
                                             <Label>Tenant</Label>
-                                            <select
-                                                bind:value={subForm.tenant_id}
-                                                class="w-full rounded-md border px-3 py-2 text-sm"
-                                            >
-                                                <option value={0}
-                                                    >Pilih tenant...</option
+                                            <label
+                                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                ><span>Tenant</span><select
+                                                    bind:value={
+                                                        subForm.tenant_id
+                                                    }
+                                                    class="w-full rounded-md border px-3 py-2 text-sm"
                                                 >
-                                                {#each subTenants as t}
-                                                    <option value={t.id}
-                                                        >{t.name}</option
+                                                    <option value={0}
+                                                        >Pilih tenant...</option
                                                     >
-                                                {/each}
-                                            </select>
+                                                    {#each subTenants as t}
+                                                        <option value={t.id}
+                                                            >{t.name}</option
+                                                        >
+                                                    {/each}
+                                                </select></label
+                                            >
                                         </div>
                                     {/if}
                                     <div>
                                         <Label>Paket</Label>
-                                        <select
-                                            bind:value={subForm.plan_id}
-                                            class="w-full rounded-md border px-3 py-2 text-sm"
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Paket</span><select
+                                                bind:value={subForm.plan_id}
+                                                class="w-full rounded-md border px-3 py-2 text-sm"
+                                            >
+                                                {#each subPlans as plan}
+                                                    <option value={plan.id}
+                                                        >{plan.name} ({formatRupiah(
+                                                            plan.price_monthly,
+                                                        )})</option
+                                                    >
+                                                {/each}
+                                            </select></label
                                         >
-                                            {#each subPlans as plan}
-                                                <option value={plan.id}
-                                                    >{plan.name} ({formatRupiah(
-                                                        plan.price_monthly,
-                                                    )})</option
-                                                >
-                                            {/each}
-                                        </select>
                                     </div>
                                     <div>
                                         <Label>Status</Label>
-                                        <select
-                                            bind:value={subForm.status}
-                                            class="w-full rounded-md border px-3 py-2 text-sm"
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Status</span><select
+                                                bind:value={subForm.status}
+                                                class="w-full rounded-md border px-3 py-2 text-sm"
+                                            >
+                                                <option value="pending_payment"
+                                                    >Pending Payment</option
+                                                >
+                                                <option value="trial"
+                                                    >Trial</option
+                                                >
+                                                <option value="active"
+                                                    >Active</option
+                                                >
+                                                <option value="past_due"
+                                                    >Past Due</option
+                                                >
+                                                <option value="suspended"
+                                                    >Suspended</option
+                                                >
+                                                <option value="canceled"
+                                                    >Canceled</option
+                                                >
+                                            </select></label
                                         >
-                                            <option value="pending_payment"
-                                                >Pending Payment</option
-                                            >
-                                            <option value="trial">Trial</option>
-                                            <option value="active"
-                                                >Active</option
-                                            >
-                                            <option value="past_due"
-                                                >Past Due</option
-                                            >
-                                            <option value="suspended"
-                                                >Suspended</option
-                                            >
-                                            <option value="canceled"
-                                                >Canceled</option
-                                            >
-                                        </select>
                                     </div>
                                     <div>
                                         <Label>Mulai</Label>
-                                        <Input
-                                            type="date"
-                                            bind:value={subForm.starts_at}
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Tanggal mulai</span><Input
+                                                type="date"
+                                                bind:value={subForm.starts_at}
+                                            /></label
+                                        >
                                     </div>
                                     <div>
                                         <Label>Berakhir</Label>
-                                        <Input
-                                            type="date"
-                                            bind:value={subForm.ends_at}
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Tanggal selesai</span><Input
+                                                type="date"
+                                                bind:value={subForm.ends_at}
+                                            /></label
+                                        >
                                     </div>
                                     <div class="md:col-span-2">
                                         <Label>Catatan</Label>
-                                        <Input
-                                            bind:value={subForm.notes}
-                                            placeholder="opsional"
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Catatan</span><Input
+                                                bind:value={subForm.notes}
+                                                placeholder="opsional"
+                                            /></label
+                                        >
                                     </div>
                                     <div
                                         class="md:col-span-2 rounded-lg border border-dashed border-slate-300/80 bg-slate-50/80 p-4 dark:border-slate-700 dark:bg-slate-900/40"
@@ -1816,18 +1906,23 @@
                                                             <Label for={field}
                                                                 >{label}</Label
                                                             >
-                                                            <Input
-                                                                id={field}
-                                                                type="number"
-                                                                min="0"
-                                                                step="1"
-                                                                placeholder="Unlimited"
-                                                                bind:value={
-                                                                    subForm[
-                                                                        field
-                                                                    ]
-                                                                }
-                                                            />
+                                                            <label
+                                                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                                ><span
+                                                                    >Batas paket</span
+                                                                ><Input
+                                                                    id={field}
+                                                                    type="number"
+                                                                    min="0"
+                                                                    step="1"
+                                                                    placeholder="Unlimited"
+                                                                    bind:value={
+                                                                        subForm[
+                                                                            field
+                                                                        ]
+                                                                    }
+                                                                /></label
+                                                            >
                                                         </div>
                                                     {/each}
                                                 </div>
@@ -1905,227 +2000,23 @@
 
                     <Card class={tableShellClass}>
                         <CardContent class="p-0">
-                            <div class="grid gap-3 p-3 md:hidden">
-                                {#each subscriptions as s}
-                                    <article
-                                        class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
-                                    >
-                                        <div
-                                            class="flex items-start justify-between gap-3"
-                                        >
-                                            <div class="min-w-0">
-                                                <h3
-                                                    class="truncate font-semibold text-foreground"
-                                                >
-                                                    {s.tenant_name}
-                                                </h3>
-                                                <div
-                                                    class="mt-2 flex flex-wrap items-center gap-2"
-                                                >
-                                                    <Badge variant="outline"
-                                                        >{s.plan_name}</Badge
-                                                    >
-                                                    {#if hasPrivateSubscriptionOverride(s)}
-                                                        <Badge
-                                                            variant="secondary"
-                                                            >Private</Badge
-                                                        >
-                                                        <span
-                                                            class="text-xs text-muted-foreground"
-                                                        >
-                                                            Base: {s.base_plan_name ??
-                                                                s.plan_name}
-                                                        </span>
-                                                    {/if}
-                                                </div>
-                                            </div>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        class="h-9 w-9 rounded-xl"
-                                                    >
-                                                        <MoreHorizontal
-                                                            class="h-4 w-4"
-                                                        />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            openSubForm(s)}
-                                                    >
-                                                        <Edit3
-                                                            class="h-4 w-4 mr-2"
-                                                        />Edit
-                                                    </DropdownMenuItem>
-                                                    {#if s.status === 'active' || s.status === 'trial'}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                quickUpdateSub(
-                                                                    s.id,
-                                                                    {
-                                                                        status: 'suspended',
-                                                                    },
-                                                                )}
-                                                        >
-                                                            <Ban
-                                                                class="h-4 w-4 mr-2"
-                                                            />Suspend
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if s.status === 'suspended'}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                quickUpdateSub(
-                                                                    s.id,
-                                                                    {
-                                                                        status: 'active',
-                                                                    },
-                                                                )}
-                                                        >
-                                                            <CheckCircle2
-                                                                class="h-4 w-4 mr-2"
-                                                            />Activate
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if s.status !== 'canceled'}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                quickUpdateSub(
-                                                                    s.id,
-                                                                    {
-                                                                        status: 'canceled',
-                                                                    },
-                                                                )}
-                                                            class="text-destructive"
-                                                        >
-                                                            <XCircle
-                                                                class="h-4 w-4 mr-2"
-                                                            />Cancel
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                        <div
-                                            class="mt-4 grid grid-cols-2 gap-2"
+                            <ViewportOnly minWidth={0} maxWidth={767}
+                                ><div class="grid gap-3 p-3 md:hidden">
+                                    {#each subscriptions as s}
+                                        <article
+                                            class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                                         >
                                             <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                class="flex items-start justify-between gap-3"
                                             >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Status
-                                                </p>
-                                                <div class="mt-1">
-                                                    <Badge
-                                                        variant={statusBadge(
-                                                            s.status,
-                                                        ).variant}
+                                                <div class="min-w-0">
+                                                    <h3
+                                                        class="truncate font-semibold text-foreground"
                                                     >
-                                                        {statusBadge(s.status)
-                                                            .label}
-                                                    </Badge>
-                                                </div>
-                                            </div>
-                                            <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
-                                            >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Harga
-                                                </p>
-                                                <p class="mt-1 font-semibold">
-                                                    {formatRupiah(
-                                                        s.price_monthly,
-                                                    )}
-                                                </p>
-                                            </div>
-                                            <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
-                                            >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Mulai
-                                                </p>
-                                                <p class="mt-1 text-sm">
-                                                    {formatDate(s.starts_at)}
-                                                </p>
-                                            </div>
-                                            <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
-                                            >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Berakhir
-                                                </p>
-                                                <p class="mt-1 text-sm">
-                                                    {formatDate(s.ends_at)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </article>
-                                {:else}
-                                    <div
-                                        class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
-                                    >
-                                        Belum ada subscription.
-                                    </div>
-                                {/each}
-                            </div>
-                            <div class="hidden overflow-x-auto md:block">
-                                <table class="w-full text-sm">
-                                    <thead
-                                        class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"
-                                    >
-                                        <tr
-                                            class="border-b border-slate-200 text-left dark:border-slate-800"
-                                        >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Tenant</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Paket</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Status</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Mulai</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Berakhir</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground text-right"
-                                                >Harga</th
-                                            >
-                                            <th class="px-4 py-3 w-16"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {#each subscriptions as s}
-                                            <tr
-                                                class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
-                                            >
-                                                <td
-                                                    class="px-4 py-2.5 font-medium"
-                                                    >{s.tenant_name}</td
-                                                >
-                                                <td class="px-4 py-2.5">
+                                                        {s.tenant_name}
+                                                    </h3>
                                                     <div
-                                                        class="flex flex-wrap items-center gap-2"
+                                                        class="mt-2 flex flex-wrap items-center gap-2"
                                                     >
                                                         <Badge variant="outline"
                                                             >{s.plan_name}</Badge
@@ -2143,110 +2034,330 @@
                                                             </span>
                                                         {/if}
                                                     </div>
-                                                </td>
-                                                <td class="px-4 py-2.5"
-                                                    ><Badge
-                                                        variant={statusBadge(
-                                                            s.status,
-                                                        ).variant}
-                                                        >{statusBadge(s.status)
-                                                            .label}</Badge
-                                                    ></td
-                                                >
-                                                <td class="px-4 py-2.5 text-xs"
-                                                    >{formatDate(
-                                                        s.starts_at,
-                                                    )}</td
-                                                >
-                                                <td class="px-4 py-2.5 text-xs"
-                                                    >{formatDate(s.ends_at)}</td
-                                                >
-                                                <td
-                                                    class="px-4 py-2.5 text-right"
-                                                    >{formatRupiah(
-                                                        s.price_monthly,
-                                                    )}</td
-                                                >
-                                                <td class="px-4 py-2.5">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            ><Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                ><MoreHorizontal
-                                                                    class="h-4 w-4"
-                                                                /></Button
-                                                            ></DropdownMenuTrigger
+                                                </div>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            class="h-9 w-9 rounded-xl"
                                                         >
-                                                        <DropdownMenuContent>
+                                                            <MoreHorizontal
+                                                                class="h-4 w-4"
+                                                            />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent>
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                openSubForm(s)}
+                                                        >
+                                                            <Edit3
+                                                                class="h-4 w-4 mr-2"
+                                                            />Edit
+                                                        </DropdownMenuItem>
+                                                        {#if s.status === 'active' || s.status === 'trial'}
                                                             <DropdownMenuItem
                                                                 onclick={() =>
-                                                                    openSubForm(
-                                                                        s,
+                                                                    quickUpdateSub(
+                                                                        s.id,
+                                                                        {
+                                                                            status: 'suspended',
+                                                                        },
                                                                     )}
-                                                                ><Edit3
-                                                                    class="h-4 w-4 mr-2"
-                                                                />Edit</DropdownMenuItem
                                                             >
-                                                            {#if s.status === 'active' || s.status === 'trial'}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        quickUpdateSub(
-                                                                            s.id,
-                                                                            {
-                                                                                status: 'suspended',
-                                                                            },
-                                                                        )}
-                                                                    ><Ban
-                                                                        class="h-4 w-4 mr-2"
-                                                                    />Suspend</DropdownMenuItem
-                                                                >
-                                                            {/if}
-                                                            {#if s.status === 'suspended'}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        quickUpdateSub(
-                                                                            s.id,
-                                                                            {
-                                                                                status: 'active',
-                                                                            },
-                                                                        )}
-                                                                    ><CheckCircle2
-                                                                        class="h-4 w-4 mr-2"
-                                                                    />Activate</DropdownMenuItem
-                                                                >
-                                                            {/if}
-                                                            {#if s.status !== 'canceled'}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        quickUpdateSub(
-                                                                            s.id,
-                                                                            {
-                                                                                status: 'canceled',
-                                                                            },
-                                                                        )}
-                                                                    class="text-destructive"
-                                                                    ><XCircle
-                                                                        class="h-4 w-4 mr-2"
-                                                                    />Cancel</DropdownMenuItem
-                                                                >
-                                                            {/if}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </td>
-                                            </tr>
-                                        {:else}
-                                            <tr
-                                                ><td
-                                                    colspan="7"
-                                                    class="px-4 py-8 text-center text-muted-foreground"
-                                                    >Belum ada subscription.</td
-                                                ></tr
+                                                                <Ban
+                                                                    class="h-4 w-4 mr-2"
+                                                                />Suspend
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if s.status === 'suspended'}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    quickUpdateSub(
+                                                                        s.id,
+                                                                        {
+                                                                            status: 'active',
+                                                                        },
+                                                                    )}
+                                                            >
+                                                                <CheckCircle2
+                                                                    class="h-4 w-4 mr-2"
+                                                                />Activate
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if s.status !== 'canceled'}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    quickUpdateSub(
+                                                                        s.id,
+                                                                        {
+                                                                            status: 'canceled',
+                                                                        },
+                                                                    )}
+                                                                class="text-destructive"
+                                                            >
+                                                                <XCircle
+                                                                    class="h-4 w-4 mr-2"
+                                                                />Batal
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                            <div
+                                                class="mt-4 grid grid-cols-2 gap-2"
                                             >
-                                        {/each}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Status
+                                                    </p>
+                                                    <div class="mt-1">
+                                                        <Badge
+                                                            variant={statusBadge(
+                                                                s.status,
+                                                            ).variant}
+                                                        >
+                                                            {statusBadge(
+                                                                s.status,
+                                                            ).label}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Harga
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-semibold"
+                                                    >
+                                                        {formatRupiah(
+                                                            s.price_monthly,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Mulai
+                                                    </p>
+                                                    <p class="mt-1 text-sm">
+                                                        {formatDate(
+                                                            s.starts_at,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Berakhir
+                                                    </p>
+                                                    <p class="mt-1 text-sm">
+                                                        {formatDate(s.ends_at)}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </article>
+                                    {:else}
+                                        <div
+                                            class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
+                                        >
+                                            Belum ada subscription.
+                                        </div>
+                                    {/each}
+                                </div></ViewportOnly
+                            >
+                            <ViewportOnly minWidth={768}
+                                ><div class="hidden overflow-x-auto md:block">
+                                    <table class="w-full text-sm">
+                                        <thead
+                                            class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"
+                                        >
+                                            <tr
+                                                class="border-b border-slate-200 text-left dark:border-slate-800"
+                                            >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Tenant</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Paket</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Status</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Mulai</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Berakhir</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground text-right"
+                                                    >Harga</th
+                                                >
+                                                <th class="px-4 py-3 w-16"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {#each subscriptions as s}
+                                                <tr
+                                                    class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
+                                                >
+                                                    <td
+                                                        class="px-4 py-2.5 font-medium"
+                                                        >{s.tenant_name}</td
+                                                    >
+                                                    <td class="px-4 py-2.5">
+                                                        <div
+                                                            class="flex flex-wrap items-center gap-2"
+                                                        >
+                                                            <Badge
+                                                                variant="outline"
+                                                                >{s.plan_name}</Badge
+                                                            >
+                                                            {#if hasPrivateSubscriptionOverride(s)}
+                                                                <Badge
+                                                                    variant="secondary"
+                                                                    >Private</Badge
+                                                                >
+                                                                <span
+                                                                    class="text-xs text-muted-foreground"
+                                                                >
+                                                                    Base: {s.base_plan_name ??
+                                                                        s.plan_name}
+                                                                </span>
+                                                            {/if}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5"
+                                                        ><Badge
+                                                            variant={statusBadge(
+                                                                s.status,
+                                                            ).variant}
+                                                            >{statusBadge(
+                                                                s.status,
+                                                            ).label}</Badge
+                                                        ></td
+                                                    >
+                                                    <td
+                                                        class="px-4 py-2.5 text-xs"
+                                                        >{formatDate(
+                                                            s.starts_at,
+                                                        )}</td
+                                                    >
+                                                    <td
+                                                        class="px-4 py-2.5 text-xs"
+                                                        >{formatDate(
+                                                            s.ends_at,
+                                                        )}</td
+                                                    >
+                                                    <td
+                                                        class="px-4 py-2.5 text-right"
+                                                        >{formatRupiah(
+                                                            s.price_monthly,
+                                                        )}</td
+                                                    >
+                                                    <td class="px-4 py-2.5">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                ><Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    ><MoreHorizontal
+                                                                        class="h-4 w-4"
+                                                                    /></Button
+                                                                ></DropdownMenuTrigger
+                                                            >
+                                                            <DropdownMenuContent
+                                                            >
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        openSubForm(
+                                                                            s,
+                                                                        )}
+                                                                    ><Edit3
+                                                                        class="h-4 w-4 mr-2"
+                                                                    />Edit</DropdownMenuItem
+                                                                >
+                                                                {#if s.status === 'active' || s.status === 'trial'}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            quickUpdateSub(
+                                                                                s.id,
+                                                                                {
+                                                                                    status: 'suspended',
+                                                                                },
+                                                                            )}
+                                                                        ><Ban
+                                                                            class="h-4 w-4 mr-2"
+                                                                        />Suspend</DropdownMenuItem
+                                                                    >
+                                                                {/if}
+                                                                {#if s.status === 'suspended'}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            quickUpdateSub(
+                                                                                s.id,
+                                                                                {
+                                                                                    status: 'active',
+                                                                                },
+                                                                            )}
+                                                                        ><CheckCircle2
+                                                                            class="h-4 w-4 mr-2"
+                                                                        />Activate</DropdownMenuItem
+                                                                    >
+                                                                {/if}
+                                                                {#if s.status !== 'canceled'}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            quickUpdateSub(
+                                                                                s.id,
+                                                                                {
+                                                                                    status: 'canceled',
+                                                                                },
+                                                                            )}
+                                                                        class="text-destructive"
+                                                                        ><XCircle
+                                                                            class="h-4 w-4 mr-2"
+                                                                        />Batal</DropdownMenuItem
+                                                                    >
+                                                                {/if}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </td>
+                                                </tr>
+                                            {:else}
+                                                <tr
+                                                    ><td
+                                                        colspan="7"
+                                                        class="px-4 py-8 text-center text-muted-foreground"
+                                                        >Belum ada subscription.</td
+                                                    ></tr
+                                                >
+                                            {/each}
+                                        </tbody>
+                                    </table>
+                                </div></ViewportOnly
+                            >
                             {#if subPagination?.last_page > 1}
                                 <div
                                     class="flex items-center justify-between px-4 py-3 border-t"
@@ -2254,7 +2365,10 @@
                                     <span class="text-xs text-muted-foreground"
                                         >Page {subPagination.page} of {subPagination.last_page}</span
                                     >
-                                    <div class="flex gap-1">
+                                    <div
+                                        class:mobile-pagination={true}
+                                        class="flex gap-1"
+                                    >
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -2262,7 +2376,7 @@
                                             onclick={() =>
                                                 loadSubscriptions(
                                                     subPagination.page - 1,
-                                                )}>Prev</Button
+                                                )}>Sebelumnya</Button
                                         >
                                         <Button
                                             variant="outline"
@@ -2272,7 +2386,7 @@
                                             onclick={() =>
                                                 loadSubscriptions(
                                                     subPagination.page + 1,
-                                                )}>Next</Button
+                                                )}>Berikutnya</Button
                                         >
                                     </div>
                                 </div>
@@ -2335,74 +2449,105 @@
                                                 <Label class="text-xs"
                                                     >Harga Bulanan</Label
                                                 >
-                                                <Input
-                                                    type="number"
-                                                    bind:value={
-                                                        editingPlan.price_monthly
-                                                    }
-                                                />
+                                                <label
+                                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                    ><span>Harga bulanan</span
+                                                    ><Input
+                                                        type="number"
+                                                        bind:value={
+                                                            editingPlan.price_monthly
+                                                        }
+                                                    /></label
+                                                >
                                             </div>
                                             <div>
                                                 <Label class="text-xs"
                                                     >Harga Tahunan</Label
                                                 >
-                                                <Input
-                                                    type="number"
-                                                    bind:value={
-                                                        editingPlan.price_yearly
-                                                    }
-                                                />
+                                                <label
+                                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                    ><span>Harga tahunan</span
+                                                    ><Input
+                                                        type="number"
+                                                        bind:value={
+                                                            editingPlan.price_yearly
+                                                        }
+                                                    /></label
+                                                >
                                             </div>
                                             <div class="grid grid-cols-2 gap-2">
                                                 <div>
                                                     <Label class="text-xs"
                                                         >Max Pools</Label
-                                                    ><Input
-                                                        type="number"
-                                                        bind:value={
-                                                            editingPlan.max_pools
-                                                        }
-                                                    />
+                                                    ><label
+                                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                        ><span>Batas pool</span
+                                                        ><Input
+                                                            type="number"
+                                                            bind:value={
+                                                                editingPlan.max_pools
+                                                            }
+                                                        /></label
+                                                    >
                                                 </div>
                                                 <div>
                                                     <Label class="text-xs"
-                                                        >Max Users</Label
-                                                    ><Input
-                                                        type="number"
-                                                        bind:value={
-                                                            editingPlan.max_users
-                                                        }
-                                                    />
+                                                        >Max Pengguna</Label
+                                                    ><label
+                                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                        ><span
+                                                            >Batas pengguna</span
+                                                        ><Input
+                                                            type="number"
+                                                            bind:value={
+                                                                editingPlan.max_users
+                                                            }
+                                                        /></label
+                                                    >
                                                 </div>
                                                 <div>
                                                     <Label class="text-xs"
                                                         >Max Armadas</Label
-                                                    ><Input
-                                                        type="number"
-                                                        bind:value={
-                                                            editingPlan.max_armadas
-                                                        }
-                                                    />
+                                                    ><label
+                                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                        ><span
+                                                            >Batas armada</span
+                                                        ><Input
+                                                            type="number"
+                                                            bind:value={
+                                                                editingPlan.max_armadas
+                                                            }
+                                                        /></label
+                                                    >
                                                 </div>
                                                 <div>
                                                     <Label class="text-xs"
                                                         >Max Routes</Label
-                                                    ><Input
-                                                        type="number"
-                                                        bind:value={
-                                                            editingPlan.max_routes
-                                                        }
-                                                    />
+                                                    ><label
+                                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                        ><span>Batas rute</span
+                                                        ><Input
+                                                            type="number"
+                                                            bind:value={
+                                                                editingPlan.max_routes
+                                                            }
+                                                        /></label
+                                                    >
                                                 </div>
                                                 <div>
                                                     <Label class="text-xs"
                                                         >Max Drivers</Label
-                                                    ><Input
-                                                        type="number"
-                                                        bind:value={
-                                                            editingPlan.max_drivers
-                                                        }
-                                                    />
+                                                    ><label
+                                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                        ><span
+                                                            >Batas driver</span
+                                                        ><Input
+                                                            type="number"
+                                                            bind:value={
+                                                                editingPlan.max_drivers
+                                                            }
+                                                        /></label
+                                                    >
                                                 </div>
                                             </div>
                                             <div class="space-y-1 pt-2">
@@ -2602,26 +2747,32 @@
                             <Search
                                 class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
                             />
-                            <Input
-                                class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
-                                placeholder="Cari invoice atau tenant..."
-                                bind:value={searchQuery}
-                                onchange={() => loadInvoices()}
-                            />
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Pencarian</span><Input
+                                    class="h-11 rounded-xl pl-9 sm:h-9 sm:rounded-md"
+                                    placeholder="Cari invoice atau tenant..."
+                                    bind:value={searchQuery}
+                                    onchange={() => loadInvoices()}
+                                /></label
+                            >
                         </div>
-                        <select
-                            bind:value={statusFilter}
-                            onchange={() => loadInvoices()}
-                            class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:h-9 sm:w-auto sm:rounded-full"
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Status</span><select
+                                bind:value={statusFilter}
+                                onchange={() => loadInvoices()}
+                                class="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-foreground shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:h-9 sm:w-auto sm:rounded-full"
+                            >
+                                <option value="">Semua Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="paid">Paid</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="failed">Failed</option>
+                                <option value="refunded">Refunded</option>
+                                <option value="canceled">Dibatalkan</option>
+                            </select></label
                         >
-                            <option value="">Semua Status</option>
-                            <option value="pending">Pending</option>
-                            <option value="paid">Paid</option>
-                            <option value="overdue">Overdue</option>
-                            <option value="failed">Failed</option>
-                            <option value="refunded">Refunded</option>
-                            <option value="canceled">Dibatalkan</option>
-                        </select>
                         <Button
                             variant="outline"
                             size="icon"
@@ -2636,324 +2787,346 @@
 
                     <Card class={tableShellClass}>
                         <CardContent class="p-0">
-                            <div class="grid gap-3 p-3 md:hidden">
-                                {#each invoices as inv}
-                                    <article
-                                        class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
-                                    >
-                                        <div
-                                            class="flex items-start justify-between gap-3"
-                                        >
-                                            <div class="min-w-0">
-                                                <h3
-                                                    class="truncate font-semibold text-foreground"
-                                                >
-                                                    {inv.invoice_number}
-                                                </h3>
-                                                <p
-                                                    class="mt-0.5 truncate text-xs text-muted-foreground"
-                                                >
-                                                    {inv.tenant_name}
-                                                </p>
-                                            </div>
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        class="h-9 w-9 rounded-xl"
-                                                    >
-                                                        <MoreHorizontal
-                                                            class="h-4 w-4"
-                                                        />
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
-                                                    {#if inv.gateway_checkout_url}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                window.open(
-                                                                    inv.gateway_checkout_url,
-                                                                    '_blank',
-                                                                )}
-                                                        >
-                                                            <ExternalLink
-                                                                class="h-4 w-4 mr-2"
-                                                            />Open Checkout
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if inv.status !== 'paid'}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                markInvoicePaid(
-                                                                    inv,
-                                                                )}
-                                                        >
-                                                            <CheckCircle2
-                                                                class="h-4 w-4 mr-2"
-                                                            />Mark Paid
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                        <div
-                                            class="mt-4 grid grid-cols-2 gap-2"
+                            <ViewportOnly minWidth={0} maxWidth={767}
+                                ><div class="grid gap-3 p-3 md:hidden">
+                                    {#each invoices as inv}
+                                        <article
+                                            class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                                         >
                                             <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                class="flex items-start justify-between gap-3"
                                             >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Nominal
-                                                </p>
-                                                <p class="mt-1 font-semibold">
-                                                    {formatRupiah(inv.amount)}
-                                                </p>
+                                                <div class="min-w-0">
+                                                    <h3
+                                                        class="truncate font-semibold text-foreground"
+                                                    >
+                                                        {inv.invoice_number}
+                                                    </h3>
+                                                    <p
+                                                        class="mt-0.5 truncate text-xs text-muted-foreground"
+                                                    >
+                                                        {inv.tenant_name}
+                                                    </p>
+                                                </div>
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            class="h-9 w-9 rounded-xl"
+                                                        >
+                                                            <MoreHorizontal
+                                                                class="h-4 w-4"
+                                                            />
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent>
+                                                        {#if inv.gateway_checkout_url}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    window.open(
+                                                                        inv.gateway_checkout_url,
+                                                                        '_blank',
+                                                                    )}
+                                                            >
+                                                                <ExternalLink
+                                                                    class="h-4 w-4 mr-2"
+                                                                />Open Checkout
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if inv.status !== 'paid'}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    markInvoicePaid(
+                                                                        inv,
+                                                                    )}
+                                                            >
+                                                                <CheckCircle2
+                                                                    class="h-4 w-4 mr-2"
+                                                                />Mark Paid
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
                                             </div>
                                             <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                class="mt-4 grid grid-cols-2 gap-2"
                                             >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
                                                 >
-                                                    Status
-                                                </p>
-                                                <div class="mt-1">
-                                                    <Badge
-                                                        variant={invoiceBadge(
-                                                            inv,
-                                                        ).variant}
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
                                                     >
-                                                        {invoiceBadge(inv)
-                                                            .label}
-                                                    </Badge>
+                                                        Nominal
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-semibold"
+                                                    >
+                                                        {formatRupiah(
+                                                            inv.amount,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Status
+                                                    </p>
+                                                    <div class="mt-1">
+                                                        <Badge
+                                                            variant={invoiceBadge(
+                                                                inv,
+                                                            ).variant}
+                                                        >
+                                                            {invoiceBadge(inv)
+                                                                .label}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Paket
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 truncate text-sm"
+                                                    >
+                                                        {inv.plan_name || '-'}
+                                                    </p>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        Due
+                                                    </p>
+                                                    <p class="mt-1 text-sm">
+                                                        {formatDate(
+                                                            inv.due_date,
+                                                        )}
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
+                                            <p
+                                                class="mt-3 text-xs text-muted-foreground"
                                             >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Paket
-                                                </p>
-                                                <p
-                                                    class="mt-1 truncate text-sm"
-                                                >
-                                                    {inv.plan_name || '-'}
-                                                </p>
-                                            </div>
-                                            <div
-                                                class="rounded-xl bg-slate-50 p-3 dark:bg-slate-900/60"
-                                            >
-                                                <p
-                                                    class="text-[11px] text-muted-foreground"
-                                                >
-                                                    Due
-                                                </p>
-                                                <p class="mt-1 text-sm">
-                                                    {formatDate(inv.due_date)}
-                                                </p>
-                                            </div>
+                                                Gateway: {gatewayStatus(inv)}
+                                            </p>
+                                        </article>
+                                    {:else}
+                                        <div
+                                            class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
+                                        >
+                                            Belum ada invoice subscription.
                                         </div>
-                                        <p
-                                            class="mt-3 text-xs text-muted-foreground"
-                                        >
-                                            Gateway: {gatewayStatus(inv)}
-                                        </p>
-                                    </article>
-                                {:else}
-                                    <div
-                                        class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-muted-foreground dark:border-slate-800"
+                                    {/each}
+                                </div></ViewportOnly
+                            >
+                            <ViewportOnly minWidth={768}
+                                ><div class="hidden overflow-x-auto md:block">
+                                    <table
+                                        class="w-full min-w-[1080px] text-sm"
                                     >
-                                        Belum ada invoice subscription.
-                                    </div>
-                                {/each}
-                            </div>
-                            <div class="hidden overflow-x-auto md:block">
-                                <table class="w-full min-w-[1080px] text-sm">
-                                    <thead
-                                        class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"
-                                    >
-                                        <tr
-                                            class="border-b border-slate-200 text-left dark:border-slate-800"
+                                        <thead
+                                            class="bg-slate-50/80 text-xs uppercase tracking-[0.16em] dark:bg-slate-900/60"
                                         >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Invoice</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Tenant</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Paket</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground text-right"
-                                                >Nominal</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Due Date</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Status</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Gateway</th
-                                            >
-                                            <th
-                                                class="px-4 py-3 font-semibold text-muted-foreground"
-                                                >Paid At</th
-                                            >
-                                            <th class="px-4 py-3 w-16"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {#each invoices as inv}
                                             <tr
-                                                class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
+                                                class="border-b border-slate-200 text-left dark:border-slate-800"
                                             >
-                                                <td class="px-4 py-2.5">
-                                                    <div class="font-medium">
-                                                        {inv.invoice_number}
-                                                    </div>
-                                                    <div
-                                                        class="text-xs text-muted-foreground"
-                                                    >
-                                                        {formatDate(
-                                                            inv.created_at,
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td class="px-4 py-2.5">
-                                                    <div class="font-medium">
-                                                        {inv.tenant_name}
-                                                    </div>
-                                                    <div
-                                                        class="text-xs text-muted-foreground"
-                                                    >
-                                                        {inv.tenant_slug}
-                                                    </div>
-                                                </td>
-                                                <td class="px-4 py-2.5"
-                                                    >{inv.plan_name || '-'}</td
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Invoice</th
                                                 >
-                                                <td
-                                                    class="px-4 py-2.5 text-right font-semibold"
-                                                    >{formatRupiah(
-                                                        inv.amount,
-                                                    )}</td
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Tenant</th
                                                 >
-                                                <td class="px-4 py-2.5 text-xs"
-                                                    >{formatDate(
-                                                        inv.due_date,
-                                                    )}</td
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Paket</th
                                                 >
-                                                <td class="px-4 py-2.5">
-                                                    <Badge
-                                                        variant={invoiceBadge(
-                                                            inv,
-                                                        ).variant}
-                                                        >{invoiceBadge(inv)
-                                                            .label}</Badge
-                                                    >
-                                                </td>
-                                                <td class="px-4 py-2.5">
-                                                    <div class="space-y-1">
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground text-right"
+                                                    >Nominal</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Due Date</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Status</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Gateway</th
+                                                >
+                                                <th
+                                                    class="px-4 py-3 font-semibold text-muted-foreground"
+                                                    >Paid At</th
+                                                >
+                                                <th class="px-4 py-3 w-16"></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {#each invoices as inv}
+                                                <tr
+                                                    class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
+                                                >
+                                                    <td class="px-4 py-2.5">
                                                         <div
-                                                            class="text-xs font-semibold text-foreground"
+                                                            class="font-medium"
                                                         >
-                                                            {inv.payment_gateway ||
-                                                                'Mayar'}
+                                                            {inv.invoice_number}
                                                         </div>
                                                         <div
                                                             class="text-xs text-muted-foreground"
                                                         >
-                                                            {gatewayStatus(inv)}
+                                                            {formatDate(
+                                                                inv.created_at,
+                                                            )}
                                                         </div>
-                                                    </div>
-                                                    {#if inv.gateway_checkout_url}
-                                                        <a
-                                                            href={inv.gateway_checkout_url}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                            class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                                                    </td>
+                                                    <td class="px-4 py-2.5">
+                                                        <div
+                                                            class="font-medium"
                                                         >
-                                                            Checkout URL
-                                                            <ExternalLink
-                                                                class="h-3 w-3"
-                                                            />
-                                                        </a>
-                                                    {/if}
-                                                </td>
-                                                <td
-                                                    class="px-4 py-2.5 text-xs text-muted-foreground"
+                                                            {inv.tenant_name}
+                                                        </div>
+                                                        <div
+                                                            class="text-xs text-muted-foreground"
+                                                        >
+                                                            {inv.tenant_slug}
+                                                        </div>
+                                                    </td>
+                                                    <td class="px-4 py-2.5"
+                                                        >{inv.plan_name ||
+                                                            '-'}</td
+                                                    >
+                                                    <td
+                                                        class="px-4 py-2.5 text-right font-semibold"
+                                                        >{formatRupiah(
+                                                            inv.amount,
+                                                        )}</td
+                                                    >
+                                                    <td
+                                                        class="px-4 py-2.5 text-xs"
+                                                        >{formatDate(
+                                                            inv.due_date,
+                                                        )}</td
+                                                    >
+                                                    <td class="px-4 py-2.5">
+                                                        <Badge
+                                                            variant={invoiceBadge(
+                                                                inv,
+                                                            ).variant}
+                                                            >{invoiceBadge(inv)
+                                                                .label}</Badge
+                                                        >
+                                                    </td>
+                                                    <td class="px-4 py-2.5">
+                                                        <div class="space-y-1">
+                                                            <div
+                                                                class="text-xs font-semibold text-foreground"
+                                                            >
+                                                                {inv.payment_gateway ||
+                                                                    'Mayar'}
+                                                            </div>
+                                                            <div
+                                                                class="text-xs text-muted-foreground"
+                                                            >
+                                                                {gatewayStatus(
+                                                                    inv,
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        {#if inv.gateway_checkout_url}
+                                                            <a
+                                                                href={inv.gateway_checkout_url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                class="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary"
+                                                            >
+                                                                Checkout URL
+                                                                <ExternalLink
+                                                                    class="h-3 w-3"
+                                                                />
+                                                            </a>
+                                                        {/if}
+                                                    </td>
+                                                    <td
+                                                        class="px-4 py-2.5 text-xs text-muted-foreground"
+                                                    >
+                                                        {formatDate(
+                                                            inv.gateway_paid_at ??
+                                                                inv.paid_at,
+                                                        )}
+                                                    </td>
+                                                    <td class="px-4 py-2.5">
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                ><Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    ><MoreHorizontal
+                                                                        class="h-4 w-4"
+                                                                    /></Button
+                                                                ></DropdownMenuTrigger
+                                                            >
+                                                            <DropdownMenuContent
+                                                            >
+                                                                {#if inv.gateway_checkout_url}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            window.open(
+                                                                                inv.gateway_checkout_url,
+                                                                                '_blank',
+                                                                            )}
+                                                                        ><ExternalLink
+                                                                            class="h-4 w-4 mr-2"
+                                                                        />Open
+                                                                        Checkout</DropdownMenuItem
+                                                                    >
+                                                                {/if}
+                                                                {#if inv.status !== 'paid'}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            markInvoicePaid(
+                                                                                inv,
+                                                                            )}
+                                                                        ><CheckCircle2
+                                                                            class="h-4 w-4 mr-2"
+                                                                        />Mark
+                                                                        Paid</DropdownMenuItem
+                                                                    >
+                                                                {/if}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </td>
+                                                </tr>
+                                            {:else}
+                                                <tr
+                                                    ><td
+                                                        colspan="9"
+                                                        class="px-4 py-8 text-center text-muted-foreground"
+                                                        >Belum ada invoice
+                                                        subscription.</td
+                                                    ></tr
                                                 >
-                                                    {formatDate(
-                                                        inv.gateway_paid_at ??
-                                                            inv.paid_at,
-                                                    )}
-                                                </td>
-                                                <td class="px-4 py-2.5">
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            ><Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                ><MoreHorizontal
-                                                                    class="h-4 w-4"
-                                                                /></Button
-                                                            ></DropdownMenuTrigger
-                                                        >
-                                                        <DropdownMenuContent>
-                                                            {#if inv.gateway_checkout_url}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        window.open(
-                                                                            inv.gateway_checkout_url,
-                                                                            '_blank',
-                                                                        )}
-                                                                    ><ExternalLink
-                                                                        class="h-4 w-4 mr-2"
-                                                                    />Open
-                                                                    Checkout</DropdownMenuItem
-                                                                >
-                                                            {/if}
-                                                            {#if inv.status !== 'paid'}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        markInvoicePaid(
-                                                                            inv,
-                                                                        )}
-                                                                    ><CheckCircle2
-                                                                        class="h-4 w-4 mr-2"
-                                                                    />Mark Paid</DropdownMenuItem
-                                                                >
-                                                            {/if}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </td>
-                                            </tr>
-                                        {:else}
-                                            <tr
-                                                ><td
-                                                    colspan="9"
-                                                    class="px-4 py-8 text-center text-muted-foreground"
-                                                    >Belum ada invoice
-                                                    subscription.</td
-                                                ></tr
-                                            >
-                                        {/each}
-                                    </tbody>
-                                </table>
-                            </div>
+                                            {/each}
+                                        </tbody>
+                                    </table>
+                                </div></ViewportOnly
+                            >
                             {#if invoicePagination?.last_page > 1}
                                 <div
                                     class="flex items-center justify-between px-4 py-3 border-t"
@@ -2962,7 +3135,10 @@
                                         >Page {invoicePagination.page} of {invoicePagination.last_page}
                                         ({invoicePagination.total} total)</span
                                     >
-                                    <div class="flex gap-1">
+                                    <div
+                                        class:mobile-pagination={true}
+                                        class="flex gap-1"
+                                    >
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -2971,7 +3147,7 @@
                                             onclick={() =>
                                                 loadInvoices(
                                                     invoicePagination.page - 1,
-                                                )}>Prev</Button
+                                                )}>Sebelumnya</Button
                                         >
                                         <Button
                                             variant="outline"
@@ -2981,7 +3157,7 @@
                                             onclick={() =>
                                                 loadInvoices(
                                                     invoicePagination.page + 1,
-                                                )}>Next</Button
+                                                )}>Berikutnya</Button
                                         >
                                     </div>
                                 </div>
@@ -3143,7 +3319,7 @@
                                     class="rounded-lg border border-slate-200/70 p-4 dark:border-slate-800"
                                 >
                                     <p class="font-semibold text-foreground">
-                                        Create invoice
+                                        Simpan invoice
                                     </p>
                                     <p class="mt-1">
                                         Invoice subscription dibuat di OptiBus,

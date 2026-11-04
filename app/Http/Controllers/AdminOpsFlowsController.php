@@ -6,8 +6,8 @@ use App\Http\Controllers\Api\AdminOpsApiController;
 use App\Http\Controllers\Api\OperationsApiController;
 use App\Support\DeferredInertia;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -59,7 +59,7 @@ class AdminOpsFlowsController extends Controller
             'initialCharterId' => $requestedCharterId > 0 ? $requestedCharterId : null,
             'lockedMenuView' => $lockedMenuView,
             'deferredFlowEnabled' => $usesHybridInertia,
-            'flowData' => $usesHybridInertia
+            'flowData' => $usesHybridInertia && ! in_array($requestedMode, ['form', 'view'], true)
                 ? ($usesDeferredInertia
                     ? Inertia::defer(fn (): array => $this->flowData($request, $resolvedTab), 'flow-data')
                     : $this->flowData($request, $resolvedTab))

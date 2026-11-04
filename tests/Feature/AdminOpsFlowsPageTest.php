@@ -27,6 +27,17 @@ class AdminOpsFlowsPageTest extends TestCase
         return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
+    public function test_form_pages_load_masters_without_loading_the_transaction_list(): void
+    {
+        $this->actingAsSuperAdmin();
+        foreach (['charters.form', 'luggages.form'] as $route) {
+            $this->get(route($route))->assertOk()->assertInertia(fn (Assert $page) => $page
+                ->where('initialMode', 'form')->where('flowData', null)
+                ->missing('flowMasters')
+                ->loadDeferredProps('flow-masters', fn (Assert $masters) => $masters->has('flowMasters.pools')));
+        }
+    }
+
     public function test_charter_page_exposes_deferred_flow_data_and_masters(): void
     {
         $this->actingAsSuperAdmin();

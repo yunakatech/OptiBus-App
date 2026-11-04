@@ -434,8 +434,7 @@
                     .map((permissionId) => Number(permissionId))
                     .filter(
                         (permissionId) =>
-                            Number.isInteger(permissionId) &&
-                            permissionId > 0,
+                            Number.isInteger(permissionId) && permissionId > 0,
                     ),
             ),
         );
@@ -563,6 +562,7 @@
 <AppHead title="Role & Hak Akses" />
 
 <div
+    class:mobile-page={true}
     class="min-h-full bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.10),transparent_32rem),linear-gradient(180deg,hsl(var(--background)),hsl(var(--muted))/0.45)] px-3 py-4 md:px-6 md:py-6"
 >
     <div class="mx-auto w-full max-w-7xl space-y-5">
@@ -600,7 +600,7 @@
                             {roleMeta.total}
                         </p>
                         <p
-                            class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                            class="text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
                         >
                             Role
                         </p>
@@ -610,7 +610,7 @@
                             {permissions.length}
                         </p>
                         <p
-                            class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                            class="text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
                         >
                             Permission
                         </p>
@@ -620,7 +620,7 @@
                             {permissionGroups.length}
                         </p>
                         <p
-                            class="text-[10px] uppercase tracking-wide text-muted-foreground"
+                            class="text-xs md:text-[10px] uppercase tracking-wide text-muted-foreground"
                         >
                             Grup
                         </p>
@@ -806,7 +806,7 @@
                                                         {#if role.is_system}
                                                             <Badge
                                                                 variant="secondary"
-                                                                class="text-[10px]"
+                                                                class="text-xs md:text-[10px]"
                                                             >
                                                                 Sistem
                                                             </Badge>
@@ -858,7 +858,7 @@
                                                 </div>
                                             </div>
                                             <div
-                                                class="mt-3 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground"
+                                                class="mt-3 flex flex-wrap items-center gap-2 text-xs md:text-[11px] text-muted-foreground"
                                             >
                                                 <span
                                                     class="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1"
@@ -886,7 +886,10 @@
                                         >
                                             Total {roleMeta.total} role
                                         </p>
-                                        <div class="flex items-center gap-2">
+                                        <div
+                                            class:mobile-pagination={true}
+                                            class="flex items-center gap-2"
+                                        >
                                             <Button
                                                 type="button"
                                                 size="sm"
@@ -898,7 +901,7 @@
                                                         roleMeta.page - 1,
                                                     )}
                                             >
-                                                Prev
+                                                Sebelumnya
                                             </Button>
                                             <span
                                                 class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs text-muted-foreground"
@@ -917,7 +920,7 @@
                                                         roleMeta.page + 1,
                                                     )}
                                             >
-                                                Next
+                                                Berikutnya
                                             </Button>
                                         </div>
                                     </div>
@@ -1072,7 +1075,7 @@
                                                             {group.group}
                                                         </h3>
                                                         <p
-                                                            class="text-[11px] text-muted-foreground"
+                                                            class="text-xs md:text-[11px] text-muted-foreground"
                                                         >
                                                             {group.permissions
                                                                 .length}
@@ -1082,7 +1085,7 @@
                                                     <button
                                                         type="button"
                                                         class={cn(
-                                                            'rounded-full border px-3 py-1 text-[11px] font-bold transition',
+                                                            'rounded-full border px-3 py-1 text-xs md:text-[11px] font-bold transition',
                                                             groupAllSelected(
                                                                 group,
                                                             )
@@ -1143,7 +1146,7 @@
                                                                     {permission.name}
                                                                 </span>
                                                                 <span
-                                                                    class="block truncate text-[11px] text-muted-foreground"
+                                                                    class="block truncate text-xs md:text-[11px] text-muted-foreground"
                                                                 >
                                                                     {permission.slug}
                                                                 </span>

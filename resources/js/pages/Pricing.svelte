@@ -7,6 +7,10 @@
 </script>
 
 <script lang="ts">
+    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
+
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { page } from '@inertiajs/svelte';
     import {
         ArrowRight,
@@ -266,6 +270,8 @@
     }
 </script>
 
+<NavigationMetrics />
+
 <svelte:head>
     <title>Paket & Harga — OptiBus</title>
     <meta
@@ -274,7 +280,10 @@
     />
 </svelte:head>
 
-<div class="min-h-screen overflow-x-hidden bg-[#f1eee5] text-[#1a2825]">
+<div
+    class:mobile-page={true}
+    class="min-h-screen overflow-x-hidden bg-[#f1eee5] text-[#1a2825]"
+>
     <nav
         class="sticky top-0 z-40 border-b border-[#d6d0c2] bg-[#f1eee5]/95 py-2 backdrop-blur sm:py-3"
     >
@@ -288,27 +297,29 @@
             >
                 <AppLogo />
             </a>
-            <div
-                class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-[#52615b] md:flex"
-            >
-                <a
-                    href="/"
-                    class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
-                    >Beranda</a
+            <ViewportOnly minWidth={768}
+                ><div
+                    class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-[#52615b] md:flex"
                 >
-                <a
-                    href="#compare"
-                    class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
-                    >Perbandingan</a
-                >
-                {#if isAuthenticated}
                     <a
-                        href={appHref}
+                        href="/"
                         class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
-                        >Dasbor</a
+                        >Beranda</a
                     >
-                {/if}
-            </div>
+                    <a
+                        href="#compare"
+                        class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
+                        >Perbandingan</a
+                    >
+                    {#if isAuthenticated}
+                        <a
+                            href={appHref}
+                            class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
+                            >Dasbor</a
+                        >
+                    {/if}
+                </div></ViewportOnly
+            >
             <div class="flex shrink-0 items-center gap-2">
                 {#if !isAuthenticated}
                     <a
@@ -335,7 +346,9 @@
                 class="mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-[1fr_auto] md:items-end md:gap-12 lg:px-10 lg:py-16"
             >
                 <div>
-                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]">
+                    <p
+                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                    >
                         Paket & kapasitas
                     </p>
                     <h1
@@ -357,25 +370,33 @@
                     <div
                         class="flex items-center gap-2 font-semibold text-[#213a34]"
                     >
-                        <CalendarRange class="h-4 w-4 text-[#a94e28]" aria-hidden="true" />
+                        <CalendarRange
+                            class="h-4 w-4 text-[#a94e28]"
+                            aria-hidden="true"
+                        />
                         Opsi tagihan tahunan
                     </div>
                     <p class="mt-2">
-                        Total tahunan dan penghematan ditampilkan pada setiap paket.
+                        Total tahunan dan penghematan ditampilkan pada setiap
+                        paket.
                     </p>
                 </div>
             </div>
         </section>
 
         <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
-            <div class="grid border-y border-[#c9c2b3] lg:grid-cols-3 lg:divide-x lg:divide-[#c9c2b3]">
+            <div
+                class="grid border-y border-[#c9c2b3] lg:grid-cols-3 lg:divide-x lg:divide-[#c9c2b3]"
+            >
                 {#each plans as plan}
                     <article
                         class={`relative flex flex-col border-b border-[#c9c2b3] px-1 py-6 sm:px-5 sm:py-7 lg:border-b-0 ${plan.slug === 'pro' ? 'bg-[#e8e2d7] lg:-my-px lg:border-y-2 lg:border-y-[#174b43]' : ''}`}
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
-                                <h2 class="font-serif text-2xl font-medium text-[#173a34]">
+                                <h2
+                                    class="font-serif text-2xl font-medium text-[#173a34]"
+                                >
                                     {plan.name}
                                 </h2>
                                 <p
@@ -386,7 +407,7 @@
                             </div>
                             {#if plan.slug === 'pro'}
                                 <span
-                                    class="border border-[#9eb5a8] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#174b43]"
+                                    class="border border-[#9eb5a8] px-2 py-1 text-xs md:text-[10px] font-bold uppercase tracking-[0.12em] text-[#174b43]"
                                     >Populer</span
                                 >
                             {/if}
@@ -398,7 +419,8 @@
                                     class="font-serif text-3xl font-medium text-[#173a34] sm:text-4xl"
                                     >{formatRupiah(plan.price_monthly)}</span
                                 >
-                                <span class="text-xs uppercase tracking-[0.08em] text-[#53615b]"
+                                <span
+                                    class="text-xs uppercase tracking-[0.08em] text-[#53615b]"
                                     >/ bulan</span
                                 >
                             </div>
@@ -414,7 +436,9 @@
                             </p>
                         </div>
 
-                        <div class="mt-5 grid grid-cols-2 gap-0 border-y border-[#c9c2b3] text-xs">
+                        <div
+                            class="mt-5 grid grid-cols-2 gap-0 border-y border-[#c9c2b3] text-xs"
+                        >
                             <div
                                 class="border-b border-r border-[#c9c2b3] py-3 pr-2"
                             >
@@ -422,23 +446,17 @@
                                     class="mb-2 h-4 w-4 text-[#a94e28]"
                                 />{limitLabel(plan.max_armadas, 'armada')}
                             </div>
-                            <div
-                                class="border-b border-[#c9c2b3] py-3 pl-3"
-                            >
+                            <div class="border-b border-[#c9c2b3] py-3 pl-3">
                                 <Route
                                     class="mb-2 h-4 w-4 text-[#a94e28]"
                                 />{limitLabel(plan.max_routes, 'rute')}
                             </div>
-                            <div
-                                class="border-r border-[#c9c2b3] py-3 pr-2"
-                            >
+                            <div class="border-r border-[#c9c2b3] py-3 pr-2">
                                 <UsersRound
                                     class="mb-2 h-4 w-4 text-[#a94e28]"
                                 />{limitLabel(plan.max_users, 'pengguna')}
                             </div>
-                            <div
-                                class="py-3 pl-3"
-                            >
+                            <div class="py-3 pl-3">
                                 <Building2
                                     class="mb-2 h-4 w-4 text-[#a94e28]"
                                 />{limitLabel(plan.max_pools, 'pool')}
@@ -486,13 +504,15 @@
         </section>
 
         <section id="compare" class="border-y border-[#c9c2b3] bg-[#e8e2d7]">
-            <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+            <div
+                class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
+            >
                 <div
                     class="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-end"
                 >
                     <div>
                         <p
-                            class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                            class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
                         >
                             Perbandingan fitur
                         </p>
@@ -505,131 +525,152 @@
                     <div
                         class="inline-flex min-h-10 w-fit items-center gap-2 border-l-2 border-[#bc6738] pl-3 text-xs text-[#53615b]"
                     >
-                        <ShieldCheck class="h-4 w-4 text-[#174b43]" aria-hidden="true" />
+                        <ShieldCheck
+                            class="h-4 w-4 text-[#174b43]"
+                            aria-hidden="true"
+                        />
                         Data tenant dan pool terpisah
                     </div>
                 </div>
 
-                <div class="divide-y divide-[#c9c2b3] border-y border-[#c9c2b3] md:hidden">
-                    {#each comparisonRows as row}
-                        <div class="py-4">
-                            <p class="text-sm font-semibold text-[#213a34]">
-                                {row.label}
-                            </p>
-                            <div class="mt-3 grid gap-x-3 gap-y-2 sm:grid-cols-2">
-                                {#each plans as plan, index}
-                                    <div
-                                        class="flex items-center justify-between gap-3 border-b border-[#d2cabb] py-2 text-sm"
-                                    >
-                                        <span class="font-medium"
-                                            >{plan.name}</span
-                                        >
-                                        <span
-                                            class={row.values[index] === 'Tidak'
-                                                ? 'text-[#8c938c]'
-                                                : 'font-semibold text-[#174b43]'}
-                                        >
-                                            {row.values[index]}
-                                        </span>
-                                    </div>
-                                {/each}
-                            </div>
-                        </div>
-                    {/each}
-                </div>
-
-                <div
-                    class="hidden overflow-hidden border-y border-[#c9c2b3] md:block"
-                >
-                    <div class="overflow-x-auto">
-                        <table class="w-full min-w-[680px] text-xs">
-                            <thead>
-                                <tr
-                                    class="border-b border-[#c9c2b3] bg-[#f1eee5]"
+                <ViewportOnly minWidth={0} maxWidth={767}
+                    ><div
+                        class="divide-y divide-[#c9c2b3] border-y border-[#c9c2b3] md:hidden"
+                    >
+                        {#each comparisonRows as row}
+                            <div class="py-4">
+                                <p class="text-sm font-semibold text-[#213a34]">
+                                    {row.label}
+                                </p>
+                                <div
+                                    class="mt-3 grid gap-x-3 gap-y-2 sm:grid-cols-2"
                                 >
-                                    <th
-                                        class="px-3 py-2.5 text-left font-semibold"
-                                        >Item</th
-                                    >
-                                    {#each plans as plan}
-                                        <th
-                                            class="px-3 py-2.5 text-center font-semibold"
-                                            >{plan.name}</th
+                                    {#each plans as plan, index}
+                                        <div
+                                            class="flex items-center justify-between gap-3 border-b border-[#d2cabb] py-2 text-sm"
                                         >
+                                            <span class="font-medium"
+                                                >{plan.name}</span
+                                            >
+                                            <span
+                                                class={row.values[index] ===
+                                                'Tidak'
+                                                    ? 'text-[#8c938c]'
+                                                    : 'font-semibold text-[#174b43]'}
+                                            >
+                                                {row.values[index]}
+                                            </span>
+                                        </div>
                                     {/each}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr class="border-b border-[#d2cabb]">
-                                    <td class="px-3 py-2.5 font-medium">Armada</td
-                                    >
-                                    {#each plans as plan}<td
-                                            class="px-3 py-2.5 text-center"
-                                            >{capacityLabel(
-                                                plan.max_armadas,
-                                            )}</td
-                                        >{/each}
-                                </tr>
-                                <tr class="border-b border-[#d2cabb]">
-                                    <td class="px-3 py-2.5 font-medium">Rute</td>
-                                    {#each plans as plan}<td
-                                            class="px-3 py-2.5 text-center"
-                                            >{capacityLabel(
-                                                plan.max_routes,
-                                            )}</td
-                                        >{/each}
-                                </tr>
-                                <tr class="border-b border-[#d2cabb]">
-                                    <td class="px-3 py-2.5 font-medium"
-                                        >Pengguna</td
-                                    >
-                                    {#each plans as plan}<td
-                                            class="px-3 py-2.5 text-center"
-                                            >{capacityLabel(plan.max_users)}</td
-                                        >{/each}
-                                </tr>
-                                {#each allFeatureNames as featureName}
+                                </div>
+                            </div>
+                        {/each}
+                    </div></ViewportOnly
+                >
+
+                <ViewportOnly minWidth={768}
+                    ><div
+                        class="hidden overflow-hidden border-y border-[#c9c2b3] md:block"
+                    >
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[680px] text-xs">
+                                <thead>
                                     <tr
-                                        class="border-b border-[#d2cabb] last:border-0"
+                                        class="border-b border-[#c9c2b3] bg-[#f1eee5]"
                                     >
-                                        <td class="px-3 py-2.5 font-medium"
-                                            >{featureName}</td
+                                        <th
+                                            class="px-3 py-2.5 text-left font-semibold"
+                                            >Item</th
                                         >
                                         {#each plans as plan}
-                                            {@const feature =
-                                                plan.features?.find(
-                                                    (item) =>
-                                                        item.name ===
-                                                        featureName,
-                                                )}
-                                            <td class="px-3 py-2.5 text-center">
-                                                {#if feature?.included}
-                                                    <Check
-                                                        class="mx-auto h-4 w-4 text-[#174b43]"
-                                                        aria-label="Termasuk"
-                                                    />
-                                                {:else}
-                                                    <X
-                                                        class="mx-auto h-4 w-4 text-[#8c938c]"
-                                                        aria-label="Tidak termasuk"
-                                                    />
-                                                {/if}
-                                            </td>
+                                            <th
+                                                class="px-3 py-2.5 text-center font-semibold"
+                                                >{plan.name}</th
+                                            >
                                         {/each}
                                     </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-[#d2cabb]">
+                                        <td class="px-3 py-2.5 font-medium"
+                                            >Armada</td
+                                        >
+                                        {#each plans as plan}<td
+                                                class="px-3 py-2.5 text-center"
+                                                >{capacityLabel(
+                                                    plan.max_armadas,
+                                                )}</td
+                                            >{/each}
+                                    </tr>
+                                    <tr class="border-b border-[#d2cabb]">
+                                        <td class="px-3 py-2.5 font-medium"
+                                            >Rute</td
+                                        >
+                                        {#each plans as plan}<td
+                                                class="px-3 py-2.5 text-center"
+                                                >{capacityLabel(
+                                                    plan.max_routes,
+                                                )}</td
+                                            >{/each}
+                                    </tr>
+                                    <tr class="border-b border-[#d2cabb]">
+                                        <td class="px-3 py-2.5 font-medium"
+                                            >Pengguna</td
+                                        >
+                                        {#each plans as plan}<td
+                                                class="px-3 py-2.5 text-center"
+                                                >{capacityLabel(
+                                                    plan.max_users,
+                                                )}</td
+                                            >{/each}
+                                    </tr>
+                                    {#each allFeatureNames as featureName}
+                                        <tr
+                                            class="border-b border-[#d2cabb] last:border-0"
+                                        >
+                                            <td class="px-3 py-2.5 font-medium"
+                                                >{featureName}</td
+                                            >
+                                            {#each plans as plan}
+                                                {@const feature =
+                                                    plan.features?.find(
+                                                        (item) =>
+                                                            item.name ===
+                                                            featureName,
+                                                    )}
+                                                <td
+                                                    class="px-3 py-2.5 text-center"
+                                                >
+                                                    {#if feature?.included}
+                                                        <Check
+                                                            class="mx-auto h-4 w-4 text-[#174b43]"
+                                                            aria-label="Termasuk"
+                                                        />
+                                                    {:else}
+                                                        <X
+                                                            class="mx-auto h-4 w-4 text-[#8c938c]"
+                                                            aria-label="Tidak termasuk"
+                                                        />
+                                                    {/if}
+                                                </td>
+                                            {/each}
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div></ViewportOnly
+                >
             </div>
         </section>
 
-        <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+        <section
+            class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
+        >
             <div class="grid gap-8 md:grid-cols-[0.72fr_1.28fr] md:gap-16">
                 <div class="md:pt-2">
                     <div
-                        class="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                        class="flex items-center gap-2 text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
                     >
                         <HelpCircle class="h-4 w-4" aria-hidden="true" />
                         Panduan paket
@@ -642,12 +683,20 @@
                 </div>
                 <ol class="divide-y divide-[#c9c2b3] border-y border-[#c9c2b3]">
                     {#each buyingGuides as guide, index}
-                        <li class="grid grid-cols-[2.5rem_1fr] gap-3 py-4 sm:grid-cols-[3rem_1fr] sm:py-5">
-                            <span class="font-serif text-lg text-[#a94e28]">0{index + 1}</span>
+                        <li
+                            class="grid grid-cols-[2.5rem_1fr] gap-3 py-4 sm:grid-cols-[3rem_1fr] sm:py-5"
+                        >
+                            <span class="font-serif text-lg text-[#a94e28]"
+                                >0{index + 1}</span
+                            >
                             <div>
-                                <h3 class="font-semibold text-[#213a34]">{guide.title}</h3>
-                                <p class="mt-1 text-sm leading-6 text-[#53615b]">
-                                {guide.body}
+                                <h3 class="font-semibold text-[#213a34]">
+                                    {guide.title}
+                                </h3>
+                                <p
+                                    class="mt-1 text-sm leading-6 text-[#53615b]"
+                                >
+                                    {guide.body}
                                 </p>
                             </div>
                         </li>
@@ -661,7 +710,9 @@
                 class="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-[1fr_auto] md:items-center lg:px-10 lg:py-16"
             >
                 <div>
-                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9a27d]">
+                    <p
+                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9a27d]"
+                    >
                         Coba alurnya
                     </p>
                     <h2
@@ -694,17 +745,32 @@
                 </span>
             </span>
             <div class="flex flex-wrap gap-x-5 gap-y-2">
-                <a href="/" class="inline-flex min-h-10 items-center hover:text-[#a94e28] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]">Beranda</a>
+                <a
+                    href="/"
+                    class="inline-flex min-h-10 items-center hover:text-[#a94e28] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                    >Beranda</a
+                >
                 {#if isAuthenticated}
-                    <a href={appHref} class="inline-flex min-h-10 items-center hover:text-[#a94e28]">Dasbor</a>
-                    <a href={subscriptionHref} class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                    <a
+                        href={appHref}
+                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        >Dasbor</a
+                    >
+                    <a
+                        href={subscriptionHref}
+                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
                         >Langganan</a
                     >
                 {:else}
-                    <a href="/login" class="inline-flex min-h-10 items-center hover:text-[#a94e28]">Masuk</a>
+                    <a
+                        href="/login"
+                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        >Masuk</a
+                    >
                     <a
                         href="/register?plan=starter&intent=trial"
-                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]">Daftar</a
+                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        >Daftar</a
                     >
                 {/if}
             </div>
