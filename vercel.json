@@ -1,5 +1,8 @@
 {
     "version": 2,
+    "git": {
+        "deploymentEnabled": false
+    },
     "framework": null,
     "functions": {
         "api/index.php": {
