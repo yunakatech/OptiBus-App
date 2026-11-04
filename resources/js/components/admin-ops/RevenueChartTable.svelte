@@ -84,8 +84,8 @@
                         <span
                             class={cn(
                                 isCompact
-                                    ? 'inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide'
-                                    : 'inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide',
+                                    ? 'inline-flex rounded-full border px-2 py-0.5 text-xs md:text-[10px] font-semibold uppercase tracking-wide'
+                                    : 'inline-flex rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold uppercase tracking-wide',
                                 badge.tone ??
                                     'border-border/70 bg-muted/30 text-foreground',
                             )}
@@ -121,8 +121,8 @@
                 >
                     <p
                         class={isCompact
-                            ? 'text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'
-                            : 'text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'}
+                            ? 'text-xs md:text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'
+                            : 'text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'}
                     >
                         {card.label}
                     </p>
@@ -139,8 +139,8 @@
                     {#if card.note}
                         <p
                             class={isCompact
-                                ? 'mt-1 text-[10px] leading-4 text-muted-foreground'
-                                : 'mt-1 text-[11px] leading-4 text-muted-foreground'}
+                                ? 'mt-1 text-xs md:text-[10px] leading-4 text-muted-foreground'
+                                : 'mt-1 text-xs md:text-[11px] leading-4 text-muted-foreground'}
                         >
                             {card.note}
                         </p>
@@ -148,8 +148,8 @@
                     {#if card.formula}
                         <p
                             class={isCompact
-                                ? 'mt-1 text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground/80'
-                                : 'mt-1 text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80'}
+                                ? 'mt-1 text-xs md:text-[9px] font-medium uppercase tracking-[0.12em] text-muted-foreground/80'
+                                : 'mt-1 text-xs md:text-[10px] font-medium uppercase tracking-[0.14em] text-muted-foreground/80'}
                         >
                             {card.formula}
                         </p>
@@ -169,8 +169,8 @@
                 <div>
                     <p
                         class={isCompact
-                            ? 'text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'
-                            : 'text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'}
+                            ? 'text-xs md:text-[9px] font-semibold uppercase tracking-[0.16em] text-muted-foreground'
+                            : 'text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground'}
                     >
                         Top Revenue Snapshot
                     </p>
@@ -184,7 +184,7 @@
                 </div>
                 <p
                     class={isCompact
-                        ? 'text-[11px] text-muted-foreground'
+                        ? 'text-xs md:text-[11px] text-muted-foreground'
                         : 'text-xs text-muted-foreground'}
                 >
                     Semi visual, tetap ringan.
@@ -205,7 +205,7 @@
                         <div class="min-w-0">
                             <p
                                 class={isCompact
-                                    ? 'truncate text-[11px] font-semibold text-foreground'
+                                    ? 'truncate text-xs md:text-[11px] font-semibold text-foreground'
                                     : 'truncate text-xs font-semibold text-foreground'}
                             >
                                 {bar.label}
@@ -213,8 +213,8 @@
                             {#if bar.subtitle}
                                 <p
                                     class={isCompact
-                                        ? 'truncate text-[10px] text-muted-foreground'
-                                        : 'truncate text-[11px] text-muted-foreground'}
+                                        ? 'truncate text-xs md:text-[10px] text-muted-foreground'
+                                        : 'truncate text-xs md:text-[11px] text-muted-foreground'}
                                 >
                                     {bar.subtitle}
                                 </p>

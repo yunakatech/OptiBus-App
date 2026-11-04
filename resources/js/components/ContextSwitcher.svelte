@@ -348,7 +348,9 @@
                 type="button"
                 class={cn(
                     'flex min-h-11 w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 active:bg-slate-100 focus-visible:border-primary/40 focus-visible:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:hover:border-slate-600 dark:hover:bg-slate-900/60 dark:active:bg-slate-900/70 dark:focus-visible:bg-slate-900/60',
-                    open ? 'border-primary/35 bg-slate-50 dark:bg-slate-900/60' : '',
+                    open
+                        ? 'border-primary/35 bg-slate-50 dark:bg-slate-900/60'
+                        : '',
                 )}
                 aria-haspopup="listbox"
                 aria-expanded={open}
@@ -359,7 +361,7 @@
                 <Icon class="size-4 shrink-0 text-primary" />
                 <span class="min-w-0 flex-1 text-left">
                     <span
-                        class="block text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                        class="block text-xs font-medium text-muted-foreground"
                     >
                         {label}
                     </span>
@@ -541,7 +543,9 @@
                 type="button"
                 class={cn(
                     'flex min-h-[44px] w-full items-center gap-2 rounded-xl border border-sidebar-border/70 bg-background/80 px-3 py-2 text-left text-sm font-medium text-foreground shadow-sm transition hover:border-slate-300 hover:bg-slate-50 focus-visible:border-primary/40 focus-visible:outline-none dark:hover:border-slate-600 dark:hover:bg-slate-900/60 dark:focus-visible:bg-slate-900/60',
-                    open ? 'border-primary/35 bg-slate-50 dark:bg-slate-900/60' : '',
+                    open
+                        ? 'border-primary/35 bg-slate-50 dark:bg-slate-900/60'
+                        : '',
                 )}
                 aria-haspopup="dialog"
                 aria-expanded={open}
@@ -552,7 +556,7 @@
                 <Icon class="size-4 shrink-0 text-primary" />
                 <span class="min-w-0 flex-1 text-left">
                     <span
-                        class="block text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                        class="block text-xs font-medium text-muted-foreground"
                     >
                         {label}
                     </span>
@@ -660,24 +664,24 @@
                             </button>
 
                             {#each filteredOptions as item (item.id)}
-                            <button
-                                type="button"
-                                class={cn(
-                                    'mb-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] transition hover:bg-slate-50 dark:hover:bg-slate-900/60',
-                                    activeId === item.id
-                                        ? 'bg-primary/5 font-bold text-primary dark:bg-slate-900/60 dark:text-slate-100'
-                                        : 'text-foreground font-medium',
-                                )}
+                                <button
+                                    type="button"
+                                    class={cn(
+                                        'mb-1 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-left text-[13px] transition hover:bg-slate-50 dark:hover:bg-slate-900/60',
+                                        activeId === item.id
+                                            ? 'bg-primary/5 font-bold text-primary dark:bg-slate-900/60 dark:text-slate-100'
+                                            : 'text-foreground font-medium',
+                                    )}
                                     onclick={() => void switchContext(item.id)}
                                 >
                                     <div
                                         class={cn(
                                             'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
-                                        activeId === item.id
-                                            ? 'bg-primary text-white'
-                                            : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
-                                    )}
-                                >
+                                            activeId === item.id
+                                                ? 'bg-primary text-white'
+                                                : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
+                                        )}
+                                    >
                                         <Check class="size-3.5" />
                                     </div>
                                     <span class="min-w-0 flex-1 truncate"

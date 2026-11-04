@@ -10,6 +10,8 @@
 </script>
 
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { router } from '@inertiajs/svelte';
     import {
         CalendarDays,
@@ -231,9 +233,7 @@
     );
     const activeCollectionRate = $derived(
         collectionTotals.amount > 0
-            ? Math.round(
-                  (activePaidEstimate / collectionTotals.amount) * 100,
-              )
+            ? Math.round((activePaidEstimate / collectionTotals.amount) * 100)
             : 0,
     );
     const paymentFilterActiveCount = $derived(
@@ -298,8 +298,16 @@
 
     const monthRange = (offset = 0) => {
         const today = new Date();
-        const first = new Date(today.getFullYear(), today.getMonth() + offset, 1);
-        const last = new Date(today.getFullYear(), today.getMonth() + offset + 1, 0);
+        const first = new Date(
+            today.getFullYear(),
+            today.getMonth() + offset,
+            1,
+        );
+        const last = new Date(
+            today.getFullYear(),
+            today.getMonth() + offset + 1,
+            0,
+        );
 
         return {
             from: formatDateValue(first),
@@ -313,7 +321,10 @@
         return { from: today, to: today };
     };
 
-    const setDateRange = (range: { from: string; to: string }, draft = false) => {
+    const setDateRange = (
+        range: { from: string; to: string },
+        draft = false,
+    ) => {
         if (draft) {
             paymentFilterDraft.dateFrom = range.from;
             paymentFilterDraft.dateTo = range.to;
@@ -328,10 +339,14 @@
         reloadData(1);
     };
 
-    const applyQuickDateRange = (kind: 'today' | 'current' | 'previous', draft = false) => {
-        const range = kind === 'today'
-            ? todayRange()
-            : monthRange(kind === 'previous' ? -1 : 0);
+    const applyQuickDateRange = (
+        kind: 'today' | 'current' | 'previous',
+        draft = false,
+    ) => {
+        const range =
+            kind === 'today'
+                ? todayRange()
+                : monthRange(kind === 'previous' ? -1 : 0);
 
         setDateRange(range, draft);
     };
@@ -908,7 +923,7 @@
                         {row.customer_name || row.code}
                     </p>
                     <p
-                        class="mt-0.5 truncate text-[11px] text-muted-foreground"
+                        class="mt-0.5 truncate text-xs md:text-[11px] text-muted-foreground"
                     >
                         {row.code} | {formatCurrencyDisplay(
                             row.remaining_amount,
@@ -971,21 +986,25 @@
 {/snippet}
 
 <div
+    class:mobile-page={true}
     data-content-density="compact"
-    class="min-h-full space-y-4 overflow-x-hidden p-3 pb-28 md:p-4"
+    class="min-h-full space-y-4 p-3 pb-4 md:p-4"
 >
     <Card
         class="overflow-hidden border-sidebar-border/70 bg-linear-to-br from-background via-background to-cyan-50/30 dark:border-sidebar-border dark:to-cyan-950/15"
     >
-        <CardHeader class="space-y-4 border-b bg-background/80 backdrop-blur">
-            <div class="grid gap-2 md:grid-cols-3">
+        <CardHeader class="space-y-3 border-b bg-background/80 p-3 md:p-6">
+            <div class="grid grid-cols-3 gap-2">
                 {#each statusTabs as tab (tab.key)}
                     <button
                         type="button"
-                        class={`rounded-lg border p-3 text-left transition ${activeStatus === tab.key ? 'border-cyan-400 bg-cyan-50 shadow-sm dark:border-cyan-500/40 dark:bg-cyan-950/25' : 'border-border bg-card hover:border-cyan-200 hover:bg-cyan-50/40 dark:hover:bg-cyan-950/10'}`}
+                        class={`min-w-0 rounded-lg border p-2 text-left transition md:p-3 ${activeStatus === tab.key ? 'border-primary bg-primary/5 shadow-sm' : 'border-border bg-card hover:bg-muted/40'}`}
+                        aria-pressed={activeStatus === tab.key}
                         onclick={() => setStatus(tab.key)}
                     >
-                        <div class="flex items-center justify-between gap-2">
+                        <div
+                            class="flex flex-wrap items-center justify-between gap-1"
+                        >
                             <span class="text-sm font-semibold"
                                 >{tab.label}</span
                             >
@@ -995,17 +1014,21 @@
                                 {statusCount(tab.key)}
                             </span>
                         </div>
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p
+                            class="mt-1 hidden text-xs text-muted-foreground md:block"
+                        >
                             {tab.hint}
                         </p>
-                        <p class="mt-2 text-sm font-semibold text-foreground">
+                        <p
+                            class="mt-2 hidden text-sm font-semibold text-foreground md:block"
+                        >
                             {formatCurrencyDisplay(statusAmount(tab.key))}
                         </p>
                     </button>
                 {/each}
             </div>
 
-            <div class="grid gap-2 md:grid-cols-4">
+            <div class="grid grid-cols-2 gap-2 md:grid-cols-4">
                 <div class="rounded-xl border border-border/70 bg-card p-3">
                     <p class="text-xs text-muted-foreground">Data aktif</p>
                     <p class="mt-1 text-lg font-semibold text-foreground">
@@ -1036,9 +1059,14 @@
         </CardHeader>
 
         <CardContent class="space-y-4 p-4">
-            <div class="rounded-xl border border-border/70 bg-card/80 p-3 shadow-sm">
+            <div
+                class="rounded-xl border border-border/70 bg-card/80 p-3 shadow-sm"
+            >
                 <ResponsiveFilterBar
                     label="Pembayaran"
+                    bind:query={searchQuery}
+                    onSearch={() => reloadData(1)}
+                    searchPlaceholder="Nama, kode, nomor HP, rute"
                     activeCount={paymentFilterActiveCount}
                     summary={paymentFilterSummary || 'Semua transaksi'}
                     onOpen={beginPaymentFilterDraft}
@@ -1047,13 +1075,15 @@
                     onCancel={beginPaymentFilterDraft}
                 >
                     {#snippet primary()}
-                        <div class="md:hidden">
-                            <span class="text-xs text-muted-foreground"
-                                >Status: {statusTabs.find(
-                                    (tab) => tab.key === activeStatus,
-                                )?.label}</span
-                            >
-                        </div>
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div class="md:hidden">
+                                <span class="text-xs text-muted-foreground"
+                                    >Status: {statusTabs.find(
+                                        (tab) => tab.key === activeStatus,
+                                    )?.label}</span
+                                >
+                            </div></ViewportOnly
+                        >
                     {/snippet}
                     {#snippet filters()}
                         <div class="grid gap-5">
@@ -1078,26 +1108,69 @@
                                     bind:value={paymentFilterDraft.search}
                                 />
                             </label>
-                            <div class="grid gap-3 rounded-2xl border border-border/70 bg-muted/20 p-3">
-                                <div class="flex items-start justify-between gap-3">
+                            <div
+                                class="grid gap-3 rounded-2xl border border-border/70 bg-muted/20 p-3"
+                            >
+                                <div
+                                    class="flex items-start justify-between gap-3"
+                                >
                                     <div>
-                                        <span class="block text-sm font-semibold">Rentang tanggal</span>
-                                        <span class="text-xs font-normal text-muted-foreground">Pilih periode transaksi</span>
+                                        <span
+                                            class="block text-sm font-semibold"
+                                            >Rentang tanggal</span
+                                        >
+                                        <span
+                                            class="text-xs font-normal text-muted-foreground"
+                                            >Pilih periode transaksi</span
+                                        >
                                     </div>
-                                    <span class="shrink-0 rounded-full bg-background px-2 py-1 text-[11px] font-medium text-muted-foreground">Maks. 3 bulan</span>
+                                    <span
+                                        class="shrink-0 rounded-full bg-background px-2 py-1 text-xs md:text-[11px] font-medium text-muted-foreground"
+                                        >Maks. 3 bulan</span
+                                    >
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
-                                    <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('today', true)}>Hari ini</Button>
-                                    <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('current', true)}>Bulan ini</Button>
-                                    <Button type="button" variant="outline" class="h-9 rounded-lg px-2 text-xs" onclick={() => applyQuickDateRange('previous', true)}>Bulan lalu</Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-9 rounded-lg px-2 text-xs"
+                                        onclick={() =>
+                                            applyQuickDateRange('today', true)}
+                                        >Hari ini</Button
+                                    >
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-9 rounded-lg px-2 text-xs"
+                                        onclick={() =>
+                                            applyQuickDateRange(
+                                                'current',
+                                                true,
+                                            )}>Bulan ini</Button
+                                    >
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        class="h-9 rounded-lg px-2 text-xs"
+                                        onclick={() =>
+                                            applyQuickDateRange(
+                                                'previous',
+                                                true,
+                                            )}>Bulan lalu</Button
+                                    >
                                 </div>
-                                <div class="grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+                                <div
+                                    class="grid grid-cols-[1fr_auto_1fr] items-end gap-2"
+                                >
                                     <FilterDateInput
                                         label="Dari tanggal"
                                         bind:value={paymentFilterDraft.dateFrom}
                                         maxDate={draftDateFromMax()}
                                     />
-                                    <span class="mb-3 text-xs font-medium text-muted-foreground">sampai</span>
+                                    <span
+                                        class="mb-3 text-xs font-medium text-muted-foreground"
+                                        >sampai</span
+                                    >
                                     <FilterDateInput
                                         label="Sampai tanggal"
                                         bind:value={paymentFilterDraft.dateTo}
@@ -1120,73 +1193,181 @@
                         </div>
                     {/snippet}
                 </ResponsiveFilterBar>
-                <div class="hidden gap-4 md:grid">
-                    <div class="grid gap-3 md:grid-cols-[10rem_minmax(0,1fr)_minmax(0,1fr)] md:items-end">
-                        <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground">
-                            Sumber transaksi
-                            <select class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm font-normal text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35" bind:value={activeSource} onchange={() => reloadData(1)}>
-                                {#each sourceTabs as tab (tab.key)}
-                                    <option value={tab.key}>{tab.label}</option>
-                                {/each}
-                            </select>
-                        </label>
-                        <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground">
-                            Cari transaksi
-                            <span class="relative">
-                                <Search class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-                                <Input class="h-10 rounded-lg pl-9" placeholder="Nama, kode, no HP, rute..." bind:value={searchQuery} oninput={schedulePaymentSearch} onkeydown={(event) => event.key === 'Enter' && reloadData(1)} />
-                            </span>
-                        </label>
-                        <div class="flex h-10 items-center justify-between rounded-lg border border-dashed border-border/80 px-3 text-xs">
-                            <span class="font-semibold text-foreground">Rentang tanggal</span>
-                            <span class="text-muted-foreground">Maks. 3 bulan</span>
+                <ViewportOnly minWidth={768}
+                    ><div class="hidden gap-4 md:grid">
+                        <div
+                            class="grid gap-3 md:grid-cols-[10rem_minmax(0,1fr)_minmax(0,1fr)] md:items-end"
+                        >
+                            <label
+                                class="grid gap-1.5 text-xs font-semibold text-muted-foreground"
+                            >
+                                Sumber transaksi
+                                <select
+                                    class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm font-normal text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35"
+                                    bind:value={activeSource}
+                                    onchange={() => reloadData(1)}
+                                >
+                                    {#each sourceTabs as tab (tab.key)}
+                                        <option value={tab.key}
+                                            >{tab.label}</option
+                                        >
+                                    {/each}
+                                </select>
+                            </label>
+                            <label
+                                class="grid gap-1.5 text-xs font-semibold text-muted-foreground"
+                            >
+                                Cari transaksi
+                                <span class="relative">
+                                    <Search
+                                        class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
+                                    />
+                                    <Input
+                                        class="h-10 rounded-lg pl-9"
+                                        placeholder="Nama, kode, no HP, rute..."
+                                        bind:value={searchQuery}
+                                        oninput={schedulePaymentSearch}
+                                        onkeydown={(event) =>
+                                            event.key === 'Enter' &&
+                                            reloadData(1)}
+                                    />
+                                </span>
+                            </label>
+                            <div
+                                class="flex h-10 items-center justify-between rounded-lg border border-dashed border-border/80 px-3 text-xs"
+                            >
+                                <span class="font-semibold text-foreground"
+                                    >Rentang tanggal</span
+                                >
+                                <span class="text-muted-foreground"
+                                    >Maks. 3 bulan</span
+                                >
+                            </div>
                         </div>
-                    </div>
-                    <div class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] md:items-end">
-                        <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground">
-                            Dari tanggal
-                            <span class="relative">
-                                <CalendarDays class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-                                <input bind:this={dateFromInput} bind:value={dateFrom} class="h-10 w-full rounded-lg border border-input bg-background pr-3 pl-9 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35" placeholder="Pilih tanggal mulai" autocomplete="off" onblur={() => normalizeDateRange('from')} onkeydown={(event) => event.key === 'Enter' && reloadData(1)} />
-                            </span>
-                        </label>
-                        <span class="mb-3 text-xs font-medium text-muted-foreground">sampai</span>
-                        <label class="grid gap-1.5 text-xs font-semibold text-muted-foreground">
-                            Sampai tanggal
-                            <span class="relative">
-                                <CalendarDays class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground" />
-                                <input bind:this={dateToInput} bind:value={dateTo} class="h-10 w-full rounded-lg border border-input bg-background pr-3 pl-9 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35" placeholder="Pilih tanggal selesai" autocomplete="off" onblur={() => normalizeDateRange('to')} onkeydown={(event) => event.key === 'Enter' && reloadData(1)} />
-                            </span>
-                        </label>
-                        <div class="flex flex-wrap gap-1.5 pb-0.5">
-                            <Button type="button" variant="outline" class="h-10 rounded-lg px-3 text-xs" onclick={() => applyQuickDateRange('today')}>Hari ini</Button>
-                            <Button type="button" variant="outline" class="h-10 rounded-lg px-3 text-xs" onclick={() => applyQuickDateRange('current')}>Bulan ini</Button>
-                            <Button type="button" variant="outline" class="h-10 rounded-lg px-3 text-xs" onclick={() => applyQuickDateRange('previous')}>Bulan lalu</Button>
+                        <div
+                            class="grid gap-3 md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)_auto] md:items-end"
+                        >
+                            <label
+                                class="grid gap-1.5 text-xs font-semibold text-muted-foreground"
+                            >
+                                Dari tanggal
+                                <span class="relative">
+                                    <CalendarDays
+                                        class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
+                                    />
+                                    <input
+                                        bind:this={dateFromInput}
+                                        bind:value={dateFrom}
+                                        class="h-10 w-full rounded-lg border border-input bg-background pr-3 pl-9 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35"
+                                        placeholder="Pilih tanggal mulai"
+                                        autocomplete="off"
+                                        onblur={() =>
+                                            normalizeDateRange('from')}
+                                        onkeydown={(event) =>
+                                            event.key === 'Enter' &&
+                                            reloadData(1)}
+                                    />
+                                </span>
+                            </label>
+                            <span
+                                class="mb-3 text-xs font-medium text-muted-foreground"
+                                >sampai</span
+                            >
+                            <label
+                                class="grid gap-1.5 text-xs font-semibold text-muted-foreground"
+                            >
+                                Sampai tanggal
+                                <span class="relative">
+                                    <CalendarDays
+                                        class="pointer-events-none absolute top-2.5 left-3 h-4 w-4 text-muted-foreground"
+                                    />
+                                    <input
+                                        bind:this={dateToInput}
+                                        bind:value={dateTo}
+                                        class="h-10 w-full rounded-lg border border-input bg-background pr-3 pl-9 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/35"
+                                        placeholder="Pilih tanggal selesai"
+                                        autocomplete="off"
+                                        onblur={() => normalizeDateRange('to')}
+                                        onkeydown={(event) =>
+                                            event.key === 'Enter' &&
+                                            reloadData(1)}
+                                    />
+                                </span>
+                            </label>
+                            <div class="flex flex-wrap gap-1.5 pb-0.5">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-10 rounded-lg px-3 text-xs"
+                                    onclick={() => applyQuickDateRange('today')}
+                                    >Hari ini</Button
+                                >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-10 rounded-lg px-3 text-xs"
+                                    onclick={() =>
+                                        applyQuickDateRange('current')}
+                                    >Bulan ini</Button
+                                >
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    class="h-10 rounded-lg px-3 text-xs"
+                                    onclick={() =>
+                                        applyQuickDateRange('previous')}
+                                    >Bulan lalu</Button
+                                >
+                            </div>
                         </div>
-                    </div>
-                    <div class="flex flex-wrap items-center justify-end gap-2 border-t border-border/70 pt-3">
-                        <label class="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-                            Jumlah per halaman
-                            <select class="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground" bind:value={perPage} onchange={() => reloadData(1)}>
-                                <option value={10}>10/baris</option>
-                                <option value={20}>20/baris</option>
-                                <option value={50}>50/baris</option>
-                            </select>
-                        </label>
-                        <Button type="button" variant="outline" class="h-10 rounded-lg" onclick={() => reloadData(1)}>
-                            <RefreshCw class={`mr-1.5 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                            Muat
-                        </Button>
-                        <Button asChild variant="outline" class="h-10 rounded-lg border-cyan-200 bg-cyan-50/70 text-cyan-800 hover:bg-cyan-100 dark:border-cyan-400/20 dark:bg-cyan-950/20 dark:text-cyan-100">
-                            {#snippet children(props)}
-                                <a {...props} href={exportUrl()} target="_blank" rel="noreferrer">
-                                    <Download class="mr-1.5 h-4 w-4" />
-                                    Export CSV
-                                </a>
-                            {/snippet}
-                        </Button>
-                    </div>
-                </div>
+                        <div
+                            class="flex flex-wrap items-center justify-end gap-2 border-t border-border/70 pt-3"
+                        >
+                            <label
+                                class="flex items-center gap-2 text-xs font-medium text-muted-foreground"
+                            >
+                                Jumlah per halaman
+                                <select
+                                    class="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+                                    bind:value={perPage}
+                                    onchange={() => reloadData(1)}
+                                >
+                                    <option value={10}>10/baris</option>
+                                    <option value={20}>20/baris</option>
+                                    <option value={50}>50/baris</option>
+                                </select>
+                            </label>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                class="h-10 rounded-lg"
+                                onclick={() => reloadData(1)}
+                            >
+                                <RefreshCw
+                                    class={`mr-1.5 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+                                />
+                                Muat
+                            </Button>
+                            <Button
+                                asChild
+                                variant="outline"
+                                class="h-10 rounded-lg border-cyan-200 bg-cyan-50/70 text-cyan-800 hover:bg-cyan-100 dark:border-cyan-400/20 dark:bg-cyan-950/20 dark:text-cyan-100"
+                            >
+                                {#snippet children(props)}
+                                    <a
+                                        {...props}
+                                        href={exportUrl()}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        <Download class="mr-1.5 h-4 w-4" />
+                                        Export CSV
+                                    </a>
+                                {/snippet}
+                            </Button>
+                        </div>
+                    </div></ViewportOnly
+                >
             </div>
 
             {#if dateRangeMessage}
@@ -1204,7 +1385,7 @@
                     >
                         <div class="min-w-0 space-y-1">
                             <p
-                                class="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-800 dark:text-cyan-200"
+                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-800 dark:text-cyan-200"
                             >
                                 Bulk Payment
                             </p>
@@ -1323,41 +1504,142 @@
                     </p>
                 </div>
             {:else}
-                <div
-                    class="table-container hidden rounded-lg border border-border/70 bg-card shadow-sm md:block"
+                <ViewportOnly minWidth={768}
+                    ><div
+                        class="table-container hidden rounded-lg border border-border/70 bg-card shadow-sm md:block"
+                    >
+                        <table class="w-full text-sm">
+                            <thead
+                                class="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground"
+                            >
+                                <tr>
+                                    <th class="w-12 px-4 py-3">
+                                        <input
+                                            bind:this={selectAllInput}
+                                            type="checkbox"
+                                            class="h-4 w-4 rounded border-cyan-300 text-cyan-600 focus:ring-cyan-500"
+                                            checked={selectedRowsAllVisibleSelectable}
+                                            disabled={selectableRows.length ===
+                                                0}
+                                            onchange={(event) =>
+                                                toggleSelectAllVisible(
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).checked,
+                                                )}
+                                        />
+                                    </th>
+                                    <th class="px-4 py-3">Transaksi</th>
+                                    <th class="px-4 py-3">Pelanggan</th>
+                                    <th class="px-4 py-3">Pool/Rute</th>
+                                    <th class="px-4 py-3 text-right">Tagihan</th
+                                    >
+                                    <th class="px-4 py-3">Status</th>
+                                    <th class="px-4 py-3 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-border/70">
+                                {#each rows as row (row.key)}
+                                    <tr class="align-top">
+                                        <td class="px-4 py-3 align-top">
+                                            <input
+                                                bind:group={selectedKeys}
+                                                value={row.key}
+                                                type="checkbox"
+                                                class="mt-1 h-4 w-4 rounded border-cyan-300 text-cyan-600 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-40"
+                                                disabled={!row.can_update}
+                                                aria-label={`Pilih ${row.code}`}
+                                            />
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <div class="space-y-1">
+                                                <Badge
+                                                    class={`rounded-full border px-2 py-0.5 text-xs md:text-[10px] ${sourceClass(row.source)}`}
+                                                >
+                                                    {row.source_label}
+                                                </Badge>
+                                                <p
+                                                    class="font-semibold text-foreground"
+                                                >
+                                                    {row.code}
+                                                </p>
+                                                <p
+                                                    class="text-xs text-muted-foreground"
+                                                >
+                                                    {row.date || '-'}
+                                                    {row.time || ''}
+                                                </p>
+                                            </div>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <p
+                                                class="font-semibold text-foreground"
+                                            >
+                                                {row.customer_name || '-'}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                {row.secondary_name ||
+                                                    row.contact ||
+                                                    '-'}
+                                            </p>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <p
+                                                class="font-medium text-foreground"
+                                            >
+                                                {row.pool_name || '-'}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                {row.route}
+                                            </p>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            <p
+                                                class="font-semibold text-foreground"
+                                            >
+                                                {formatCurrencyDisplay(
+                                                    row.amount,
+                                                )}
+                                            </p>
+                                            <p
+                                                class="text-xs text-muted-foreground"
+                                            >
+                                                Sisa {formatCurrencyDisplay(
+                                                    row.remaining_amount,
+                                                )}
+                                            </p>
+                                        </td>
+                                        <td class="px-4 py-3">
+                                            <Badge
+                                                class={`rounded-full border px-2 py-0.5 text-xs md:text-[10px] ${statusClass(row.payment_status)}`}
+                                            >
+                                                {row.payment_status}
+                                            </Badge>
+                                        </td>
+                                        <td class="px-4 py-3 text-right">
+                                            {@render PaymentActionMenu(row)}
+                                        </td>
+                                    </tr>
+                                {/each}
+                            </tbody>
+                        </table>
+                    </div></ViewportOnly
                 >
-                    <table class="w-full text-sm">
-                        <thead
-                            class="bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground"
-                        >
-                            <tr>
-                                <th class="w-12 px-4 py-3">
-                                    <input
-                                        bind:this={selectAllInput}
-                                        type="checkbox"
-                                        class="h-4 w-4 rounded border-cyan-300 text-cyan-600 focus:ring-cyan-500"
-                                        checked={selectedRowsAllVisibleSelectable}
-                                        disabled={selectableRows.length === 0}
-                                        onchange={(event) =>
-                                            toggleSelectAllVisible(
-                                                (
-                                                    event.currentTarget as HTMLInputElement
-                                                ).checked,
-                                            )}
-                                    />
-                                </th>
-                                <th class="px-4 py-3">Transaksi</th>
-                                <th class="px-4 py-3">Customer</th>
-                                <th class="px-4 py-3">Pool/Rute</th>
-                                <th class="px-4 py-3 text-right">Tagihan</th>
-                                <th class="px-4 py-3">Status</th>
-                                <th class="px-4 py-3 text-right">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-border/70">
-                            {#each rows as row (row.key)}
-                                <tr class="align-top">
-                                    <td class="px-4 py-3 align-top">
+
+                <ViewportOnly minWidth={0} maxWidth={767}
+                    ><div class="space-y-3 md:hidden">
+                        {#each rows as row (row.key)}
+                            <div
+                                class="rounded-lg border border-border/70 bg-card p-3 shadow-sm"
+                            >
+                                <div
+                                    class="flex items-start justify-between gap-2"
+                                >
+                                    <div class="flex min-w-0 items-start gap-2">
                                         <input
                                             bind:group={selectedKeys}
                                             value={row.key}
@@ -1366,148 +1648,71 @@
                                             disabled={!row.can_update}
                                             aria-label={`Pilih ${row.code}`}
                                         />
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <div class="space-y-1">
+                                        <div class="min-w-0">
                                             <Badge
-                                                class={`rounded-full border px-2 py-0.5 text-[10px] ${sourceClass(row.source)}`}
+                                                class={`rounded-full border px-2 py-0.5 text-xs md:text-[10px] ${sourceClass(row.source)}`}
                                             >
                                                 {row.source_label}
                                             </Badge>
                                             <p
-                                                class="font-semibold text-foreground"
+                                                class="mt-2 truncate font-semibold text-foreground"
                                             >
-                                                {row.code}
+                                                {row.customer_name || row.code}
                                             </p>
                                             <p
-                                                class="text-xs text-muted-foreground"
+                                                class="truncate text-xs text-muted-foreground"
                                             >
-                                                {row.date || '-'}
-                                                {row.time || ''}
+                                                {row.code} | {row.date || '-'}
                                             </p>
                                         </div>
-                                    </td>
-                                    <td class="px-4 py-3">
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <Badge
+                                            class={`rounded-full border px-2 py-0.5 text-xs md:text-[10px] ${statusClass(row.payment_status)}`}
+                                        >
+                                            {row.payment_status}
+                                        </Badge>
+                                        {@render PaymentActionMenu(row)}
+                                    </div>
+                                </div>
+                                <div
+                                    class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-muted/30 p-2 text-xs"
+                                >
+                                    <div>
+                                        <p class="text-muted-foreground">
+                                            Pool
+                                        </p>
                                         <p
                                             class="font-semibold text-foreground"
                                         >
-                                            {row.customer_name || '-'}
-                                        </p>
-                                        <p
-                                            class="text-xs text-muted-foreground"
-                                        >
-                                            {row.secondary_name ||
-                                                row.contact ||
-                                                '-'}
-                                        </p>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <p class="font-medium text-foreground">
                                             {row.pool_name || '-'}
                                         </p>
-                                        <p
-                                            class="text-xs text-muted-foreground"
-                                        >
-                                            {row.route}
+                                    </div>
+                                    <div>
+                                        <p class="text-muted-foreground">
+                                            Tagihan
                                         </p>
-                                    </td>
-                                    <td class="px-4 py-3 text-right">
                                         <p
                                             class="font-semibold text-foreground"
                                         >
                                             {formatCurrencyDisplay(row.amount)}
                                         </p>
-                                        <p
-                                            class="text-xs text-muted-foreground"
-                                        >
-                                            Sisa {formatCurrencyDisplay(
-                                                row.remaining_amount,
-                                            )}
-                                        </p>
-                                    </td>
-                                    <td class="px-4 py-3">
-                                        <Badge
-                                            class={`rounded-full border px-2 py-0.5 text-[10px] ${statusClass(row.payment_status)}`}
-                                        >
-                                            {row.payment_status}
-                                        </Badge>
-                                    </td>
-                                    <td class="px-4 py-3 text-right">
-                                        {@render PaymentActionMenu(row)}
-                                    </td>
-                                </tr>
-                            {/each}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="space-y-3 md:hidden">
-                    {#each rows as row (row.key)}
-                        <div
-                            class="rounded-lg border border-border/70 bg-card p-3 shadow-sm"
-                        >
-                            <div class="flex items-start justify-between gap-2">
-                                <div class="flex min-w-0 items-start gap-2">
-                                    <input
-                                        bind:group={selectedKeys}
-                                        value={row.key}
-                                        type="checkbox"
-                                        class="mt-1 h-4 w-4 rounded border-cyan-300 text-cyan-600 focus:ring-cyan-500 disabled:cursor-not-allowed disabled:opacity-40"
-                                        disabled={!row.can_update}
-                                        aria-label={`Pilih ${row.code}`}
-                                    />
-                                    <div class="min-w-0">
-                                        <Badge
-                                            class={`rounded-full border px-2 py-0.5 text-[10px] ${sourceClass(row.source)}`}
-                                        >
-                                            {row.source_label}
-                                        </Badge>
-                                        <p
-                                            class="mt-2 truncate font-semibold text-foreground"
-                                        >
-                                            {row.customer_name || row.code}
+                                    </div>
+                                    <div class="col-span-2">
+                                        <p class="text-muted-foreground">
+                                            Rute
                                         </p>
                                         <p
-                                            class="truncate text-xs text-muted-foreground"
+                                            class="font-semibold text-foreground"
                                         >
-                                            {row.code} | {row.date || '-'}
+                                            {row.route}
                                         </p>
                                     </div>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <Badge
-                                        class={`rounded-full border px-2 py-0.5 text-[10px] ${statusClass(row.payment_status)}`}
-                                    >
-                                        {row.payment_status}
-                                    </Badge>
-                                    {@render PaymentActionMenu(row)}
-                                </div>
                             </div>
-                            <div
-                                class="mt-3 grid grid-cols-2 gap-2 rounded-xl bg-muted/30 p-2 text-xs"
-                            >
-                                <div>
-                                    <p class="text-muted-foreground">Pool</p>
-                                    <p class="font-semibold text-foreground">
-                                        {row.pool_name || '-'}
-                                    </p>
-                                </div>
-                                <div>
-                                    <p class="text-muted-foreground">Tagihan</p>
-                                    <p class="font-semibold text-foreground">
-                                        {formatCurrencyDisplay(row.amount)}
-                                    </p>
-                                </div>
-                                <div class="col-span-2">
-                                    <p class="text-muted-foreground">Rute</p>
-                                    <p class="font-semibold text-foreground">
-                                        {row.route}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    {/each}
-                </div>
+                        {/each}
+                    </div></ViewportOnly
+                >
             {/if}
 
             <div
@@ -1517,7 +1722,10 @@
                     Total {pagination.total} data, halaman {pagination.page} dari
                     {pagination.last_page}
                 </p>
-                <div class="flex items-center gap-2">
+                <div
+                    class:mobile-pagination={true}
+                    class="flex items-center gap-2"
+                >
                     <Button
                         type="button"
                         variant="outline"
@@ -1525,7 +1733,7 @@
                         disabled={pagination.page <= 1 || loading}
                         onclick={() => reloadData(pagination.page - 1)}
                     >
-                        Prev
+                        Sebelumnya
                     </Button>
                     <Button
                         type="button"
@@ -1535,7 +1743,7 @@
                             loading}
                         onclick={() => reloadData(pagination.page + 1)}
                     >
-                        Next
+                        Berikutnya
                     </Button>
                 </div>
             </div>

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
@@ -109,7 +111,9 @@
                         Layout Designer
                     </p>
                     <div>
-                        <p class="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        <p
+                            class="text-xs md:text-[10px] uppercase tracking-[0.2em] text-muted-foreground"
+                        >
                             Nama Kategori Armada
                         </p>
                         <h3 class="text-xl font-semibold">
@@ -126,7 +130,7 @@
                         class="rounded-xl border border-border/70 bg-background/80 p-3"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
                         >
                             Kapasitas
                         </p>
@@ -138,7 +142,7 @@
                         class="rounded-xl border border-border/70 bg-background/80 p-3"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
                         >
                             Kursi Aktif
                         </p>
@@ -150,7 +154,7 @@
                         class={`rounded-xl border p-3 ${layoutOverCapacity ? 'border-red-300 bg-red-50 text-red-700' : 'border-border/70 bg-background/80'}`}
                     >
                         <p
-                            class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                            class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
                         >
                             Sisa Slot
                         </p>
@@ -169,7 +173,9 @@
                 >
                     <div class="space-y-1">
                         <h4 class="text-sm font-semibold">Preset Cepat</h4>
-                        <p class="text-[11px] leading-5 text-muted-foreground">
+                        <p
+                            class="text-xs md:text-[11px] leading-5 text-muted-foreground"
+                        >
                             Template penuh buat bentuk kabin cepat, lalu rapikan
                             detail dari preview.
                         </p>
@@ -317,22 +323,24 @@
                             template awal tanpa membuka popup terpisah.
                         </p>
                     </div>
-                    <div class="mt-3 flex justify-end md:hidden">
-                        <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            class="h-8 rounded-lg text-xs"
-                            onclick={() =>
-                                (layoutFiltersExpanded =
-                                    !layoutFiltersExpanded)}
-                            aria-expanded={layoutFiltersExpanded}
-                        >
-                            {layoutFiltersExpanded
-                                ? 'Sembunyikan Filter'
-                                : 'Tampilkan Filter'}
-                        </Button>
-                    </div>
+                    <ViewportOnly minWidth={0} maxWidth={767}
+                        ><div class="mt-3 flex justify-end md:hidden">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                class="h-8 rounded-lg text-xs"
+                                onclick={() =>
+                                    (layoutFiltersExpanded =
+                                        !layoutFiltersExpanded)}
+                                aria-expanded={layoutFiltersExpanded}
+                            >
+                                {layoutFiltersExpanded
+                                    ? 'Sembunyikan Filter'
+                                    : 'Tampilkan Filter'}
+                            </Button>
+                        </div></ViewportOnly
+                    >
                     <div
                         class={layoutFiltersExpanded
                             ? 'mt-3 space-y-2'
@@ -340,7 +348,7 @@
                     >
                         <label class="space-y-1">
                             <span
-                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                             >
                                 Cari kategori
                             </span>
@@ -351,7 +359,7 @@
                         </label>
                         <label class="space-y-1">
                             <span
-                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                             >
                                 Kategori referensi
                             </span>
@@ -426,7 +434,7 @@
                                 Preview Layout
                             </h4>
                             <p
-                                class="text-[11px] leading-5 text-muted-foreground"
+                                class="text-xs md:text-[11px] leading-5 text-muted-foreground"
                             >
                                 Preview kabin bus. Lorong, kursi reguler, sleep
                                 seat langsung kebaca.
@@ -448,10 +456,11 @@
                             class="mb-2 flex items-center justify-between rounded-lg border border-border/60 bg-background/85 px-3 py-1.5"
                         >
                             <span
-                                class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                                 >Depan Bus</span
                             >
-                            <span class="text-[11px] text-muted-foreground"
+                            <span
+                                class="text-xs md:text-[11px] text-muted-foreground"
                                 >Lorong tengah ditandai khusus</span
                             >
                         </div>
@@ -465,14 +474,14 @@
                                     >
                                         <div>
                                             <p
-                                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                             >
                                                 {rowIdx === 0
                                                     ? 'Baris Driver'
                                                     : `Baris ${rowIdx}`}
                                             </p>
                                             <p
-                                                class="text-[9px] text-muted-foreground"
+                                                class="text-xs md:text-[9px] text-muted-foreground"
                                             >
                                                 {rowIdx === 0
                                                     ? 'Kabin depan'
@@ -485,7 +494,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         replaceLayoutRowPattern(
                                                             rowIdx,
@@ -496,7 +505,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         replaceLayoutRowPattern(
                                                             rowIdx,
@@ -507,7 +516,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         replaceLayoutRowPattern(
                                                             rowIdx,
@@ -518,7 +527,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         replaceLayoutRowPattern(
                                                             rowIdx,
@@ -529,7 +538,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         replaceLayoutRowPattern(
                                                             rowIdx,
@@ -540,7 +549,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         replaceLayoutRowPattern(
                                                             rowIdx,
@@ -551,7 +560,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         replaceLayoutRowPattern(
                                                             rowIdx,
@@ -562,7 +571,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         duplicateLayoutRow(
                                                             rowIdx,
@@ -572,7 +581,7 @@
                                                     type="button"
                                                     size="sm"
                                                     variant="ghost"
-                                                    class="h-7 rounded-full px-2 text-[11px]"
+                                                    class="h-7 rounded-full px-2 text-xs md:text-[11px]"
                                                     onclick={() =>
                                                         removeLayoutRow(rowIdx)}
                                                     >Hapus</Button
@@ -589,21 +598,21 @@
                                             {#if !cell.hidden}
                                                 {#if cell.type === 'driver'}
                                                     <div
-                                                        class="flex h-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-[11px] font-semibold uppercase tracking-wide text-white"
+                                                        class="flex h-10 items-center justify-center rounded-lg border border-zinc-800 bg-zinc-900 text-xs md:text-[11px] font-semibold uppercase tracking-wide text-white"
                                                     >
                                                         Driver
                                                     </div>
                                                 {:else if cell.type === 'empty'}
                                                     {#if cell.marker === 'aisle'}
                                                         <div
-                                                            class="flex h-10 items-center justify-center rounded-lg border border-dashed border-amber-300/80 bg-amber-50/80 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700"
+                                                            class="flex h-10 items-center justify-center rounded-lg border border-dashed border-amber-300/80 bg-amber-50/80 text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-700"
                                                         >
                                                             Lorong
                                                         </div>
                                                     {:else}
                                                         <button
                                                             type="button"
-                                                            class={`flex h-10 items-center justify-center rounded-lg border border-dashed px-2 text-[11px] font-medium transition hover:border-foreground/30 ${
+                                                            class={`flex h-10 items-center justify-center rounded-lg border border-dashed px-2 text-xs md:text-[11px] font-medium transition hover:border-foreground/30 ${
                                                                 cell.seatStyle ===
                                                                 'sleeper'
                                                                     ? 'border-sky-200 bg-sky-50/70 text-sky-700 hover:bg-sky-100'
@@ -624,7 +633,7 @@
                                                 {:else}
                                                     <button
                                                         type="button"
-                                                        class={`flex items-center justify-center rounded-lg border px-2 text-[11px] font-semibold transition ${
+                                                        class={`flex items-center justify-center rounded-lg border px-2 text-xs md:text-[11px] font-semibold transition ${
                                                             cell.seatStyle ===
                                                             'sleeper'
                                                                 ? 'h-12 border-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-200'
@@ -651,11 +660,12 @@
                         <div
                             class="mt-2.5 flex items-center justify-between rounded-lg border border-border/60 bg-background/85 px-3 py-1.5"
                         >
-                            <span class="text-[10px] text-muted-foreground"
+                            <span
+                                class="text-xs md:text-[10px] text-muted-foreground"
                                 >Regular: hijau · Sleep: biru · Lorong: amber</span
                             >
                             <span
-                                class="text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.24em] text-muted-foreground"
                                 >Belakang</span
                             >
                         </div>

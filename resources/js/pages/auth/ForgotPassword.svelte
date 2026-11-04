@@ -32,7 +32,7 @@
     </div>
 {/if}
 
-<div class="space-y-6">
+<div class:mobile-page={true} class="space-y-6">
     <Form {...email.form()}>
         {#snippet children({ errors, processing })}
             <div class="grid gap-2">

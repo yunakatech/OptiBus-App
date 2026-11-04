@@ -61,7 +61,7 @@
         <div class="mb-3 flex items-start justify-between gap-3">
             <div>
                 <p
-                    class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300"
+                    class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300"
                 >
                     Edit Penumpang
                 </p>
@@ -113,7 +113,7 @@
                         {/each}
                     {/if}
                 </select>
-                <p class="mt-1 text-[11px] text-muted-foreground">
+                <p class="mt-1 text-xs md:text-[11px] text-muted-foreground">
                     {groupEditSeatHelpText()}
                 </p>
             </div>
@@ -165,7 +165,7 @@
                     for="group-edit-pickup"
                     class="mb-1 block text-xs font-medium text-muted-foreground"
                 >
-                    Pickup Point
+                    Titik jemput
                 </label>
                 <Input
                     id="group-edit-pickup"
@@ -195,7 +195,7 @@
                 />
             </div>
             <div
-                class="md:col-span-2 rounded-lg border border-border/70 bg-muted/10 px-3 py-2 text-[11px] text-muted-foreground"
+                class="md:col-span-2 rounded-lg border border-border/70 bg-muted/10 px-3 py-2 text-xs md:text-[11px] text-muted-foreground"
             >
                 Pilihan seat pada dropdown sudah mengikuti ketersediaan kursi
                 untuk keberangkatan ini.

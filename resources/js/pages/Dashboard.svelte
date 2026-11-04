@@ -12,14 +12,11 @@
 </script>
 
 <script lang="ts">
-    import { Deferred, router } from '@inertiajs/svelte';
+    import { router } from '@inertiajs/svelte';
     import { ArrowRight, CheckCircle2, Circle, Copy } from 'lucide-svelte';
+    import DashboardSection from '@/components/dashboard/DashboardSection.svelte';
+    import LazyDashboardPanel from '@/components/dashboard/LazyDashboardPanel.svelte';
     import AppHead from '@/components/AppHead.svelte';
-    import ArmadaPerformanceCard from '@/components/dashboard/ArmadaPerformanceCard.svelte';
-    import CommandCenter from '@/components/dashboard/CommandCenter.svelte';
-    import RevenueActivityChart from '@/components/dashboard/RevenueActivityChart.svelte';
-    import RevenueChannelPieChart from '@/components/dashboard/RevenueChannelPieChart.svelte';
-    import DriverPerformanceCard from '@/components/dashboard/DriverPerformanceCard.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -344,10 +341,7 @@
         ),
     );
     const recentActivityOverflow = $derived(
-        Math.max(
-            safeRecentActivityTotal - safeRecentActivityVisibleCount,
-            0,
-        ),
+        Math.max(safeRecentActivityTotal - safeRecentActivityVisibleCount, 0),
     );
     const departuresTodayTotalBookings = $derived(
         safeDeparturesToday.reduce(
@@ -355,9 +349,7 @@
             0,
         ),
     );
-    const nextCharter = $derived(
-        safeUpcomingCharterReminder.items[0] ?? null,
-    );
+    const nextCharter = $derived(safeUpcomingCharterReminder.items[0] ?? null);
     const hasTrendTransactionCounts = $derived(
         operationalTrendSourceRows.some(
             (item) => Number(item.transaction_count || 0) > 0,
@@ -698,6 +690,7 @@
 <AppHead title="Dashboard" />
 
 <div
+    class:mobile-page={true}
     data-content-density="compact"
     class="flex h-full flex-1 flex-col gap-2 overflow-x-clip rounded-xl px-2 py-2 md:gap-3 md:p-4"
 >
@@ -774,107 +767,70 @@
         <!-- Command Center & Prioritas Grid -->
         <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <!-- Revenue Activity Chart -->
-            <RevenueActivityChart
-                monthlyTrend={safeDailyTrend}
-                {toCurrency}
-                title="Revenue 30 Hari Terakhir"
-                subtitle="Aktivitas Harian"
-            />
+            <DashboardSection data="dailyTrend" label="Pendapatan harian">
+                <LazyDashboardPanel
+                    loader={() =>
+                        import('@/components/dashboard/RevenueActivityChart.svelte')}
+                    label="Pendapatan harian"
+                    panelProps={{
+                        monthlyTrend: safeDailyTrend,
+                        toCurrency,
+                        title: 'Pendapatan 30 hari terakhir',
+                        subtitle: 'Aktivitas harian',
+                    }}
+                />
+            </DashboardSection>
 
             <!-- Prioritas Hari Ini replaced with RevenueChannelPieChart -->
-            <RevenueChannelPieChart
-                summaryStatsByScope={safeSummaryStatsByScope}
-                {toCurrency}
+            <LazyDashboardPanel
+                loader={() =>
+                    import('@/components/dashboard/RevenueChannelPieChart.svelte')}
+                label="Sumber pendapatan"
+                panelProps={{
+                    summaryStatsByScope: safeSummaryStatsByScope,
+                    toCurrency,
+                }}
             />
         </div>
     </div>
 
-    <Deferred
-        data={[
-            'dailyTrend',
-            'monthlyTrend',
-            'recentActivity',
-            'recentActivityTotal',
-            'recentActivityVisibleCount',
-            'departuresToday',
-            'upcomingCharterReminder',
-            'topDrivers',
-            'topArmadas',
-        ]}
-    >
-        {#snippet fallback()}
-            <div
-                class="grid gap-2.5 xl:grid-cols-3 xl:items-start"
-                aria-label="Memuat data dashboard"
+    <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
+        <div class="space-y-2.5 xl:col-span-2">
+            <!-- Command Center -->
+            <DashboardSection data="monthlyTrend" label="Pendapatan bulanan">
+                <LazyDashboardPanel
+                    loader={() =>
+                        import('@/components/dashboard/CommandCenter.svelte')}
+                    label="Pendapatan bulanan"
+                    panelProps={{ monthlyTrend: safeMonthlyTrend, toCurrency }}
+                />
+            </DashboardSection>
+
+            <!-- Driver Performance Card -->
+            <DashboardSection data="topDrivers" label="Performa driver">
+                <LazyDashboardPanel
+                    loader={() =>
+                        import('@/components/dashboard/DriverPerformanceCard.svelte')}
+                    label="Performa"
+                    panelProps={{ categories: safeTopDrivers, toCurrency }}
+                />
+            </DashboardSection>
+
+            <DashboardSection data="topArmadas" label="Performa armada">
+                <LazyDashboardPanel
+                    loader={() =>
+                        import('@/components/dashboard/ArmadaPerformanceCard.svelte')}
+                    label="Performa"
+                    panelProps={{ categories: safeTopArmadas, toCurrency }}
+                />
+            </DashboardSection>
+        </div>
+
+        <div class="space-y-2.5 xl:col-span-1">
+            <DashboardSection
+                data={['upcomingCharterReminder']}
+                label="Carter mendatang"
             >
-                <div class="space-y-2.5 xl:col-span-2">
-                    {#each Array.from( { length: 2 }, ) as _, index (`dashboard-main-skeleton-${index}`)}
-                        <Card class="overflow-hidden">
-                            <CardContent class="space-y-3 p-4">
-                                <div
-                                    class="h-4 w-40 animate-pulse rounded-full bg-muted"
-                                ></div>
-                                <div
-                                    class="h-3 w-28 animate-pulse rounded-full bg-muted/70"
-                                ></div>
-                                <div
-                                    class="grid grid-cols-7 items-end gap-2 pt-3"
-                                >
-                                    {#each Array.from( { length: 7 }, ) as _, barIndex (`dashboard-chart-skeleton-${index}-${barIndex}`)}
-                                        <div
-                                            class="animate-pulse rounded-md bg-muted"
-                                            style={`height:${24 + ((barIndex + index) % 4) * 10}px`}
-                                        ></div>
-                                    {/each}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    {/each}
-                </div>
-                <div class="space-y-2.5">
-                    {#each Array.from( { length: 3 }, ) as _, index (`dashboard-side-skeleton-${index}`)}
-                        <Card>
-                            <CardContent class="space-y-3 p-4">
-                                <div
-                                    class="h-4 w-36 animate-pulse rounded-full bg-muted"
-                                ></div>
-                                {#each Array.from( { length: index === 1 ? 3 : 2 }, ) as _, rowIndex (`dashboard-side-row-${index}-${rowIndex}`)}
-                                    <div
-                                        class="space-y-2 rounded-xl border border-border/60 p-3"
-                                    >
-                                        <div
-                                            class="h-3 w-2/3 animate-pulse rounded-full bg-muted"
-                                        ></div>
-                                        <div
-                                            class="h-3 w-full animate-pulse rounded-full bg-muted/70"
-                                        ></div>
-                                    </div>
-                                {/each}
-                            </CardContent>
-                        </Card>
-                    {/each}
-                </div>
-            </div>
-        {/snippet}
-
-        <div class="grid gap-2.5 xl:grid-cols-3 xl:items-start">
-            <div class="space-y-2.5 xl:col-span-2">
-                <!-- Command Center -->
-                <CommandCenter monthlyTrend={safeMonthlyTrend} {toCurrency} />
-
-                <!-- Driver Performance Card -->
-                <DriverPerformanceCard
-                    categories={safeTopDrivers}
-                    {toCurrency}
-                />
-
-                <ArmadaPerformanceCard
-                    categories={safeTopArmadas}
-                    {toCurrency}
-                />
-            </div>
-
-            <div class="space-y-2.5 xl:col-span-1">
                 <Card
                     class="overflow-hidden rounded-lg border border-border/80 shadow-sm"
                 >
@@ -886,7 +842,8 @@
                                 <CardTitle class="text-[13px] sm:text-[14px]"
                                     >Info Carter 7 Hari Kedepan</CardTitle
                                 >
-                                <CardDescription class="text-[10px] sm:text-xs"
+                                <CardDescription
+                                    class="text-xs md:text-[10px] sm:text-xs"
                                     >Reminder charter terdekat, diurutkan dari
                                     tanggal paling dekat</CardDescription
                                 >
@@ -905,7 +862,7 @@
                     >
                         {#if safeUpcomingCharterReminder.items.length === 0}
                             <div
-                                class="rounded-xl border border-dashed p-3 text-[11px] text-muted-foreground text-center"
+                                class="rounded-xl border border-dashed p-3 text-xs md:text-[11px] text-muted-foreground text-center"
                             >
                                 Belum ada data carter.
                             </div>
@@ -925,7 +882,7 @@
                                                 {item.name}
                                             </p>
                                             <p
-                                                class="truncate text-[11px] text-muted-foreground"
+                                                class="truncate text-xs md:text-[11px] text-muted-foreground"
                                             >
                                                 {item.company_name ||
                                                     item.phone ||
@@ -933,13 +890,13 @@
                                             </p>
                                         </div>
                                         <span
-                                            class="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:bg-cyan-950/45 dark:text-cyan-200"
+                                            class="shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-cyan-700 dark:bg-cyan-950/45 dark:text-cyan-200"
                                         >
                                             {charterReminderTag(item)}
                                         </span>
                                     </div>
                                     <div
-                                        class="space-y-1 text-[11px] text-muted-foreground"
+                                        class="space-y-1 text-xs md:text-[11px] text-muted-foreground"
                                     >
                                         <p class="font-medium text-foreground">
                                             {item.date_label}
@@ -973,15 +930,19 @@
                         {/if}
                     </CardContent>
                 </Card>
+            </DashboardSection>
 
-                <Card
-                    class="rounded-lg border border-border/80 shadow-sm"
-                >
+            <DashboardSection
+                data={['departuresToday']}
+                label="Keberangkatan hari ini"
+            >
+                <Card class="rounded-lg border border-border/80 shadow-sm">
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <CardTitle class="text-[13px] sm:text-[14px]"
                             >Keberangkatan Hari Ini</CardTitle
                         >
-                        <CardDescription class="text-[10px] sm:text-xs"
+                        <CardDescription
+                            class="text-xs md:text-[10px] sm:text-xs"
                             >Data jadwal dari booking aktif hari ini</CardDescription
                         >
                     </CardHeader>
@@ -1027,7 +988,7 @@
                                                 {item.rute}
                                             </p>
                                             <p
-                                                class="truncate text-[11px] text-muted-foreground"
+                                                class="truncate text-xs md:text-[11px] text-muted-foreground"
                                             >
                                                 Driver: {item.driver_name ||
                                                     '-'}
@@ -1037,7 +998,7 @@
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            class="h-8 w-full rounded-md px-2 text-[11px] sm:h-7 sm:w-auto"
+                                            class="h-8 w-full rounded-md px-2 text-xs md:text-[11px] sm:h-7 sm:w-auto"
                                             onclick={() =>
                                                 void copyDepartureData(item)}
                                             disabled={copyingDepartureKey ===
@@ -1055,9 +1016,18 @@
                         {/if}
                     </CardContent>
                 </Card>
+            </DashboardSection>
 
+            <DashboardSection
+                data={[
+                    'recentActivity',
+                    'recentActivityTotal',
+                    'recentActivityVisibleCount',
+                ]}
+                label="Aktivitas terbaru"
+            >
                 <Card
-                    class="hidden h-fit rounded-lg border border-border/80 shadow-sm xl:block"
+                    class="h-fit rounded-lg border border-border/80 shadow-sm"
                 >
                     <CardHeader class="space-y-1 p-4 pb-2 sm:px-5 sm:pt-4">
                         <div class="flex items-start justify-between gap-3">
@@ -1066,7 +1036,7 @@
                                     >Aktivitas Terbaru</CardTitle
                                 >
                                 <CardDescription class="text-xs"
-                                    >Update terbaru dari sistem</CardDescription
+                                    >Simpan terbaru dari sistem</CardDescription
                                 >
                             </div>
                             {#if safeRecentActivityTotal > 0}
@@ -1109,7 +1079,7 @@
                                             </p>
                                         </div>
                                         <span
-                                            class="shrink-0 text-[11px] text-muted-foreground"
+                                            class="shrink-0 text-xs md:text-[11px] text-muted-foreground"
                                             >{item.time}</span
                                         >
                                     </div>
@@ -1130,75 +1100,7 @@
                         {/if}
                     </CardContent>
                 </Card>
-            </div>
-
-            <Card class="order-last h-fit xl:hidden">
-                <CardHeader class="space-y-1 pb-2">
-                    <div
-                        class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between"
-                    >
-                        <div class="min-w-0">
-                            <CardTitle class="text-sm md:text-base"
-                                >Aktivitas Terbaru</CardTitle
-                            >
-                            <CardDescription class="text-xs"
-                                >Update terbaru dari sistem</CardDescription
-                            >
-                        </div>
-                        {#if safeRecentActivityTotal > 0}
-                            <Badge variant="secondary" class="w-fit shrink-0"
-                                >{safeRecentActivityTotal} log</Badge
-                            >
-                        {/if}
-                    </div>
-                </CardHeader>
-                <CardContent class="space-y-2.5 pt-0">
-                    {#if safeRecentActivity.length === 0}
-                        <p class="text-xs text-muted-foreground">
-                            Belum ada aktivitas.
-                        </p>
-                    {:else}
-                        {#each safeRecentActivity as item, idx (`activity-mobile-${idx}-${item.tag}`)}
-                            <div class="rounded-md border p-2.5">
-                                <div
-                                    class="mb-1 flex items-start justify-between gap-2"
-                                >
-                                    <Badge
-                                        variant="secondary"
-                                        class="max-w-[70%] truncate"
-                                        >{item.tag}</Badge
-                                    >
-                                    <span
-                                        class="shrink-0 text-xs text-muted-foreground"
-                                        >{item.time}</span
-                                    >
-                                </div>
-                                <p
-                                    class="break-words text-xs font-semibold md:text-sm"
-                                >
-                                    {item.title}
-                                </p>
-                                <p
-                                    class="break-words text-xs text-muted-foreground"
-                                >
-                                    {item.meta}
-                                </p>
-                            </div>
-                        {/each}
-                        {#if recentActivityOverflow > 0}
-                            <a
-                                href="/settings/logs"
-                                class="flex flex-col gap-1 rounded-xl border border-dashed border-border/70 bg-muted/25 px-3 py-2 text-xs font-medium text-foreground transition hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
-                            >
-                                <span
-                                    >Lihat {recentActivityOverflow} aktivitas lainnya</span
-                                >
-                                <span>Ke menu Log</span>
-                            </a>
-                        {/if}
-                    {/if}
-                </CardContent>
-            </Card>
+            </DashboardSection>
         </div>
-    </Deferred>
+    </div>
 </div>

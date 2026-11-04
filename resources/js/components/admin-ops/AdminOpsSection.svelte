@@ -45,7 +45,7 @@
             <div>
                 {#if eyebrow !== ''}
                     <p
-                        class="text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground md:[html[data-density=compact]_&]:text-[10px] md:[html[data-density=compact]_&]:tracking-[0.18em]"
+                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.24em] text-muted-foreground md:[html[data-density=compact]_&]:text-[10px] md:[html[data-density=compact]_&]:tracking-[0.18em]"
                     >
                         {eyebrow}
                     </p>
@@ -72,7 +72,7 @@
                     {#if badgeText !== ''}
                         <span
                             class={cn(
-                                'inline-flex w-fit rounded-full border border-border/70 bg-background/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground md:[html[data-density=compact]_&]:px-2.5 md:[html[data-density=compact]_&]:py-0.5 md:[html[data-density=compact]_&]:text-[10px]',
+                                'inline-flex w-fit rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground md:[html[data-density=compact]_&]:px-2.5 md:[html[data-density=compact]_&]:py-0.5 md:[html[data-density=compact]_&]:text-[10px]',
                                 badgeClass,
                             )}
                         >

@@ -15,7 +15,12 @@
     import { extractApiErrorMessage } from '@/lib/api-errors';
     import { saveUiPreferences } from '@/lib/ui-preferences';
     import { cn } from '@/lib/utils';
-    import type { ActivePool, ActiveTenant, PoolOption, TenantOption } from '@/types/auth';
+    import type {
+        ActivePool,
+        ActiveTenant,
+        PoolOption,
+        TenantOption,
+    } from '@/types/auth';
 
     let {
         mode,
@@ -29,8 +34,12 @@
     const isSuperAdmin = $derived(Boolean(auth?.user?.is_super_admin));
     const tenants = $derived((auth?.tenants ?? []) as TenantOption[]);
     const pools = $derived((auth?.pools ?? []) as PoolOption[]);
-    const activeTenant = $derived((auth?.active_tenant ?? null) as ActiveTenant | null);
-    const activePool = $derived((auth?.active_pool ?? null) as ActivePool | null);
+    const activeTenant = $derived(
+        (auth?.active_tenant ?? null) as ActiveTenant | null,
+    );
+    const activePool = $derived(
+        (auth?.active_pool ?? null) as ActivePool | null,
+    );
     const hasTenants = $derived(tenants.length > 0);
     const hasPools = $derived(pools.length > 0);
     const showTenant = $derived(isSuperAdmin && hasTenants);
@@ -56,8 +65,11 @@
         }
 
         return (
-            (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement | null)
-                ?.content ?? ''
+            (
+                document.querySelector(
+                    'meta[name=csrf-token]',
+                ) as HTMLMetaElement | null
+            )?.content ?? ''
         );
     }
 
@@ -97,7 +109,10 @@
                 preserveState: false,
             });
         } catch (error) {
-            errorMessage = error instanceof Error ? error.message : 'Gagal mengganti tenant.';
+            errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : 'Gagal mengganti tenant.';
         } finally {
             pendingTenantId = null;
         }
@@ -145,7 +160,10 @@
                 preserveState: false,
             });
         } catch (error) {
-            errorMessage = error instanceof Error ? error.message : 'Gagal mengganti pool.';
+            errorMessage =
+                error instanceof Error
+                    ? error.message
+                    : 'Gagal mengganti pool.';
         } finally {
             pendingPoolId = null;
         }
@@ -154,7 +172,9 @@
 
 {#if mode === 'desktop'}
     {#if showTenant || showPool}
-        <DropdownMenu class={cn('relative w-full min-w-0 max-w-full', className)}>
+        <DropdownMenu
+            class={cn('relative w-full min-w-0 max-w-full', className)}
+        >
             <DropdownMenuTrigger asChild class="w-full min-w-0 max-w-full">
                 {#snippet children(props)}
                     <button
@@ -177,7 +197,9 @@
                         >
                             {activeSummary}
                         </span>
-                        <ChevronDown class="size-4 shrink-0 text-muted-foreground" />
+                        <ChevronDown
+                            class="size-4 shrink-0 text-muted-foreground"
+                        />
                     </button>
                 {/snippet}
             </DropdownMenuTrigger>
@@ -186,7 +208,9 @@
                 sideOffset={8}
                 class="w-[min(18rem,calc(100vw-1rem))] max-w-[calc(100vw-1rem)] overflow-hidden p-2"
             >
-                <div class="max-h-[70svh] space-y-1 overflow-y-auto pr-1 scrollbar-thin">
+                <div
+                    class="max-h-[70svh] space-y-1 overflow-y-auto pr-1 scrollbar-thin"
+                >
                     {#if showTenant}
                         <DropdownMenuItem
                             class="gap-2 rounded-md text-sm"
@@ -194,11 +218,25 @@
                             onclick={() => switchTenant(0)}
                         >
                             <Building2 class="size-4 shrink-0" />
-                            <Check class={cn('size-4 shrink-0', !activeTenant ? 'opacity-100 text-primary' : 'opacity-0')} />
-                            <span class="min-w-0 flex-1 truncate">Tanpa Tenant</span>
-                            <span class="shrink-0 text-[11px] text-muted-foreground">Platform</span>
+                            <Check
+                                class={cn(
+                                    'size-4 shrink-0',
+                                    !activeTenant
+                                        ? 'opacity-100 text-primary'
+                                        : 'opacity-0',
+                                )}
+                            />
+                            <span class="min-w-0 flex-1 truncate"
+                                >Tanpa Tenant</span
+                            >
+                            <span
+                                class="shrink-0 text-[11px] text-muted-foreground"
+                                >Platform</span
+                            >
                             {#if pendingTenantId !== null}
-                                <LoaderCircle class="size-4 shrink-0 animate-spin text-muted-foreground" />
+                                <LoaderCircle
+                                    class="size-4 shrink-0 animate-spin text-muted-foreground"
+                                />
                             {/if}
                         </DropdownMenuItem>
 
@@ -209,11 +247,26 @@
                                 onclick={() => switchTenant(tenant.id)}
                             >
                                 <Building2 class="size-4 shrink-0" />
-                                <Check class={cn('size-4 shrink-0', activeTenant?.id === tenant.id ? 'opacity-100 text-primary' : 'opacity-0')} />
-                                <span class="min-w-0 flex-1 truncate" title={tenant.name}>{tenant.name}</span>
-                                <span class="max-w-20 shrink-0 truncate text-[11px] text-muted-foreground" title={tenant.slug}>{tenant.slug}</span>
+                                <Check
+                                    class={cn(
+                                        'size-4 shrink-0',
+                                        activeTenant?.id === tenant.id
+                                            ? 'opacity-100 text-primary'
+                                            : 'opacity-0',
+                                    )}
+                                />
+                                <span
+                                    class="min-w-0 flex-1 truncate"
+                                    title={tenant.name}>{tenant.name}</span
+                                >
+                                <span
+                                    class="max-w-20 shrink-0 truncate text-[11px] text-muted-foreground"
+                                    title={tenant.slug}>{tenant.slug}</span
+                                >
                                 {#if pendingTenantId === tenant.id}
-                                    <LoaderCircle class="size-4 shrink-0 animate-spin text-muted-foreground" />
+                                    <LoaderCircle
+                                        class="size-4 shrink-0 animate-spin text-muted-foreground"
+                                    />
                                 {/if}
                             </DropdownMenuItem>
                         {/each}
@@ -230,10 +283,21 @@
                             onclick={() => switchPool(0)}
                         >
                             <MapPin class="size-4 shrink-0" />
-                            <Check class={cn('size-4 shrink-0', !activePool ? 'opacity-100 text-primary' : 'opacity-0')} />
-                            <span class="min-w-0 flex-1 truncate">Semua Pool</span>
+                            <Check
+                                class={cn(
+                                    'size-4 shrink-0',
+                                    !activePool
+                                        ? 'opacity-100 text-primary'
+                                        : 'opacity-0',
+                                )}
+                            />
+                            <span class="min-w-0 flex-1 truncate"
+                                >Semua Pool</span
+                            >
                             {#if pendingPoolId !== null}
-                                <LoaderCircle class="size-4 shrink-0 animate-spin text-muted-foreground" />
+                                <LoaderCircle
+                                    class="size-4 shrink-0 animate-spin text-muted-foreground"
+                                />
                             {/if}
                         </DropdownMenuItem>
 
@@ -244,38 +308,53 @@
                                 onclick={() => switchPool(pool.id)}
                             >
                                 <MapPin class="size-4 shrink-0" />
-                                <Check class={cn('size-4 shrink-0', activePool?.id === pool.id ? 'opacity-100 text-primary' : 'opacity-0')} />
-                                <span class="min-w-0 flex-1 truncate" title={pool.name}>{pool.name}</span>
+                                <Check
+                                    class={cn(
+                                        'size-4 shrink-0',
+                                        activePool?.id === pool.id
+                                            ? 'opacity-100 text-primary'
+                                            : 'opacity-0',
+                                    )}
+                                />
+                                <span
+                                    class="min-w-0 flex-1 truncate"
+                                    title={pool.name}>{pool.name}</span
+                                >
                                 {#if pool.code}
-                                    <span class="max-w-16 shrink-0 truncate text-[11px] text-muted-foreground" title={pool.code}>{pool.code}</span>
+                                    <span
+                                        class="max-w-16 shrink-0 truncate text-[11px] text-muted-foreground"
+                                        title={pool.code}>{pool.code}</span
+                                    >
                                 {/if}
                                 {#if pendingPoolId === pool.id}
-                                    <LoaderCircle class="size-4 shrink-0 animate-spin text-muted-foreground" />
+                                    <LoaderCircle
+                                        class="size-4 shrink-0 animate-spin text-muted-foreground"
+                                    />
                                 {/if}
                             </DropdownMenuItem>
                         {/each}
                     {/if}
                 </div>
                 {#if errorMessage}
-                    <p class="px-2 pt-2 text-xs text-destructive">{errorMessage}</p>
+                    <p class="px-2 pt-2 text-xs text-destructive">
+                        {errorMessage}
+                    </p>
                 {/if}
             </DropdownMenuContent>
         </DropdownMenu>
     {/if}
-{:else}
-    {#if showTenant || showPool}
-        <div
-            class={cn(
-                showTenant && showPool ? 'grid gap-2 sm:grid-cols-2' : 'grid gap-2',
-                className,
-            )}
-        >
-            {#if showTenant}
-                <ContextSwitcher kind="tenant" mode="mobile" />
-            {/if}
-            {#if showPool}
-                <ContextSwitcher kind="pool" mode="mobile" />
-            {/if}
-        </div>
-    {/if}
+{:else if showTenant || showPool}
+    <div
+        class={cn(
+            showTenant && showPool ? 'grid grid-cols-2 gap-2' : 'grid gap-2',
+            className,
+        )}
+    >
+        {#if showTenant}
+            <ContextSwitcher kind="tenant" mode="mobile" />
+        {/if}
+        {#if showPool}
+            <ContextSwitcher kind="pool" mode="mobile" />
+        {/if}
+    </div>
 {/if}

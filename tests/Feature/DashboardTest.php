@@ -69,7 +69,7 @@ class DashboardTest extends TestCase
         $opsMaster->assertOk();
     }
 
-    public function test_dashboard_exposes_aggregated_summary_and_one_deferred_data_group(): void
+    public function test_dashboard_exposes_summary_and_independent_deferred_sections(): void
     {
         Carbon::setTestNow('2026-06-05 10:00:00');
         $this->actingAsSuperAdmin();
@@ -151,7 +151,7 @@ class DashboardTest extends TestCase
                         'departuresToday',
                         'upcomingCharterReminder',
                     ])
-                    ->loadDeferredProps('dashboard-data', fn (Assert $reload) => $reload
+                    ->loadDeferredProps(['dashboard-trends', 'dashboard-operations', 'dashboard-activity', 'dashboard-performance'], fn (Assert $reload) => $reload
                         ->has('dailyTrend')
                         ->has('monthlyTrend')
                         ->has('recentActivity')
@@ -218,7 +218,7 @@ class DashboardTest extends TestCase
                 ->assertOk()
                 ->assertInertia(fn (Assert $page) => $page
                     ->where('stats.target_revenue_month', 1000000)
-                    ->loadDeferredProps('dashboard-data', fn (Assert $reload) => $reload
+                    ->loadDeferredProps('dashboard-activity', fn (Assert $reload) => $reload
                         ->where('recentActivityTotal', 1)
                         ->where('recentActivity.0.title', 'Log tenant A')));
         } finally {

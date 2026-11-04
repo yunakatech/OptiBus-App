@@ -1,4 +1,6 @@
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { Copy, Printer } from 'lucide-svelte';
     import { Button } from '@/components/ui/button';
 
@@ -96,33 +98,35 @@
         <div
             class="relative border-b border-border/70 bg-[radial-gradient(circle_at_top_left,_rgba(34,211,238,0.18),_transparent_42%),linear-gradient(135deg,_rgba(15,23,42,0.98),_rgba(8,47,73,0.92))] px-5 py-5 text-white"
         >
-            <div
-                class="absolute inset-y-0 right-0 hidden w-64 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.14),_transparent_62%)] lg:block"
-            ></div>
+            <ViewportOnly minWidth={1024}
+                ><div
+                    class="absolute inset-y-0 right-0 hidden w-64 bg-[radial-gradient(circle_at_center,_rgba(255,255,255,0.14),_transparent_62%)] lg:block"
+                ></div></ViewportOnly
+            >
             <div
                 class="relative flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
             >
                 <div class="space-y-3">
                     <div class="flex flex-wrap items-center gap-2">
                         <span
-                            class={`rounded-full px-3 py-1 text-[11px] font-semibold ${charterStatusClass(charterViewData.status)}`}
+                            class={`rounded-full px-3 py-1 text-xs md:text-[11px] font-semibold ${charterStatusClass(charterViewData.status)}`}
                         >
                             {charterStatusLabel(charterViewData.status)}
                         </span>
                         <span
-                            class={`rounded-full px-3 py-1 text-[11px] font-semibold ${charterPaymentClass(charterViewData.payment_status)}`}
+                            class={`rounded-full px-3 py-1 text-xs md:text-[11px] font-semibold ${charterPaymentClass(charterViewData.payment_status)}`}
                         >
                             {charterViewData.payment_status ?? '-'}
                         </span>
                         <span
-                            class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-semibold text-slate-100"
+                            class="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs md:text-[11px] font-semibold text-slate-100"
                         >
                             {charterViewData.layanan ?? defaultCharterService}
                         </span>
                     </div>
                     <div>
                         <p
-                            class="text-[11px] uppercase tracking-[0.18em] text-cyan-100/80"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.18em] text-cyan-100/80"
                         >
                             Detail Carter
                         </p>
@@ -152,7 +156,7 @@
                             }}
                         >
                             <Copy class="mr-2 h-4 w-4" />
-                            Copy Data
+                            Salin data
                         </Button>
                         <Button
                             type="button"
@@ -204,7 +208,7 @@
             <div class="grid gap-3 md:grid-cols-3 xl:grid-cols-4">
                 <div class="rounded-lg border border-border/70 bg-muted/20 p-4">
                     <p
-                        class="text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
+                        class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
                     >
                         Jadwal
                     </p>
@@ -222,7 +226,7 @@
                 </div>
                 <div class="rounded-lg border border-border/70 bg-muted/20 p-4">
                     <p
-                        class="text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
+                        class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
                     >
                         Armada & Driver
                     </p>
@@ -241,7 +245,7 @@
                 </div>
                 <div class="rounded-lg border border-border/70 bg-muted/20 p-4">
                     <p
-                        class="text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
+                        class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
                     >
                         Total Biaya
                     </p>
@@ -267,7 +271,7 @@
                 </div>
                 <div class="rounded-lg border border-border/70 bg-muted/20 p-4">
                     <p
-                        class="text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
+                        class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
                     >
                         Pembayaran
                     </p>
@@ -305,7 +309,7 @@
                             class="rounded-lg border border-emerald-200/70 bg-emerald-50/70 p-4"
                         >
                             <p
-                                class="text-[11px] uppercase tracking-[0.08em] text-emerald-700"
+                                class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-emerald-700"
                             >
                                 Titik Jemput
                             </p>
@@ -319,7 +323,7 @@
                             class="rounded-lg border border-cyan-200/70 bg-cyan-50/70 p-4"
                         >
                             <p
-                                class="text-[11px] uppercase tracking-[0.08em] text-cyan-700"
+                                class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-cyan-700"
                             >
                                 Titik Antar
                             </p>
@@ -386,7 +390,7 @@
                         class="mt-4 rounded-lg border border-border/70 bg-card p-4"
                     >
                         <p
-                            class="text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
+                            class="text-xs md:text-[11px] uppercase tracking-[0.08em] text-muted-foreground"
                         >
                             Tagihan Saat Ini
                         </p>

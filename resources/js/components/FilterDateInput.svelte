@@ -21,9 +21,12 @@
     } = $props();
 
     let input = $state<HTMLInputElement | null>(null);
-    let picker: FlatpickrInstance | null = null;
+    let picker = $state.raw<FlatpickrInstance | null>(null);
 
     onMount(() => {
+        // Keep the platform date picker on phones; no calendar chunk is needed.
+        if (window.matchMedia('(max-width: 767px), (pointer: coarse)').matches)
+            return;
         let disposed = false;
 
         void loadFlatpickr()
@@ -76,12 +79,16 @@
     });
 
     $effect(() => {
+        const nextMinDate = minDate;
+        const nextMaxDate = maxDate;
+        const nextDisabled = disabled;
         if (!picker) {
             return;
         }
 
-        picker.set('minDate', minDate || null);
-        picker.set('maxDate', maxDate || null);
+        picker.set('minDate', nextMinDate || null);
+        picker.set('maxDate', nextMaxDate || null);
+        if (picker.altInput) picker.altInput.disabled = nextDisabled;
     });
 </script>
 

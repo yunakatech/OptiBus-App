@@ -10,6 +10,8 @@
 </script>
 
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { page, router } from '@inertiajs/svelte';
     import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-svelte';
     import { onMount } from 'svelte';
@@ -772,7 +774,7 @@
 
 <AppHead title={masterTabTitle(activeTab)} />
 
-<div class="space-y-4 p-4">
+<div class:mobile-page={true} class="space-y-4 p-4">
     <section
         class="overflow-hidden rounded-lg border border-border/70 bg-background shadow-sm"
     >
@@ -861,36 +863,48 @@
                     >
                         <p class="text-xs font-medium text-muted-foreground">
                             {bagasiForm.id
-                                ? 'Halaman Edit Customer Bagasi'
-                                : 'Halaman Tambah Customer Bagasi Baru'}
+                                ? 'Edit pelanggan bagasi'
+                                : 'Tambah pelanggan bagasi'}
                         </p>
                     </div>
                     <form
                         class="grid gap-3 md:grid-cols-4"
                         onsubmit={saveBagasiCustomer}
                     >
-                        <Input
-                            placeholder="Nama"
-                            bind:value={bagasiForm.nama}
-                            required
-                        />
-                        <Input
-                            placeholder="No HP"
-                            bind:value={bagasiForm.no_hp}
-                            required
-                        />
-                        <Input
-                            placeholder="Alamat"
-                            bind:value={bagasiForm.alamat}
-                        />
-                        <select
-                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                            bind:value={bagasiForm.tipe}
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Nama</span><Input
+                                placeholder="Nama"
+                                bind:value={bagasiForm.nama}
+                                required
+                            /></label
                         >
-                            <option value="pengirim">Pengirim</option>
-                            <option value="penerima">Penerima</option>
-                            <option value="keduanya">Keduanya</option>
-                        </select>
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Nomor HP</span><Input
+                                placeholder="No HP"
+                                bind:value={bagasiForm.no_hp}
+                                required
+                            /></label
+                        >
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Alamat</span><Input
+                                placeholder="Alamat"
+                                bind:value={bagasiForm.alamat}
+                            /></label
+                        >
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Peran pelanggan</span><select
+                                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                bind:value={bagasiForm.tipe}
+                            >
+                                <option value="pengirim">Pengirim</option>
+                                <option value="penerima">Penerima</option>
+                                <option value="keduanya">Keduanya</option>
+                            </select></label
+                        >
                         <div>
                             <LoadingButton
                                 type="submit"
@@ -900,14 +914,17 @@
                                     ? 'Menyimpan...'
                                     : 'Membuat...'}
                                 >{bagasiForm.id
-                                    ? 'Update'
-                                    : 'Create'}</LoadingButton
+                                    ? 'Simpan'
+                                    : 'Simpan'}</LoadingButton
                             >
                         </div>
                     </form>
                 {:else}
                     <ResponsiveFilterBar
                         label="Bagasi"
+                        bind:query={bagasiQ}
+                        onSearch={() => void applySearch('customer-bagasi')}
+                        searchPlaceholder="Cari bagasi"
                         activeCount={bagasiQ.trim() ? 1 : 0}
                         summary={bagasiQ.trim() || 'Semua customer'}
                         onOpen={() => beginMasterFilterDraft('customer-bagasi')}
@@ -922,12 +939,12 @@
                             <span
                                 class="text-xs text-muted-foreground md:hidden"
                             >
-                                Cari customer bagasi
+                                Cari pelanggan bagasi
                             </span>
                         {/snippet}
                         {#snippet filters()}
                             <label class="grid gap-1.5 text-sm font-medium">
-                                Cari customer
+                                Cari pelanggan
                                 <Input
                                     class="h-12 rounded-xl text-base"
                                     placeholder="Nama, nomor HP, atau alamat"
@@ -945,12 +962,12 @@
                             class="mb-2 flex items-center justify-between gap-2"
                         >
                             <p
-                                class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                class="text-xs md:text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                             >
                                 Filter Data
                             </p>
                             <span
-                                class="rounded-full border border-border/60 bg-background px-2 py-0.5 text-[9px] font-medium text-muted-foreground"
+                                class="rounded-full border border-border/60 bg-background px-2 py-0.5 text-xs md:text-[9px] font-medium text-muted-foreground"
                             >
                                 Bagasi
                             </span>
@@ -958,70 +975,170 @@
                         <div
                             class="flex flex-col gap-2 md:flex-row md:items-center md:gap-2.5"
                         >
-                            <Input
-                                placeholder="Cari nama/no hp/alamat"
-                                bind:value={bagasiQ}
-                                class="h-8 text-[11px] md:flex-1 md:min-w-0"
-                            />
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Pencarian</span><Input
+                                    placeholder="Cari nama/no hp/alamat"
+                                    bind:value={bagasiQ}
+                                    class="h-8 text-xs md:text-[11px] md:flex-1 md:min-w-0"
+                                /></label
+                            >
                             <Button
                                 type="button"
-                                class="h-8 px-3 text-[11px] md:shrink-0"
+                                class="h-8 px-3 text-xs md:text-[11px] md:shrink-0"
                                 onclick={() =>
                                     void applySearch('customer-bagasi')}
-                                >Search</Button
+                                >Cari</Button
                             >
                         </div>
                     </div>
-                    <div class="grid gap-3 md:hidden">
-                        {#each bagasiCustomers as row (row.id)}
-                            <article
-                                class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
-                            >
-                                <div
-                                    class="flex items-start justify-between gap-3"
+                    <ViewportOnly minWidth={0} maxWidth={767}
+                        ><div class="grid gap-3 md:hidden">
+                            {#each bagasiCustomers as row (row.id)}
+                                <article
+                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                 >
-                                    <div class="min-w-0">
-                                        <p
-                                            class="truncate text-sm font-semibold text-foreground"
+                                    <div
+                                        class="flex items-start justify-between gap-3"
+                                    >
+                                        <div class="min-w-0">
+                                            <p
+                                                class="truncate text-sm font-semibold text-foreground"
+                                            >
+                                                {row.nama}
+                                            </p>
+                                            <p
+                                                class="mt-0.5 truncate text-xs text-muted-foreground"
+                                            >
+                                                {row.no_hp}
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="flex shrink-0 items-center gap-1.5"
                                         >
-                                            {row.nama}
-                                        </p>
-                                        <p
-                                            class="mt-0.5 truncate text-xs text-muted-foreground"
-                                        >
-                                            {row.no_hp}
-                                        </p>
+                                            <span
+                                                class="rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300"
+                                            >
+                                                {row.tipe ?? '-'}
+                                            </span>
+                                            <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        class="h-8 w-8 rounded-full border border-border/70"
+                                                    >
+                                                        <MoreHorizontal
+                                                            class="h-4 w-4"
+                                                        />
+                                                        <span class="sr-only"
+                                                            >Aksi pelanggan
+                                                            bagasi</span
+                                                        >
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent
+                                                    align="end"
+                                                    sideOffset={8}
+                                                    class="z-[120] w-44"
+                                                >
+                                                    <DropdownMenuItem
+                                                        disabled={tenantWriteDisabled}
+                                                        onclick={() => {
+                                                            bagasiForm = {
+                                                                id: row.id,
+                                                                nama: row.nama,
+                                                                no_hp: row.no_hp,
+                                                                alamat:
+                                                                    row.alamat ??
+                                                                    '',
+                                                                tipe:
+                                                                    row.tipe ??
+                                                                    'pengirim',
+                                                            };
+                                                            setFormMode('form');
+                                                        }}
+                                                    >
+                                                        <Pencil
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        Edit
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onclick={() =>
+                                                            void removeRow(
+                                                                `/api/admin/customer-bagasi/${row.id}`,
+                                                                'Customer bagasi deleted.',
+                                                            )}
+                                                        disabled={pendingDeleteKey ===
+                                                            `/api/admin/customer-bagasi/${row.id}` ||
+                                                            tenantWriteDisabled}
+                                                    >
+                                                        <Trash2
+                                                            class="mr-2 h-3.5 w-3.5"
+                                                        />
+                                                        {pendingDeleteKey ===
+                                                        `/api/admin/customer-bagasi/${row.id}`
+                                                            ? 'Menghapus...'
+                                                            : 'Hapus'}
+                                                    </DropdownMenuItem>
+                                                </DropdownMenuContent>
+                                            </DropdownMenu>
+                                        </div>
                                     </div>
                                     <div
-                                        class="flex shrink-0 items-center gap-1.5"
+                                        class="mt-3 rounded-xl bg-muted/30 px-3 py-2 text-xs"
                                     >
-                                        <span
-                                            class="rounded-full border border-cyan-200 bg-cyan-50 px-2 py-0.5 text-[10px] font-semibold text-cyan-700 dark:border-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-300"
+                                        <p
+                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >
-                                            {row.tipe ?? '-'}
-                                        </span>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
+                                            Alamat
+                                        </p>
+                                        <p
+                                            class="mt-1 break-words font-medium text-foreground"
+                                        >
+                                            {row.alamat ?? '-'}
+                                        </p>
+                                    </div>
+                                </article>
+                            {/each}
+                        </div></ViewportOnly
+                    >
+                    <ViewportOnly minWidth={768}
+                        ><div
+                            class="hidden overflow-x-auto rounded-md border md:block"
+                        >
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-muted/50"
+                                    ><tr
+                                        ><th class="px-3 py-2 text-left"
+                                            >Nama</th
+                                        ><th class="px-3 py-2 text-left"
+                                            >No HP</th
+                                        ><th class="px-3 py-2 text-left"
+                                            >Tipe</th
+                                        ><th class="px-3 py-2 text-left"
+                                            >Aksi</th
+                                        ></tr
+                                    ></thead
+                                >
+                                <tbody>
+                                    {#each bagasiCustomers as row (row.id)}
+                                        <tr class="border-t">
+                                            <td class="px-3 py-2">{row.nama}</td
+                                            >
+                                            <td class="px-3 py-2"
+                                                >{row.no_hp}</td
+                                            >
+                                            <td class="px-3 py-2"
+                                                >{row.tipe ?? '-'}</td
+                                            >
+                                            <td class="space-x-2 px-3 py-2">
                                                 <Button
                                                     type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    class="h-8 w-8 rounded-full border border-border/70"
-                                                >
-                                                    <MoreHorizontal
-                                                        class="h-4 w-4"
-                                                    />
-                                                    <span class="sr-only"
-                                                        >Aksi customer bagasi</span
-                                                    >
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent
-                                                align="end"
-                                                sideOffset={8}
-                                                class="z-[120] w-44"
-                                            >
-                                                <DropdownMenuItem
+                                                    size="sm"
+                                                    variant="outline"
                                                     disabled={tenantWriteDisabled}
                                                     onclick={() => {
                                                         bagasiForm = {
@@ -1036,116 +1153,32 @@
                                                                 'pengirim',
                                                         };
                                                         setFormMode('form');
-                                                    }}
+                                                    }}>Edit</Button
                                                 >
-                                                    <Pencil
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={pendingDeleteKey ===
+                                                        `/api/admin/customer-bagasi/${row.id}` ||
+                                                        tenantWriteDisabled}
                                                     onclick={() =>
                                                         void removeRow(
                                                             `/api/admin/customer-bagasi/${row.id}`,
                                                             'Customer bagasi deleted.',
                                                         )}
-                                                    disabled={pendingDeleteKey ===
-                                                        `/api/admin/customer-bagasi/${row.id}` ||
-                                                        tenantWriteDisabled}
-                                                >
-                                                    <Trash2
-                                                        class="mr-2 h-3.5 w-3.5"
-                                                    />
-                                                    {pendingDeleteKey ===
+                                                    >{pendingDeleteKey ===
                                                     `/api/admin/customer-bagasi/${row.id}`
                                                         ? 'Menghapus...'
-                                                        : 'Hapus'}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                                </div>
-                                <div
-                                    class="mt-3 rounded-xl bg-muted/30 px-3 py-2 text-xs"
-                                >
-                                    <p
-                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                    >
-                                        Alamat
-                                    </p>
-                                    <p
-                                        class="mt-1 break-words font-medium text-foreground"
-                                    >
-                                        {row.alamat ?? '-'}
-                                    </p>
-                                </div>
-                            </article>
-                        {/each}
-                    </div>
-                    <div
-                        class="hidden overflow-x-auto rounded-md border md:block"
+                                                        : 'Delete'}</Button
+                                                >
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div></ViewportOnly
                     >
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-muted/50"
-                                ><tr
-                                    ><th class="px-3 py-2 text-left">Nama</th
-                                    ><th class="px-3 py-2 text-left">No HP</th
-                                    ><th class="px-3 py-2 text-left">Tipe</th
-                                    ><th class="px-3 py-2 text-left">Aksi</th
-                                    ></tr
-                                ></thead
-                            >
-                            <tbody>
-                                {#each bagasiCustomers as row (row.id)}
-                                    <tr class="border-t">
-                                        <td class="px-3 py-2">{row.nama}</td>
-                                        <td class="px-3 py-2">{row.no_hp}</td>
-                                        <td class="px-3 py-2"
-                                            >{row.tipe ?? '-'}</td
-                                        >
-                                        <td class="space-x-2 px-3 py-2">
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                disabled={tenantWriteDisabled}
-                                                onclick={() => {
-                                                    bagasiForm = {
-                                                        id: row.id,
-                                                        nama: row.nama,
-                                                        no_hp: row.no_hp,
-                                                        alamat:
-                                                            row.alamat ?? '',
-                                                        tipe:
-                                                            row.tipe ??
-                                                            'pengirim',
-                                                    };
-                                                    setFormMode('form');
-                                                }}>Edit</Button
-                                            >
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                disabled={pendingDeleteKey ===
-                                                    `/api/admin/customer-bagasi/${row.id}` ||
-                                                    tenantWriteDisabled}
-                                                onclick={() =>
-                                                    void removeRow(
-                                                        `/api/admin/customer-bagasi/${row.id}`,
-                                                        'Customer bagasi deleted.',
-                                                    )}
-                                                >{pendingDeleteKey ===
-                                                `/api/admin/customer-bagasi/${row.id}`
-                                                    ? 'Menghapus...'
-                                                    : 'Delete'}</Button
-                                            >
-                                        </td>
-                                    </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
                     <div
                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
@@ -1155,6 +1188,7 @@
                             Total: {bagasiMeta.total}
                         </p>
                         <div
+                            class:mobile-pagination={true}
                             class="flex items-center justify-between gap-2 sm:justify-end"
                         >
                             <Button
@@ -1165,7 +1199,7 @@
                                     void jumpPage(
                                         'customer-bagasi',
                                         bagasiMeta.page - 1,
-                                    )}>Prev</Button
+                                    )}>Sebelumnya</Button
                             >
                             <span class="px-2 py-1 text-sm"
                                 >{bagasiMeta.page} / {bagasiMeta.last_page}</span
@@ -1179,7 +1213,7 @@
                                     void jumpPage(
                                         'customer-bagasi',
                                         bagasiMeta.page + 1,
-                                    )}>Next</Button
+                                    )}>Berikutnya</Button
                             >
                         </div>
                     </div>
@@ -1193,32 +1227,44 @@
                     >
                         <p class="text-xs font-medium text-muted-foreground">
                             {charterForm.id
-                                ? 'Halaman Edit Customer Carter'
-                                : 'Halaman Tambah Customer Carter Baru'}
+                                ? 'Edit pelanggan carter'
+                                : 'Tambah pelanggan carter'}
                         </p>
                     </div>
                     <form
                         class="grid gap-3 md:grid-cols-4"
                         onsubmit={saveCharterCustomer}
                     >
-                        <Input
-                            placeholder="Nama"
-                            bind:value={charterForm.nama}
-                            required
-                        />
-                        <Input
-                            placeholder="No HP"
-                            bind:value={charterForm.no_hp}
-                            required
-                        />
-                        <Input
-                            placeholder="Company"
-                            bind:value={charterForm.company}
-                        />
-                        <Input
-                            placeholder="Alamat"
-                            bind:value={charterForm.alamat}
-                        />
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Nama</span><Input
+                                placeholder="Nama"
+                                bind:value={charterForm.nama}
+                                required
+                            /></label
+                        >
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Nomor HP</span><Input
+                                placeholder="No HP"
+                                bind:value={charterForm.no_hp}
+                                required
+                            /></label
+                        >
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Perusahaan</span><Input
+                                placeholder="Perusahaan"
+                                bind:value={charterForm.company}
+                            /></label
+                        >
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Alamat</span><Input
+                                placeholder="Alamat"
+                                bind:value={charterForm.alamat}
+                            /></label
+                        >
                         <div>
                             <LoadingButton
                                 type="submit"
@@ -1228,14 +1274,17 @@
                                     ? 'Menyimpan...'
                                     : 'Membuat...'}
                                 >{charterForm.id
-                                    ? 'Update'
-                                    : 'Create'}</LoadingButton
+                                    ? 'Simpan'
+                                    : 'Simpan'}</LoadingButton
                             >
                         </div>
                     </form>
                 {:else}
                     <ResponsiveFilterBar
                         label="Carter"
+                        bind:query={charterQ}
+                        onSearch={() => void applySearch('customer-charter')}
+                        searchPlaceholder="Cari carter"
                         activeCount={charterQ.trim() ? 1 : 0}
                         summary={charterQ.trim() || 'Semua customer'}
                         onOpen={() =>
@@ -1251,15 +1300,15 @@
                             <span
                                 class="text-xs text-muted-foreground md:hidden"
                             >
-                                Cari customer carter
+                                Cari pelanggan carter
                             </span>
                         {/snippet}
                         {#snippet filters()}
                             <label class="grid gap-1.5 text-sm font-medium">
-                                Cari customer
+                                Cari pelanggan
                                 <Input
                                     class="h-12 rounded-xl text-base"
-                                    placeholder="Nama, nomor HP, atau company"
+                                    placeholder="Nama, nomor HP, atau perusahaan"
                                     bind:value={charterFilterDraft}
                                 />
                             </label>
@@ -1274,12 +1323,12 @@
                             class="mb-2 flex items-center justify-between gap-2"
                         >
                             <p
-                                class="text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
+                                class="text-xs md:text-[9px] font-semibold uppercase tracking-[0.2em] text-muted-foreground"
                             >
                                 Filter Data
                             </p>
                             <span
-                                class="rounded-full border border-border/60 bg-background px-2 py-0.5 text-[9px] font-medium text-muted-foreground"
+                                class="rounded-full border border-border/60 bg-background px-2 py-0.5 text-xs md:text-[9px] font-medium text-muted-foreground"
                             >
                                 Carter
                             </span>
@@ -1287,198 +1336,216 @@
                         <div
                             class="flex flex-col gap-2 md:flex-row md:items-center md:gap-2.5"
                         >
-                            <Input
-                                placeholder="Cari nama/no hp/company"
-                                bind:value={charterQ}
-                                class="h-8 text-[11px] md:flex-1 md:min-w-0"
-                            />
+                            <label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Pencarian</span><Input
+                                    placeholder="Cari nama/no hp/perusahaan"
+                                    bind:value={charterQ}
+                                    class="h-8 text-xs md:text-[11px] md:flex-1 md:min-w-0"
+                                /></label
+                            >
                             <Button
                                 type="button"
-                                class="h-8 px-3 text-[11px] md:shrink-0"
+                                class="h-8 px-3 text-xs md:text-[11px] md:shrink-0"
                                 onclick={() =>
                                     void applySearch('customer-charter')}
-                                >Search</Button
+                                >Cari</Button
                             >
                         </div>
                     </div>
-                    <div class="grid gap-3 md:hidden">
-                        {#each charterCustomers as row (row.id)}
-                            <article
-                                class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
-                            >
-                                <div
-                                    class="flex items-start justify-between gap-3"
+                    <ViewportOnly minWidth={0} maxWidth={767}
+                        ><div class="grid gap-3 md:hidden">
+                            {#each charterCustomers as row (row.id)}
+                                <article
+                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                 >
-                                    <div class="min-w-0">
-                                        <p
-                                            class="truncate text-sm font-semibold text-foreground"
-                                        >
-                                            {row.nama}
-                                        </p>
-                                        <p
-                                            class="mt-0.5 truncate text-xs text-muted-foreground"
-                                        >
-                                            {row.no_hp}
-                                        </p>
-                                    </div>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button
-                                                type="button"
-                                                variant="ghost"
-                                                size="icon"
-                                                class="h-8 w-8 shrink-0 rounded-full border border-border/70"
+                                    <div
+                                        class="flex items-start justify-between gap-3"
+                                    >
+                                        <div class="min-w-0">
+                                            <p
+                                                class="truncate text-sm font-semibold text-foreground"
                                             >
-                                                <MoreHorizontal
-                                                    class="h-4 w-4"
-                                                />
-                                                <span class="sr-only"
-                                                    >Aksi customer carter</span
+                                                {row.nama}
+                                            </p>
+                                            <p
+                                                class="mt-0.5 truncate text-xs text-muted-foreground"
+                                            >
+                                                {row.no_hp}
+                                            </p>
+                                        </div>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    class="h-8 w-8 shrink-0 rounded-full border border-border/70"
                                                 >
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent
-                                            align="end"
-                                            sideOffset={8}
-                                            class="z-[120] w-44"
-                                        >
-                                            <DropdownMenuItem
-                                                disabled={tenantWriteDisabled}
-                                                onclick={() => {
-                                                    charterForm = {
-                                                        id: row.id,
-                                                        nama: row.nama,
-                                                        no_hp: row.no_hp,
-                                                        alamat:
-                                                            row.alamat ?? '',
-                                                        company:
-                                                            row.company ?? '',
-                                                    };
-                                                    setFormMode('form');
-                                                }}
+                                                    <MoreHorizontal
+                                                        class="h-4 w-4"
+                                                    />
+                                                    <span class="sr-only"
+                                                        >Aksi pelanggan carter</span
+                                                    >
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent
+                                                align="end"
+                                                sideOffset={8}
+                                                class="z-[120] w-44"
                                             >
-                                                <Pencil
-                                                    class="mr-2 h-3.5 w-3.5"
-                                                />
-                                                Edit
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem
-                                                onclick={() =>
-                                                    void removeRow(
-                                                        `/api/admin/customer-charter/${row.id}`,
-                                                        'Customer charter deleted.',
-                                                    )}
-                                                disabled={pendingDeleteKey ===
-                                                    `/api/admin/customer-charter/${row.id}` ||
-                                                    tenantWriteDisabled}
+                                                <DropdownMenuItem
+                                                    disabled={tenantWriteDisabled}
+                                                    onclick={() => {
+                                                        charterForm = {
+                                                            id: row.id,
+                                                            nama: row.nama,
+                                                            no_hp: row.no_hp,
+                                                            alamat:
+                                                                row.alamat ??
+                                                                '',
+                                                            company:
+                                                                row.company ??
+                                                                '',
+                                                        };
+                                                        setFormMode('form');
+                                                    }}
+                                                >
+                                                    <Pencil
+                                                        class="mr-2 h-3.5 w-3.5"
+                                                    />
+                                                    Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem
+                                                    onclick={() =>
+                                                        void removeRow(
+                                                            `/api/admin/customer-charter/${row.id}`,
+                                                            'Customer charter deleted.',
+                                                        )}
+                                                    disabled={pendingDeleteKey ===
+                                                        `/api/admin/customer-charter/${row.id}` ||
+                                                        tenantWriteDisabled}
+                                                >
+                                                    <Trash2
+                                                        class="mr-2 h-3.5 w-3.5"
+                                                    />
+                                                    {pendingDeleteKey ===
+                                                    `/api/admin/customer-charter/${row.id}`
+                                                        ? 'Menghapus...'
+                                                        : 'Hapus'}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                                    <div class="mt-3 grid gap-2 text-xs">
+                                        <div
+                                            class="rounded-xl bg-muted/30 px-3 py-2"
+                                        >
+                                            <p
+                                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                             >
-                                                <Trash2
-                                                    class="mr-2 h-3.5 w-3.5"
-                                                />
-                                                {pendingDeleteKey ===
-                                                `/api/admin/customer-charter/${row.id}`
-                                                    ? 'Menghapus...'
-                                                    : 'Hapus'}
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                                <div class="mt-3 grid gap-2 text-xs">
-                                    <div
-                                        class="rounded-xl bg-muted/30 px-3 py-2"
-                                    >
-                                        <p
-                                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                Perusahaan
+                                            </p>
+                                            <p
+                                                class="mt-1 break-words font-medium text-foreground"
+                                            >
+                                                {row.company ?? '-'}
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="rounded-xl bg-muted/30 px-3 py-2"
                                         >
-                                            Company
-                                        </p>
-                                        <p
-                                            class="mt-1 break-words font-medium text-foreground"
-                                        >
-                                            {row.company ?? '-'}
-                                        </p>
+                                            <p
+                                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Alamat
+                                            </p>
+                                            <p
+                                                class="mt-1 break-words font-medium text-foreground"
+                                            >
+                                                {row.alamat ?? '-'}
+                                            </p>
+                                        </div>
                                     </div>
-                                    <div
-                                        class="rounded-xl bg-muted/30 px-3 py-2"
-                                    >
-                                        <p
-                                            class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                        >
-                                            Alamat
-                                        </p>
-                                        <p
-                                            class="mt-1 break-words font-medium text-foreground"
-                                        >
-                                            {row.alamat ?? '-'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </article>
-                        {/each}
-                    </div>
-                    <div
-                        class="hidden overflow-x-auto rounded-md border md:block"
+                                </article>
+                            {/each}
+                        </div></ViewportOnly
                     >
-                        <table class="min-w-full text-sm">
-                            <thead class="bg-muted/50"
-                                ><tr
-                                    ><th class="px-3 py-2 text-left">Nama</th
-                                    ><th class="px-3 py-2 text-left">No HP</th
-                                    ><th class="px-3 py-2 text-left">Company</th
-                                    ><th class="px-3 py-2 text-left">Aksi</th
-                                    ></tr
-                                ></thead
-                            >
-                            <tbody>
-                                {#each charterCustomers as row (row.id)}
-                                    <tr class="border-t">
-                                        <td class="px-3 py-2">{row.nama}</td>
-                                        <td class="px-3 py-2">{row.no_hp}</td>
-                                        <td class="px-3 py-2"
-                                            >{row.company ?? '-'}</td
-                                        >
-                                        <td class="space-x-2 px-3 py-2">
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                disabled={tenantWriteDisabled}
-                                                onclick={() => {
-                                                    charterForm = {
-                                                        id: row.id,
-                                                        nama: row.nama,
-                                                        no_hp: row.no_hp,
-                                                        alamat:
-                                                            row.alamat ?? '',
-                                                        company:
-                                                            row.company ?? '',
-                                                    };
-                                                    setFormMode('form');
-                                                }}>Edit</Button
+                    <ViewportOnly minWidth={768}
+                        ><div
+                            class="hidden overflow-x-auto rounded-md border md:block"
+                        >
+                            <table class="min-w-full text-sm">
+                                <thead class="bg-muted/50"
+                                    ><tr
+                                        ><th class="px-3 py-2 text-left"
+                                            >Nama</th
+                                        ><th class="px-3 py-2 text-left"
+                                            >No HP</th
+                                        ><th class="px-3 py-2 text-left"
+                                            >Perusahaan</th
+                                        ><th class="px-3 py-2 text-left"
+                                            >Aksi</th
+                                        ></tr
+                                    ></thead
+                                >
+                                <tbody>
+                                    {#each charterCustomers as row (row.id)}
+                                        <tr class="border-t">
+                                            <td class="px-3 py-2">{row.nama}</td
                                             >
-                                            <Button
-                                                type="button"
-                                                size="sm"
-                                                variant="outline"
-                                                disabled={pendingDeleteKey ===
-                                                    `/api/admin/customer-charter/${row.id}` ||
-                                                    tenantWriteDisabled}
-                                                onclick={() =>
-                                                    void removeRow(
-                                                        `/api/admin/customer-charter/${row.id}`,
-                                                        'Customer charter deleted.',
-                                                    )}
-                                                >{pendingDeleteKey ===
-                                                `/api/admin/customer-charter/${row.id}`
-                                                    ? 'Menghapus...'
-                                                    : 'Delete'}</Button
+                                            <td class="px-3 py-2"
+                                                >{row.no_hp}</td
                                             >
-                                        </td>
-                                    </tr>
-                                {/each}
-                            </tbody>
-                        </table>
-                    </div>
+                                            <td class="px-3 py-2"
+                                                >{row.company ?? '-'}</td
+                                            >
+                                            <td class="space-x-2 px-3 py-2">
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={tenantWriteDisabled}
+                                                    onclick={() => {
+                                                        charterForm = {
+                                                            id: row.id,
+                                                            nama: row.nama,
+                                                            no_hp: row.no_hp,
+                                                            alamat:
+                                                                row.alamat ??
+                                                                '',
+                                                            company:
+                                                                row.company ??
+                                                                '',
+                                                        };
+                                                        setFormMode('form');
+                                                    }}>Edit</Button
+                                                >
+                                                <Button
+                                                    type="button"
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={pendingDeleteKey ===
+                                                        `/api/admin/customer-charter/${row.id}` ||
+                                                        tenantWriteDisabled}
+                                                    onclick={() =>
+                                                        void removeRow(
+                                                            `/api/admin/customer-charter/${row.id}`,
+                                                            'Customer charter deleted.',
+                                                        )}
+                                                    >{pendingDeleteKey ===
+                                                    `/api/admin/customer-charter/${row.id}`
+                                                        ? 'Menghapus...'
+                                                        : 'Delete'}</Button
+                                                >
+                                            </td>
+                                        </tr>
+                                    {/each}
+                                </tbody>
+                            </table>
+                        </div></ViewportOnly
+                    >
                     <div
                         class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
                     >
@@ -1488,6 +1555,7 @@
                             Total: {charterMeta.total}
                         </p>
                         <div
+                            class:mobile-pagination={true}
                             class="flex items-center justify-between gap-2 sm:justify-end"
                         >
                             <Button
@@ -1498,7 +1566,7 @@
                                     void jumpPage(
                                         'customer-charter',
                                         charterMeta.page - 1,
-                                    )}>Prev</Button
+                                    )}>Sebelumnya</Button
                             >
                             <span class="px-2 py-1 text-sm"
                                 >{charterMeta.page} / {charterMeta.last_page}</span
@@ -1512,7 +1580,7 @@
                                     void jumpPage(
                                         'customer-charter',
                                         charterMeta.page + 1,
-                                    )}>Next</Button
+                                    )}>Berikutnya</Button
                             >
                         </div>
                     </div>
@@ -1534,7 +1602,9 @@
                         class="overflow-hidden rounded-lg border border-border/70 bg-background/95 shadow-sm"
                         onsubmit={saveCarterRoute}
                     >
-                        <div class="border-b border-border/70 px-4 py-3 sm:px-5">
+                        <div
+                            class="border-b border-border/70 px-4 py-3 sm:px-5"
+                        >
                             <h3
                                 class="text-base font-semibold tracking-tight text-foreground"
                             >
@@ -1688,8 +1758,7 @@
                                 variant="outline"
                                 onclick={() =>
                                     (carterRouteForm = newCarterRouteForm())}
-                                class="w-full sm:w-auto"
-                                >Reset</Button
+                                class="w-full sm:w-auto">Reset</Button
                             >
                         </div>
                     </form>
@@ -1710,6 +1779,10 @@
                                 </div>
                                 <ResponsiveFilterBar
                                     label="Rute Carter"
+                                    bind:query={carterRouteQ}
+                                    onSearch={() =>
+                                        void applySearch('rute-carter')}
+                                    searchPlaceholder="Cari rute carter"
                                     activeCount={carterRouteQ.trim() ? 1 : 0}
                                     summary={carterRouteQ.trim() ||
                                         'Semua rute'}
@@ -1727,11 +1800,14 @@
                                 >
                                     {#snippet desktop()}
                                         <div class="flex gap-2">
-                                            <Input
-                                                class="h-9 w-full rounded-xl bg-background"
-                                                placeholder="Cari nama, asal, atau tujuan"
-                                                bind:value={carterRouteQ}
-                                            />
+                                            <label
+                                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                ><span>Pencarian</span><Input
+                                                    class="h-9 w-full rounded-xl bg-background"
+                                                    placeholder="Cari nama, asal, atau tujuan"
+                                                    bind:value={carterRouteQ}
+                                                /></label
+                                            >
                                             <Button
                                                 type="button"
                                                 class="h-9 rounded-xl px-4"
@@ -1760,233 +1836,306 @@
                             </div>
 
                             {#if carterRoutes.length > 0}
-                                <div class="space-y-3 p-3 md:hidden">
-                                    {#each carterRoutes as row (row.id)}
-                                        <article class="rounded-xl border border-border/70 bg-background p-4 shadow-sm">
-                                            <div class="flex items-start justify-between gap-3">
-                                                <div class="min-w-0">
-                                                    <p class="break-words text-base font-semibold text-foreground">
-                                                        {row.name}
-                                                    </p>
-                                                    <p class="mt-1 break-words text-sm text-muted-foreground">
-                                                        {row.origin ?? '-'} <span aria-hidden="true">→</span> {row.destination ?? '-'}
-                                                    </p>
-                                                </div>
-                                                <span class="shrink-0 rounded-full border border-cyan-200/70 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-800">
-                                                    {row.duration ?? '-'}
-                                                </span>
-                                            </div>
-                                            <div class="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-muted/40 p-3">
-                                                <div>
-                                                    <p class="text-[11px] uppercase tracking-wide text-muted-foreground">Harga rental</p>
-                                                    <p class="mt-1 text-sm font-semibold text-foreground">{formatCurrencyDisplay(row.rental_price)}</p>
-                                                </div>
-                                                <div>
-                                                    <p class="text-[11px] uppercase tracking-wide text-muted-foreground">BOP</p>
-                                                    <p class="mt-1 text-sm font-semibold text-foreground">{formatCurrencyDisplay(row.bop_price)}</p>
-                                                </div>
-                                            </div>
-                                            <div class="mt-4 grid grid-cols-2 gap-2">
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    class="h-10 w-full rounded-lg"
-                                                    disabled={tenantWriteDisabled}
-                                                    onclick={() => {
-                                                        carterRouteForm = {
-                                                            id: row.id,
-                                                            name: row.name,
-                                                            origin: row.origin ?? '',
-                                                            destination: row.destination ?? '',
-                                                            duration: row.duration ?? defaultMasterCarterService,
-                                                            rental_price: Number(row.rental_price),
-                                                            bop_price: Number(row.bop_price),
-                                                            notes: row.notes ?? '',
-                                                        };
-                                                        setFormMode('form');
-                                                    }}
-                                                >Edit</Button>
-                                                <Button
-                                                    type="button"
-                                                    size="sm"
-                                                    variant="outline"
-                                                    class="h-10 w-full rounded-lg"
-                                                    disabled={pendingDeleteKey === `/api/admin/charter-routes/${row.id}` || tenantWriteDisabled}
-                                                    onclick={() => void removeRow(`/api/admin/charter-routes/${row.id}`, 'Rute carter deleted.')}
-                                                >{pendingDeleteKey === `/api/admin/charter-routes/${row.id}` ? 'Menghapus...' : 'Delete'}</Button>
-                                            </div>
-                                        </article>
-                                    {/each}
-                                </div>
-                                <div class="hidden overflow-x-auto md:block">
-                                    <table class="min-w-full text-sm">
-                                        <thead
-                                            class="bg-muted/50 text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
-                                        >
-                                            <tr>
-                                                <th
-                                                    class="px-4 py-3 text-left font-semibold"
-                                                    >Nama</th
+                                <ViewportOnly minWidth={0} maxWidth={767}
+                                    ><div class="space-y-3 p-3 md:hidden">
+                                        {#each carterRoutes as row (row.id)}
+                                            <article
+                                                class="rounded-xl border border-border/70 bg-background p-4 shadow-sm"
+                                            >
+                                                <div
+                                                    class="flex items-start justify-between gap-3"
                                                 >
-                                                <th
-                                                    class="px-4 py-3 text-left font-semibold"
-                                                    >Asal</th
-                                                >
-                                                <th
-                                                    class="px-4 py-3 text-left font-semibold"
-                                                    >Tujuan</th
-                                                >
-                                                <th
-                                                    class="px-4 py-3 text-left font-semibold"
-                                                    >Layanan</th
-                                                >
-                                                <th
-                                                    class="px-4 py-3 text-left font-semibold"
-                                                    >Harga</th
-                                                >
-                                                <th
-                                                    class="px-4 py-3 text-left font-semibold"
-                                                    >Aksi</th
-                                                >
-                                            </tr>
-                                        </thead>
-                                        <tbody
-                                            class="divide-y divide-border/60 bg-background/80"
-                                        >
-                                            {#each carterRoutes as row (row.id)}
-                                                <tr
-                                                    class="transition-colors hover:bg-muted/30"
-                                                >
-                                                    <td
-                                                        class="px-4 py-4 align-top"
-                                                    >
+                                                    <div class="min-w-0">
                                                         <p
-                                                            class="font-semibold text-foreground"
+                                                            class="break-words text-base font-semibold text-foreground"
                                                         >
                                                             {row.name}
                                                         </p>
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-4 align-top"
-                                                    >
                                                         <p
-                                                            class="font-medium text-foreground"
+                                                            class="mt-1 break-words text-sm text-muted-foreground"
                                                         >
                                                             {row.origin ?? '-'}
-                                                        </p>
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-4 align-top"
-                                                    >
-                                                        <p
-                                                            class="font-medium text-foreground"
-                                                        >
+                                                            <span
+                                                                aria-hidden="true"
+                                                                >→</span
+                                                            >
                                                             {row.destination ??
                                                                 '-'}
                                                         </p>
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-4 align-top"
+                                                    </div>
+                                                    <span
+                                                        class="shrink-0 rounded-full border border-cyan-200/70 bg-cyan-50 px-2.5 py-1 text-xs md:text-[11px] font-semibold text-cyan-800"
                                                     >
-                                                        <span
-                                                            class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-xs font-semibold tracking-wide text-cyan-800"
+                                                        {row.duration ?? '-'}
+                                                    </span>
+                                                </div>
+                                                <div
+                                                    class="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-muted/40 p-3"
+                                                >
+                                                    <div>
+                                                        <p
+                                                            class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
                                                         >
-                                                            {row.duration ??
-                                                                '-'}
-                                                        </span>
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-4 align-top"
-                                                    >
-                                                        <div class="space-y-1">
-                                                            <p
-                                                                class="text-sm font-semibold text-foreground"
-                                                            >
-                                                                {formatCurrencyDisplay(
-                                                                    row.rental_price,
-                                                                )}
-                                                            </p>
-                                                            <p
-                                                                class="text-xs text-muted-foreground"
-                                                            >
-                                                                BOP {formatCurrencyDisplay(
-                                                                    row.bop_price,
-                                                                )}
-                                                            </p>
-                                                        </div>
-                                                    </td>
-                                                    <td
-                                                        class="px-4 py-4 align-top"
-                                                    >
-                                                        <div
-                                                            class="flex flex-wrap gap-2"
+                                                            Harga rental
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 text-sm font-semibold text-foreground"
                                                         >
-                                                            <Button
-                                                                type="button"
-                                                                size="sm"
-                                                                variant="outline"
-                                                                class="rounded-full px-4"
-                                                                disabled={tenantWriteDisabled}
-                                                                onclick={() => {
-                                                                    carterRouteForm =
-                                                                        {
-                                                                            id: row.id,
-                                                                            name: row.name,
-                                                                            origin:
-                                                                                row.origin ??
-                                                                                '',
-                                                                            destination:
-                                                                                row.destination ??
-                                                                                '',
-                                                                            duration:
-                                                                                row.duration ??
-                                                                                defaultMasterCarterService,
-                                                                            rental_price:
-                                                                                Number(
-                                                                                    row.rental_price,
-                                                                                ),
-                                                                            bop_price:
-                                                                                Number(
-                                                                                    row.bop_price,
-                                                                                ),
-                                                                            notes:
-                                                                                row.notes ??
-                                                                                '',
-                                                                        };
-                                                                    setFormMode(
-                                                                        'form',
-                                                                    );
-                                                                }}
-                                                            >
-                                                                Edit
-                                                            </Button>
-                                                            <Button
-                                                                type="button"
-                                                                size="sm"
-                                                                variant="outline"
-                                                                class="rounded-full px-4"
-                                                                disabled={pendingDeleteKey ===
-                                                                    `/api/admin/charter-routes/${row.id}` ||
-                                                                    tenantWriteDisabled}
-                                                                onclick={() =>
-                                                                    void removeRow(
-                                                                        `/api/admin/charter-routes/${row.id}`,
-                                                                        'Rute carter deleted.',
-                                                                    )}
-                                                            >
-                                                                {pendingDeleteKey ===
-                                                                `/api/admin/charter-routes/${row.id}`
-                                                                    ? 'Menghapus...'
-                                                                    : 'Delete'}
-                                                            </Button>
-                                                        </div>
-                                                    </td>
+                                                            {formatCurrencyDisplay(
+                                                                row.rental_price,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                    <div>
+                                                        <p
+                                                            class="text-xs md:text-[11px] uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            BOP
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 text-sm font-semibold text-foreground"
+                                                        >
+                                                            {formatCurrencyDisplay(
+                                                                row.bop_price,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="mt-4 grid grid-cols-2 gap-2"
+                                                >
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        class="h-10 w-full rounded-lg"
+                                                        disabled={tenantWriteDisabled}
+                                                        onclick={() => {
+                                                            carterRouteForm = {
+                                                                id: row.id,
+                                                                name: row.name,
+                                                                origin:
+                                                                    row.origin ??
+                                                                    '',
+                                                                destination:
+                                                                    row.destination ??
+                                                                    '',
+                                                                duration:
+                                                                    row.duration ??
+                                                                    defaultMasterCarterService,
+                                                                rental_price:
+                                                                    Number(
+                                                                        row.rental_price,
+                                                                    ),
+                                                                bop_price:
+                                                                    Number(
+                                                                        row.bop_price,
+                                                                    ),
+                                                                notes:
+                                                                    row.notes ??
+                                                                    '',
+                                                            };
+                                                            setFormMode('form');
+                                                        }}>Edit</Button
+                                                    >
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        variant="outline"
+                                                        class="h-10 w-full rounded-lg"
+                                                        disabled={pendingDeleteKey ===
+                                                            `/api/admin/charter-routes/${row.id}` ||
+                                                            tenantWriteDisabled}
+                                                        onclick={() =>
+                                                            void removeRow(
+                                                                `/api/admin/charter-routes/${row.id}`,
+                                                                'Rute carter deleted.',
+                                                            )}
+                                                        >{pendingDeleteKey ===
+                                                        `/api/admin/charter-routes/${row.id}`
+                                                            ? 'Menghapus...'
+                                                            : 'Delete'}</Button
+                                                    >
+                                                </div>
+                                            </article>
+                                        {/each}
+                                    </div></ViewportOnly
+                                >
+                                <ViewportOnly minWidth={768}
+                                    ><div
+                                        class="hidden overflow-x-auto md:block"
+                                    >
+                                        <table class="min-w-full text-sm">
+                                            <thead
+                                                class="bg-muted/50 text-xs md:text-[11px] uppercase tracking-[0.16em] text-muted-foreground"
+                                            >
+                                                <tr>
+                                                    <th
+                                                        class="px-4 py-3 text-left font-semibold"
+                                                        >Nama</th
+                                                    >
+                                                    <th
+                                                        class="px-4 py-3 text-left font-semibold"
+                                                        >Asal</th
+                                                    >
+                                                    <th
+                                                        class="px-4 py-3 text-left font-semibold"
+                                                        >Tujuan</th
+                                                    >
+                                                    <th
+                                                        class="px-4 py-3 text-left font-semibold"
+                                                        >Layanan</th
+                                                    >
+                                                    <th
+                                                        class="px-4 py-3 text-left font-semibold"
+                                                        >Harga</th
+                                                    >
+                                                    <th
+                                                        class="px-4 py-3 text-left font-semibold"
+                                                        >Aksi</th
+                                                    >
                                                 </tr>
-                                            {/each}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                            </thead>
+                                            <tbody
+                                                class="divide-y divide-border/60 bg-background/80"
+                                            >
+                                                {#each carterRoutes as row (row.id)}
+                                                    <tr
+                                                        class="transition-colors hover:bg-muted/30"
+                                                    >
+                                                        <td
+                                                            class="px-4 py-4 align-top"
+                                                        >
+                                                            <p
+                                                                class="font-semibold text-foreground"
+                                                            >
+                                                                {row.name}
+                                                            </p>
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-4 align-top"
+                                                        >
+                                                            <p
+                                                                class="font-medium text-foreground"
+                                                            >
+                                                                {row.origin ??
+                                                                    '-'}
+                                                            </p>
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-4 align-top"
+                                                        >
+                                                            <p
+                                                                class="font-medium text-foreground"
+                                                            >
+                                                                {row.destination ??
+                                                                    '-'}
+                                                            </p>
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-4 align-top"
+                                                        >
+                                                            <span
+                                                                class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-xs font-semibold tracking-wide text-cyan-800"
+                                                            >
+                                                                {row.duration ??
+                                                                    '-'}
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-4 align-top"
+                                                        >
+                                                            <div
+                                                                class="space-y-1"
+                                                            >
+                                                                <p
+                                                                    class="text-sm font-semibold text-foreground"
+                                                                >
+                                                                    {formatCurrencyDisplay(
+                                                                        row.rental_price,
+                                                                    )}
+                                                                </p>
+                                                                <p
+                                                                    class="text-xs text-muted-foreground"
+                                                                >
+                                                                    BOP {formatCurrencyDisplay(
+                                                                        row.bop_price,
+                                                                    )}
+                                                                </p>
+                                                            </div>
+                                                        </td>
+                                                        <td
+                                                            class="px-4 py-4 align-top"
+                                                        >
+                                                            <div
+                                                                class="flex flex-wrap gap-2"
+                                                            >
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    class="rounded-full px-4"
+                                                                    disabled={tenantWriteDisabled}
+                                                                    onclick={() => {
+                                                                        carterRouteForm =
+                                                                            {
+                                                                                id: row.id,
+                                                                                name: row.name,
+                                                                                origin:
+                                                                                    row.origin ??
+                                                                                    '',
+                                                                                destination:
+                                                                                    row.destination ??
+                                                                                    '',
+                                                                                duration:
+                                                                                    row.duration ??
+                                                                                    defaultMasterCarterService,
+                                                                                rental_price:
+                                                                                    Number(
+                                                                                        row.rental_price,
+                                                                                    ),
+                                                                                bop_price:
+                                                                                    Number(
+                                                                                        row.bop_price,
+                                                                                    ),
+                                                                                notes:
+                                                                                    row.notes ??
+                                                                                    '',
+                                                                            };
+                                                                        setFormMode(
+                                                                            'form',
+                                                                        );
+                                                                    }}
+                                                                >
+                                                                    Edit
+                                                                </Button>
+                                                                <Button
+                                                                    type="button"
+                                                                    size="sm"
+                                                                    variant="outline"
+                                                                    class="rounded-full px-4"
+                                                                    disabled={pendingDeleteKey ===
+                                                                        `/api/admin/charter-routes/${row.id}` ||
+                                                                        tenantWriteDisabled}
+                                                                    onclick={() =>
+                                                                        void removeRow(
+                                                                            `/api/admin/charter-routes/${row.id}`,
+                                                                            'Rute carter deleted.',
+                                                                        )}
+                                                                >
+                                                                    {pendingDeleteKey ===
+                                                                    `/api/admin/charter-routes/${row.id}`
+                                                                        ? 'Menghapus...'
+                                                                        : 'Delete'}
+                                                                </Button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                {/each}
+                                            </tbody>
+                                        </table>
+                                    </div></ViewportOnly
+                                >
                             {:else}
                                 <div
                                     class="flex flex-col items-center justify-center gap-3 px-6 py-14 text-center"
@@ -2017,11 +2166,16 @@
                             <div
                                 class="flex flex-col gap-3 border-t border-border/70 bg-muted/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5"
                             >
-                                <p class="text-xs text-muted-foreground sm:text-sm">
+                                <p
+                                    class="text-xs text-muted-foreground sm:text-sm"
+                                >
                                     Menampilkan {carterRoutes.length} data pada halaman
                                     ini.
                                 </p>
-                                <div class="flex w-full items-center justify-between gap-2 sm:w-auto">
+                                <div
+                                    class:mobile-pagination={true}
+                                    class="flex w-full items-center justify-between gap-2 sm:w-auto"
+                                >
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -2031,7 +2185,7 @@
                                             void jumpPage(
                                                 'rute-carter',
                                                 carterRouteMeta.page - 1,
-                                            )}>Prev</Button
+                                            )}>Sebelumnya</Button
                                     >
                                     <span
                                         class="rounded-full border border-border/70 bg-background px-3 py-1 text-sm text-muted-foreground"
@@ -2047,7 +2201,7 @@
                                             void jumpPage(
                                                 'rute-carter',
                                                 carterRouteMeta.page + 1,
-                                            )}>Next</Button
+                                            )}>Berikutnya</Button
                                     >
                                 </div>
                             </div>

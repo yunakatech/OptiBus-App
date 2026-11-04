@@ -79,7 +79,7 @@
         <div class="mb-3 flex items-start justify-between gap-3">
             <div class="min-w-0">
                 <p
-                    class="text-[11px] font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300"
+                    class="text-xs md:text-[11px] font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-300"
                 >
                     Reschedule Penumpang
                 </p>
@@ -110,7 +110,7 @@
                     class="min-w-0 rounded-xl border border-cyan-200/60 bg-cyan-50/70 px-3 py-2 dark:border-cyan-500/20 dark:bg-cyan-950/20"
                 >
                     <p
-                        class="text-[10px] uppercase tracking-[0.12em] text-cyan-700 dark:text-cyan-300"
+                        class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-cyan-700 dark:text-cyan-300"
                     >
                         Keberangkatan Saat Ini
                     </p>
@@ -118,7 +118,9 @@
                         {formatGroupDateLabel(groupRescheduleCurrentDate)} -
                         {formatGroupTimeLabel(groupRescheduleCurrentJam)}
                     </p>
-                    <p class="mt-1 text-[11px] text-muted-foreground">
+                    <p
+                        class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                    >
                         Unit {groupRescheduleCurrentUnit} - Seat
                         {groupRescheduleCurrentSeat || '-'}
                     </p>
@@ -127,7 +129,7 @@
                     class="min-w-0 rounded-xl border border-emerald-200/60 bg-emerald-50/70 px-3 py-2 dark:border-emerald-500/20 dark:bg-emerald-950/20"
                 >
                     <p
-                        class="text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
+                        class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
                     >
                         Tujuan Reschedule
                     </p>
@@ -140,7 +142,9 @@
                             ? formatGroupTimeLabel(groupRescheduleJam)
                             : '-'}
                     </p>
-                    <p class="mt-1 text-[11px] text-muted-foreground">
+                    <p
+                        class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                    >
                         Unit {groupRescheduleUnit} - Seat
                         {groupRescheduleSeat || '-'}
                     </p>
@@ -245,12 +249,14 @@
                             {/each}
                         {/if}
                     </select>
-                    <p class="mt-1 text-[11px] text-muted-foreground">
+                    <p
+                        class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                    >
                         {groupRescheduleSeatHelpText()}
                     </p>
                 </div>
                 <div
-                    class="md:col-span-2 rounded-lg border border-border/70 bg-muted/10 px-3 py-2 text-[11px] text-muted-foreground"
+                    class="md:col-span-2 rounded-lg border border-border/70 bg-muted/10 px-3 py-2 text-xs md:text-[11px] text-muted-foreground"
                 >
                     Dropdown seat sudah mengikuti ketersediaan kursi pada jadwal
                     dan unit tujuan.

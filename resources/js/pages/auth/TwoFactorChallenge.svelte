@@ -49,7 +49,7 @@
 
 <AppHead title="Two-factor authentication" />
 
-<div class="space-y-6">
+<div class:mobile-page={true} class="space-y-6">
     {#if !showRecoveryInput}
         <Form
             {...store.form()}
@@ -97,12 +97,15 @@
     {:else}
         <Form {...store.form()} class="space-y-4" resetOnError>
             {#snippet children({ errors, processing, clearErrors })}
-                <Input
-                    name="recovery_code"
-                    type="text"
-                    placeholder="Enter recovery code"
-                    required
-                />
+                <label
+                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                    ><span>Kode pemulihan</span><Input
+                        name="recovery_code"
+                        type="text"
+                        placeholder="Masukkan kode pemulihan"
+                        required
+                    /></label
+                >
                 <InputError message={errors.recovery_code} />
                 <Button type="submit" class="w-full" disabled={processing}
                     >Continue</Button

@@ -9,15 +9,15 @@ use App\Support\DeferredInertia;
 use App\Support\HeadlessPdf;
 use App\Support\ManifestLifecycle;
 use App\Support\PoolScope;
+use App\Support\SchemaCache;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
-use App\Support\SchemaCache;
 use Illuminate\Support\Facades\View as ViewFactory;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -60,12 +60,23 @@ class BookingController extends Controller
         $deferLatestBookings = $usesDeferredInertia && $isBookingConsole;
         $groupDetailKey = $isGroupDetailPage ? (string) $request->route('groupKey', '') : '';
         $bookingGroups = null;
-        $resolveBookingGroups = function () use ($listOnly, &$bookingGroups): array {
+        $listPayload = null;
+        $resolveList = function () use ($request, &$listPayload): array {
+            return $listPayload ??= $this->bookingListPage($request);
+        };
+        $resolveBookingGroups = function () use ($listOnly, $isGroupDetailPage, $groupDetailKey, $resolveList, &$bookingGroups): array {
             if (! $listOnly) {
                 return [];
             }
 
-            return $bookingGroups ??= $this->buildBookingGroups();
+            if ($isGroupDetailPage) {
+                $group = $this->findBookingGroupByKey($groupDetailKey);
+                abort_if($group === null, 404);
+
+                return $bookingGroups ??= [$group];
+            }
+
+            return $bookingGroups ??= $resolveList()['groups'];
         };
         $emptyTotals = [
             'bookings' => 0,
@@ -85,12 +96,23 @@ class BookingController extends Controller
                 ? Inertia::defer(fn (): array => $resolveBookingGroups(), 'booking-list')
                 : fn (): array => $resolveBookingGroups(),
             'bookingRouteOptions' => $deferBookingList
-                ? Inertia::defer(fn (): array => $this->bookingRouteOptions($resolveBookingGroups()), 'booking-list')
-                : fn (): array => $listOnly ? $this->bookingRouteOptions($resolveBookingGroups()) : [],
+                ? Inertia::defer(fn (): array => $resolveList()['routes'], 'booking-list')
+                : fn (): array => $listOnly && ! $isGroupDetailPage ? $resolveList()['routes'] : [],
             'bookingListReady' => $deferBookingList
                 ? Inertia::defer(fn (): bool => true, 'booking-list')
                 : true,
             'listOnly' => $listOnly,
+            'bookingPagination' => $deferBookingList
+                ? Inertia::defer(fn (): array => $resolveList()['pagination'], 'booking-list')
+                : fn (): array => $listOnly && ! $isGroupDetailPage ? $resolveList()['pagination'] : [
+                    'page' => $this->bookingListFilters($request)['page'],
+                    'per_page' => $this->bookingListFilters($request)['per_page'],
+                    'total' => 0, 'last_page' => 1,
+                ],
+            'bookingListSummary' => $deferBookingList
+                ? Inertia::defer(fn (): array => $resolveList()['summary'], 'booking-list')
+                : fn (): array => $listOnly && ! $isGroupDetailPage ? $resolveList()['summary'] : [],
+            'bookingQuery' => $this->bookingListFilters($request),
             'groupDetailPage' => $isGroupDetailPage,
             'groupDetailKey' => $groupDetailKey,
             'serverNow' => now()->format('Y-m-d H:i'),
@@ -596,7 +618,135 @@ class BookingController extends Controller
     /**
      * @return array<int, array<string, mixed>>
      */
-    private function buildBookingGroups(): array
+    private function bookingListFilters(Request $request): array
+    {
+        $from = (string) $request->query('from', now()->toDateString());
+        $to = (string) $request->query('to', $from);
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $from) || $this->safeDayOfWeek($from) === null) {
+            $from = now()->toDateString();
+        }
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $to) || $this->safeDayOfWeek($to) === null) {
+            $to = $from;
+        }
+
+        return [
+            'from' => min($from, $to), 'to' => max($from, $to),
+            'route' => (string) $request->query('route', 'all'),
+            'payment' => in_array($request->query('payment'), ['lunas', 'belum_lunas'], true)
+                ? $request->query('payment') : 'all',
+            'page' => max(1, (int) $request->query('page', 1)),
+            'per_page' => min(100, max(1, (int) $request->query('per_page', 24))),
+        ];
+    }
+
+    /** Aggregate identities, never customer details; normalize aliases before paging. */
+    private function tripIdentities(?array $filters = null): array
+    {
+        $identities = [];
+        foreach (['bookings', 'trip_assignments'] as $table) {
+            if (! SchemaCache::hasTable($table)) {
+                continue;
+            }
+            $query = $this->scopedBookingQuery($table);
+            if ($filters !== null) {
+                $query->whereBetween('tanggal', [$filters['from'], $filters['to']]);
+            }
+            $time = $this->tripTimeExpression('jam');
+            $query->selectRaw("rute, tanggal, $time AS time_key, unit")
+                ->groupBy('rute', 'tanggal', DB::raw($time), 'unit');
+            if ($table === 'bookings') {
+                $status = "LOWER(TRIM(COALESCE(status, '')))";
+                $payment = "LOWER(TRIM(COALESCE(pembayaran, '')))";
+                $visible = "NOT ($status = 'canceled' AND $payment = 'belum lunas')";
+                $query->selectRaw("SUM(CASE WHEN $visible THEN 1 ELSE 0 END) AS total")
+                    ->selectRaw("SUM(CASE WHEN $status <> 'canceled' THEN 1 ELSE 0 END) AS active")
+                    ->selectRaw("SUM(CASE WHEN $status = 'canceled' THEN 1 ELSE 0 END) AS canceled")
+                    ->selectRaw("SUM(CASE WHEN $visible AND $payment NOT IN ('lunas', 'refund') THEN 1 ELSE 0 END) AS unpaid")
+                    ->selectRaw("SUM(CASE WHEN $visible AND $payment = 'refund' THEN 1 ELSE 0 END) AS refunded");
+            }
+            foreach ($query->get() as $row) {
+                $date = trim((string) $row->tanggal);
+                $route = trim((string) $row->rute);
+                $time = trim((string) $row->time_key);
+                if ($route === '' || $time === '' || $this->safeDayOfWeek($date) === null) {
+                    continue;
+                }
+                $key = md5($this->tripRawKey($route, $date, $time, (int) $row->unit));
+                $trip = $identities[$key] ?? [
+                    'key' => $key, 'rute' => $route, 'routes' => [], 'tanggal' => $date,
+                    'jam' => $time, 'unit' => max(1, (int) $row->unit),
+                    'total' => 0, 'active' => 0, 'canceled' => 0, 'unpaid' => 0,
+                    'refunded' => 0, 'has_assignment' => false,
+                ];
+                $rawRoute = (string) $row->rute;
+                $trip['routes'][$rawRoute] = $rawRoute;
+                foreach (['total', 'active', 'canceled', 'unpaid', 'refunded'] as $field) {
+                    $trip[$field] += (int) ($row->{$field} ?? 0);
+                }
+                $trip['has_assignment'] = $trip['has_assignment'] || $table === 'trip_assignments';
+                $identities[$key] = $trip;
+            }
+        }
+
+        return array_values(array_filter($identities, static fn (array $trip): bool => $trip['total'] > 0 || $trip['canceled'] > 0 || $trip['has_assignment']));
+    }
+
+    private function constrainTrips(Builder $query, array $identities, string $alias): void
+    {
+        if ($identities === []) {
+            $query->whereRaw('1 = 0');
+
+            return;
+        }
+        $query->where(function (Builder $query) use ($identities, $alias): void {
+            foreach ($identities as $trip) {
+                $query->orWhere(function (Builder $query) use ($trip, $alias): void {
+                    $query->whereIn("$alias.rute", array_values($trip['routes']))
+                        ->where("$alias.tanggal", $trip['tanggal'])
+                        ->whereRaw($this->tripTimeExpression("$alias.jam").' = ?', [$trip['jam']])
+                        ->whereIn("$alias.unit", $trip['unit'] === 1 ? [0, 1] : [$trip['unit']]);
+                });
+            }
+        });
+    }
+
+    private function bookingListPage(Request $request): array
+    {
+        $filters = $this->bookingListFilters($request);
+        $identities = $this->tripIdentities($filters);
+        $routes = $this->bookingRouteOptions($identities);
+        $identities = array_values(array_filter($identities, fn (array $trip): bool => ($filters['route'] === 'all' || $this->normalizeTripRoute($trip['rute']) === $this->normalizeTripRoute($filters['route']))
+            && ($filters['payment'] !== 'lunas' || ($trip['unpaid'] === 0 && $trip['refunded'] === 0))
+            && ($filters['payment'] !== 'belum_lunas' || $trip['unpaid'] > 0)));
+        usort($identities, static fn (array $a, array $b): int => [$a['tanggal'], $a['jam'], $a['rute'], $a['unit'], $a['key']] <=> [$b['tanggal'], $b['jam'], $b['rute'], $b['unit'], $b['key']]);
+        $total = count($identities);
+        $lastPage = max(1, (int) ceil($total / $filters['per_page']));
+        $page = min($filters['page'], $lastPage);
+        $selected = array_slice($identities, ($page - 1) * $filters['per_page'], $filters['per_page']);
+        $groups = $selected === [] ? [] : $this->buildBookingGroups($selected, false);
+        $order = array_flip(array_column($selected, 'key'));
+        usort($groups, static fn (array $a, array $b): int => $order[$a['key']] <=> $order[$b['key']]);
+
+        return [
+            'groups' => $groups, 'routes' => $routes,
+            'pagination' => ['page' => $page, 'per_page' => $filters['per_page'], 'total' => $total, 'last_page' => $lastPage],
+            'summary' => [
+                'schedules' => $total,
+                'activePassengers' => array_sum(array_column($identities, 'active')),
+                'unpaidSchedules' => count(array_filter($identities, static fn (array $trip): bool => $trip['unpaid'] > 0)),
+                'unpaidPassengers' => array_sum(array_column($identities, 'unpaid')),
+            ],
+        ];
+    }
+
+    private function tripTimeExpression(string $column): string
+    {
+        $type = DB::connection()->getDriverName() === 'mysql' ? 'CHAR(16)' : 'VARCHAR(16)';
+
+        return "SUBSTR(CAST($column AS $type), 1, 5)";
+    }
+
+    private function buildBookingGroups(?array $identities = null, bool $includePassengers = true): array
     {
         if (! SchemaCache::hasTable('bookings')) {
             return [];
@@ -610,9 +760,9 @@ class BookingController extends Controller
         $bookingsSignature = $this->buildTableMutationSignature('bookings');
         $schedulesSignature = $this->buildTableMutationSignature('schedules');
         $assignmentsSignature = $this->buildTableMutationSignature('trip_assignments');
-        $cacheKey = 'bookings:list-groups:v11:'.PoolScope::cacheKey().":{$maxId}:{$totalRows}:{$bookingsSignature}:{$schedulesSignature}:{$assignmentsSignature}";
+        $cacheKey = 'bookings:list-groups:v12:'.PoolScope::cacheKey().":{$maxId}:{$totalRows}:{$bookingsSignature}:{$schedulesSignature}:{$assignmentsSignature}:".md5(json_encode([$identities, $includePassengers]));
 
-        return Cache::remember($cacheKey, now()->addSeconds(20), function (): array {
+        return Cache::remember($cacheKey, now()->addSeconds(20), function () use ($identities, $includePassengers): array {
             $select = [
                 'b.id',
                 'b.name',
@@ -639,16 +789,37 @@ class BookingController extends Controller
                 $select[] = 'b.ticket_code';
             }
 
-            $rows = $this->scopedBookingQuery('bookings as b', 'b.rute')
+            $bookingQuery = $this->scopedBookingQuery('bookings as b', 'b.rute')
+                ->when($identities !== null, fn ($query) => $this->constrainTrips($query, $identities, 'b'))
                 ->leftJoin('segments as s', 's.id', '=', 'b.segment_id')
-                ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
+                ->leftJoin('customers as c', function ($join): void {
+                    $join->on('c.phone', '=', 'b.phone');
+                    if (SchemaCache::hasColumn('customers', 'tenant_id') && SchemaCache::hasColumn('bookings', 'tenant_id')) {
+                        $join->on('c.tenant_id', '=', 'b.tenant_id');
+                    }
+                })
                 ->select($select)
                 ->orderByDesc('b.tanggal')
                 ->orderBy('b.jam')
                 ->orderBy('b.unit')
-                ->orderBy('b.seat')
-                ->limit(2000)
-                ->get();
+                ->orderBy('b.seat');
+
+            if ($includePassengers) {
+                $rows = $bookingQuery->get();
+            } else {
+                $rows = $this->scopedBookingQuery('bookings as b', 'b.rute');
+                if ($identities !== null) {
+                    $this->constrainTrips($rows, $identities, 'b');
+                }
+                $columns = ['b.rute', 'b.tanggal', 'b.jam', 'b.unit', 'b.status', 'b.pembayaran'];
+                $rows->select($columns)->groupBy(...$columns)
+                    ->selectRaw('COUNT(*) AS passenger_count')
+                    ->selectRaw('SUM(CASE WHEN COALESCE(b.price, 0) - COALESCE(b.discount, 0) > 0 THEN COALESCE(b.price, 0) - COALESCE(b.discount, 0) ELSE 0 END) AS amount_total');
+                if ($this->bookingsHasDepartureCode()) {
+                    $rows->selectRaw('MIN(b.departure_code) AS departure_code');
+                }
+                $rows = $rows->orderBy('b.tanggal')->orderBy('b.jam')->orderBy('b.unit')->get();
+            }
 
             $grouped = [];
             foreach ($rows as $row) {
@@ -667,7 +838,7 @@ class BookingController extends Controller
 
                 $ticketCode = trim((string) ($row->ticket_code ?? ''));
                 if ($ticketCode === '') {
-                    $ticketCode = BookingCode::ticketCode((int) $row->id, (string) ($row->tanggal ?? ''));
+                    $ticketCode = BookingCode::ticketCode((int) ($row->id ?? 0), (string) ($row->tanggal ?? ''));
                 }
 
                 if (! array_key_exists($tripKey, $grouped)) {
@@ -691,9 +862,13 @@ class BookingController extends Controller
                         'departure_status' => 'active',
                         'departure_can_arrive' => false,
                         'bookings' => [],
+                        'detail_loaded' => $includePassengers,
+                        'paid_amount' => 0,
+                        'unpaid_amount' => 0,
                     ];
                 }
 
+                $count = (int) ($row->passenger_count ?? 1);
                 $status = strtolower((string) $row->status);
                 $payment = strtolower((string) $row->pembayaran);
                 $hideFromDepartureTotals = $this->shouldHideDeparturePassenger($status, $payment);
@@ -701,37 +876,49 @@ class BookingController extends Controller
                 if ($status === 'canceled') {
                     // Keep canceled passengers in the card's history total,
                     // including canceled bookings that were never paid.
-                    $grouped[$tripKey]['canceled'] += 1;
+                    $grouped[$tripKey]['canceled'] += $count;
                 }
 
                 if (! $hideFromDepartureTotals) {
-                    $grouped[$tripKey]['total'] += 1;
+                    $grouped[$tripKey]['total'] += $count;
                     if ($status !== 'canceled') {
-                        $grouped[$tripKey]['active'] += 1;
+                        $grouped[$tripKey]['active'] += $count;
                     }
                     if ($payment === 'lunas') {
-                        $grouped[$tripKey]['lunas'] += 1;
+                        $grouped[$tripKey]['lunas'] += $count;
                     } elseif ($payment === 'refund') {
-                        $grouped[$tripKey]['refund'] += 1;
+                        $grouped[$tripKey]['refund'] += $count;
                     } else {
-                        $grouped[$tripKey]['belum_lunas'] += 1;
+                        $grouped[$tripKey]['belum_lunas'] += $count;
                     }
                 }
 
-                $grouped[$tripKey]['bookings'][] = [
-                    'id' => (int) $row->id,
-                    'ticket_code' => $ticketCode,
-                    'name' => (string) $row->name,
-                    'phone' => (string) $row->phone,
-                    'seat' => (string) $row->seat,
-                    'status' => (string) $row->status,
-                    'pembayaran' => (string) $row->pembayaran,
-                    'pickup_point' => (string) ($row->pickup_point ?? ''),
-                    'segment_name' => (string) ($row->segment_name ?? ''),
-                    'gmaps' => (string) ($row->gmaps ?? ''),
-                    'price' => (float) ($row->price ?? 0),
-                    'discount' => (float) ($row->discount ?? 0),
-                ];
+                if ($status !== 'canceled') {
+                    $amount = $includePassengers
+                        ? max(0, (float) ($row->price ?? 0) - (float) ($row->discount ?? 0))
+                        : (float) ($row->amount_total ?? 0);
+                    if ($payment === 'lunas') {
+                        $grouped[$tripKey]['paid_amount'] += $amount;
+                    } elseif ($payment !== 'refund') {
+                        $grouped[$tripKey]['unpaid_amount'] += $amount;
+                    }
+                }
+                if ($includePassengers) {
+                    $grouped[$tripKey]['bookings'][] = [
+                        'id' => (int) $row->id,
+                        'ticket_code' => $ticketCode,
+                        'name' => (string) $row->name,
+                        'phone' => (string) $row->phone,
+                        'seat' => (string) $row->seat,
+                        'status' => (string) $row->status,
+                        'pembayaran' => (string) $row->pembayaran,
+                        'pickup_point' => (string) ($row->pickup_point ?? ''),
+                        'segment_name' => (string) ($row->segment_name ?? ''),
+                        'gmaps' => (string) ($row->gmaps ?? ''),
+                        'price' => (float) ($row->price ?? 0),
+                        'discount' => (float) ($row->discount ?? 0),
+                    ];
+                }
             }
 
             if (SchemaCache::hasTable('trip_assignments')) {
@@ -765,6 +952,7 @@ class BookingController extends Controller
                 }
 
                 $assignmentRows = $this->scopedBookingQuery('trip_assignments as t', 't.rute')
+                    ->when($identities !== null, fn ($query) => $this->constrainTrips($query, $identities, 't'))
                     ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id')
                     ->when($this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas'), static function ($query) {
                         $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
@@ -773,7 +961,6 @@ class BookingController extends Controller
                     ->orderByDesc('t.tanggal')
                     ->orderBy('t.jam')
                     ->orderBy('t.unit')
-                    ->limit(2000)
                     ->get();
 
                 foreach ($assignmentRows as $row) {
@@ -809,6 +996,9 @@ class BookingController extends Controller
                             'departure_status' => 'active',
                             'departure_can_arrive' => false,
                             'bookings' => [],
+                            'detail_loaded' => $includePassengers,
+                            'paid_amount' => 0,
+                            'unpaid_amount' => 0,
                         ];
                     }
 
@@ -988,13 +1178,27 @@ class BookingController extends Controller
      */
     private function findBookingGroupByKey(string $groupKey): ?array
     {
-        foreach ($this->buildBookingGroups() as $group) {
+        $identities = array_values(array_filter($this->tripIdentities(),
+            static fn (array $trip): bool => $trip['key'] === $groupKey,
+        ));
+        if ($identities === []) {
+            return null;
+        }
+        foreach ($this->buildBookingGroups($identities) as $group) {
             if ((string) ($group['key'] ?? '') === $groupKey) {
-                return $group;
+                return [...$group, 'detail_loaded' => true];
             }
         }
 
         return null;
+    }
+
+    public function groupDetails(string $groupKey): JsonResponse
+    {
+        $group = $this->findBookingGroupByKey($groupKey);
+        abort_if($group === null, 404);
+
+        return response()->json(['success' => true, 'group' => $group]);
     }
 
     private function safeDayOfWeek(string $date): ?int

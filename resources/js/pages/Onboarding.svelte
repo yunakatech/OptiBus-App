@@ -72,7 +72,14 @@
         { value: 6, shortLabel: 'Sab', label: 'Sabtu' },
         { value: 0, shortLabel: 'Min', label: 'Minggu' },
     ];
-    const timeSuggestions = ['06:00', '08:00', '09:00', '12:00', '15:00', '18:00'];
+    const timeSuggestions = [
+        '06:00',
+        '08:00',
+        '09:00',
+        '12:00',
+        '15:00',
+        '18:00',
+    ];
 
     let currentStep = $state(0);
     let localError = $state('');
@@ -222,7 +229,7 @@
         <div class="grid gap-4 px-4 py-5 sm:gap-5 sm:px-6 sm:py-6">
             <div class="space-y-1">
                 <p
-                    class="text-[10px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                    class="text-xs md:text-[10px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
                 >
                     {continuationMode ? 'Lanjutkan setup' : 'Setup awal'}
                 </p>
@@ -234,9 +241,7 @@
             </div>
 
             {#if continuationMode && progressItems.length > 0}
-                <section
-                    class="border-y border-[#c9c2b3] py-3"
-                >
+                <section class="border-y border-[#c9c2b3] py-3">
                     <div class="flex items-center justify-between gap-3">
                         <span class="text-sm font-semibold text-[#173a34]"
                             >Progress</span
@@ -245,9 +250,7 @@
                             >{progressPercent}%</span
                         >
                     </div>
-                    <div
-                        class="mt-2 h-1.5 overflow-hidden bg-[#d8d1c3]"
-                    >
+                    <div class="mt-2 h-1.5 overflow-hidden bg-[#d8d1c3]">
                         <div
                             class="h-full bg-[#174b43]"
                             style={`width:${progressPercent}%`}
@@ -276,12 +279,15 @@
                 </section>
             {/if}
 
-            <nav aria-label="Langkah pengaturan" class="grid grid-cols-5 border-y border-[#c9c2b3]">
+            <nav
+                aria-label="Langkah pengaturan"
+                class="flex flex-wrap gap-1 border-y border-[#c9c2b3] py-2 sm:grid sm:grid-cols-5"
+            >
                 {#each steps as step, index}
                     {@const Icon = step.icon}
                     <button
                         type="button"
-                        class={`min-w-0 border-b-2 px-1 py-2 text-center text-[10px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] sm:px-1.5 sm:py-2.5 sm:text-xs ${
+                        class={`min-w-0 border-b-2 px-1 py-2 text-center text-xs md:text-[10px] font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] sm:px-1.5 sm:py-2.5 sm:text-xs ${
                             currentStep === index
                                 ? 'border-[#174b43] text-[#173a34]'
                                 : 'border-transparent text-[#68736c] hover:bg-[#eee9dd]'
@@ -375,18 +381,25 @@
                     </div>
                 {:else if currentStep === 1}
                     <div class="grid gap-3">
-                        <div class="border-l-2 border-[#174b43] bg-[#e8eee7] p-3">
+                        <div
+                            class="border-l-2 border-[#174b43] bg-[#e8eee7] p-3"
+                        >
                             <div class="flex items-start gap-2.5">
-                                <div class="border border-[#c9c2b3] bg-[#f7f4ec] p-2 text-[#174b43]">
+                                <div
+                                    class="border border-[#c9c2b3] bg-[#f7f4ec] p-2 text-[#174b43]"
+                                >
                                     <CalendarDays class="h-4 w-4" />
                                 </div>
                                 <div>
                                     <p class="font-semibold text-[#173a34]">
                                         Kapan kendaraan berangkat?
                                     </p>
-                                    <p class="mt-0.5 text-xs leading-relaxed text-[#53615b]">
-                                        Pilih hari operasi dan satu jam keberangkatan utama.
-                                        Jam bisa diubah lagi nanti.
+                                    <p
+                                        class="mt-0.5 text-xs leading-relaxed text-[#53615b]"
+                                    >
+                                        Pilih hari operasi dan satu jam
+                                        keberangkatan utama. Jam bisa diubah
+                                        lagi nanti.
                                     </p>
                                 </div>
                             </div>
@@ -396,17 +409,24 @@
                             <div class="flex items-end justify-between gap-3">
                                 <div>
                                     <Label>Hari keberangkatan</Label>
-                                    <p class="mt-1 text-[11px] text-[#718079]">
-                                        Pilih satu atau beberapa hari dalam seminggu.
+                                    <p
+                                        class="mt-1 text-xs md:text-[11px] text-[#718079]"
+                                    >
+                                        Pilih satu atau beberapa hari dalam
+                                        seminggu.
                                     </p>
                                 </div>
                                 {#if scheduleDays.length > 0}
-                                    <span class="shrink-0 text-[11px] font-semibold text-[#174b43]">
+                                    <span
+                                        class="shrink-0 text-xs md:text-[11px] font-semibold text-[#174b43]"
+                                    >
                                         {scheduleDays.length} hari dipilih
                                     </span>
                                 {/if}
                             </div>
-                            <div class="grid grid-cols-4 gap-1.5 sm:grid-cols-7">
+                            <div
+                                class="grid grid-cols-4 gap-1.5 sm:grid-cols-7"
+                            >
                                 {#each dayOptions as day}
                                     <label
                                         title={day.label}
@@ -432,18 +452,27 @@
                         <div class="grid gap-3 border-y border-[#c9c2b3] py-4">
                             <div class="flex items-start justify-between gap-3">
                                 <div>
-                                    <Label for="departure_time_view">Jam berangkat</Label>
-                                    <p class="mt-1 text-[11px] text-[#718079]">
+                                    <Label for="departure_time_view"
+                                        >Jam berangkat</Label
+                                    >
+                                    <p
+                                        class="mt-1 text-xs md:text-[11px] text-[#718079]"
+                                    >
                                         Pilih waktu yang umum atau isi sendiri.
                                     </p>
                                 </div>
                                 {#if departureTime}
-                                    <span class="bg-[#174b43] px-2.5 py-1 text-xs font-bold text-white">
+                                    <span
+                                        class="bg-[#174b43] px-2.5 py-1 text-xs font-bold text-white"
+                                    >
                                         {departureTime}
                                     </span>
                                 {/if}
                             </div>
-                            <div class="flex flex-wrap gap-1.5" aria-label="Pilihan cepat jam berangkat">
+                            <div
+                                class="flex flex-wrap gap-1.5"
+                                aria-label="Pilihan cepat jam berangkat"
+                            >
                                 {#each timeSuggestions as time}
                                     <button
                                         type="button"
@@ -453,7 +482,8 @@
                                                 : 'border-[#c9c2b3] bg-transparent text-[#53615b] hover:bg-[#eee9dd]'
                                         }`}
                                         aria-pressed={departureTime === time}
-                                        onclick={() => chooseDepartureTime(time)}
+                                        onclick={() =>
+                                            chooseDepartureTime(time)}
                                     >
                                         {time}
                                     </button>
@@ -461,7 +491,10 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <div class="h-px flex-1 bg-[#c9c2b3]"></div>
-                                <span class="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#68736c]">atau isi manual</span>
+                                <span
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.16em] text-[#68736c]"
+                                    >atau isi manual</span
+                                >
                                 <div class="h-px flex-1 bg-[#c9c2b3]"></div>
                             </div>
                             <Input
@@ -471,19 +504,32 @@
                                 class="h-11 text-base font-semibold tracking-wide sm:max-w-xs"
                                 aria-describedby="departure_time_help"
                             />
-                            <p id="departure_time_help" class="text-[11px] leading-relaxed text-[#718079]">
-                                Format 24 jam. Contoh: 09:30 berarti berangkat pukul setengah sepuluh pagi.
+                            <p
+                                id="departure_time_help"
+                                class="text-xs md:text-[11px] leading-relaxed text-[#718079]"
+                            >
+                                Format 24 jam. Contoh: 09:30 berarti berangkat
+                                pukul setengah sepuluh pagi.
                             </p>
                             <InputError message={errors.departure_time} />
                         </div>
 
-                        <div class="border-l-2 border-[#a94e28] bg-[#eee9dd] px-3 py-2.5 text-xs text-[#53615b]">
-                            <span class="font-semibold text-[#173a34]">Ringkasan:</span>
+                        <div
+                            class="border-l-2 border-[#a94e28] bg-[#eee9dd] px-3 py-2.5 text-xs text-[#53615b]"
+                        >
+                            <span class="font-semibold text-[#173a34]"
+                                >Ringkasan:</span
+                            >
                             {#if selectedDayLabels.length > 0 || departureTime}
-                                {selectedDayLabels.length > 0 ? selectedDayLabels.join(', ') : 'hari belum dipilih'}
-                                {departureTime ? ` pukul ${departureTime}` : ', jam belum dipilih'}.
+                                {selectedDayLabels.length > 0
+                                    ? selectedDayLabels.join(', ')
+                                    : 'hari belum dipilih'}
+                                {departureTime
+                                    ? ` pukul ${departureTime}`
+                                    : ', jam belum dipilih'}.
                             {:else}
-                                Hari dan jam belum dipilih. Anda dapat melewati langkah ini dan mengaturnya nanti.
+                                Hari dan jam belum dipilih. Anda dapat melewati
+                                langkah ini dan mengaturnya nanti.
                             {/if}
                         </div>
                     </div>
@@ -524,17 +570,25 @@
                             <div class="flex items-end justify-between gap-3">
                                 <div>
                                     <Label>Jam pickup</Label>
-                                    <p class="mt-1 text-[11px] text-[#718079]">
-                                        Opsional. Pilih semua jam layanan yang tersedia.
+                                    <p
+                                        class="mt-1 text-xs md:text-[11px] text-[#718079]"
+                                    >
+                                        Opsional. Pilih semua jam layanan yang
+                                        tersedia.
                                     </p>
                                 </div>
                                 {#if filledPickupTimes().length > 0}
-                                    <span class="shrink-0 text-[11px] font-semibold text-[#0d7066]">
+                                    <span
+                                        class="shrink-0 text-xs md:text-[11px] font-semibold text-[#0d7066]"
+                                    >
                                         {filledPickupTimes().length} jam
                                     </span>
                                 {/if}
                             </div>
-                            <div class="flex flex-wrap gap-1.5" aria-label="Pilihan cepat jam pickup">
+                            <div
+                                class="flex flex-wrap gap-1.5"
+                                aria-label="Pilihan cepat jam pickup"
+                            >
                                 {#each timeSuggestions as time}
                                     <button
                                         type="button"
@@ -543,7 +597,9 @@
                                                 ? 'border-[#174b43] bg-[#e8eee7] text-[#173a34]'
                                                 : 'border-[#c9c2b3] bg-transparent text-[#53615b] hover:bg-[#eee9dd]'
                                         }`}
-                                        aria-pressed={filledPickupTimes().includes(time)}
+                                        aria-pressed={filledPickupTimes().includes(
+                                            time,
+                                        )}
                                         onclick={() => togglePickupTime(time)}
                                     >
                                         {time}
@@ -553,14 +609,19 @@
                             <div class="grid gap-1.5">
                                 {#each pickupTimes as time, index}
                                     <div class="flex items-center gap-2">
-                                        <span class="w-16 shrink-0 text-[11px] font-semibold text-[#718079]">
+                                        <span
+                                            class="w-16 shrink-0 text-xs md:text-[11px] font-semibold text-[#718079]"
+                                        >
                                             Pickup {index + 1}
                                         </span>
-                                        <Input
-                                            type="time"
-                                            bind:value={pickupTimes[index]}
-                                            aria-label={`Jam pickup ${index + 1}`}
-                                        />
+                                        <label
+                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                            ><span>Jam jemput</span><Input
+                                                type="time"
+                                                bind:value={pickupTimes[index]}
+                                                aria-label={`Jam pickup ${index + 1}`}
+                                            /></label
+                                        >
                                         <Button
                                             type="button"
                                             variant="outline"

@@ -1,4 +1,6 @@
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { Button } from '@/components/ui/button';
 
     type ReportKind = 'booking' | 'charter' | 'bagasi';
@@ -388,10 +390,7 @@
                         {reportExporting
                             ? 'Menyiapkan CSV...'
                             : exportLabel(
-                                  resolvedReportType(
-                                      reportSummary,
-                                      reportType,
-                                  ),
+                                  resolvedReportType(reportSummary, reportType),
                               )}
                     </Button>
                     {#if reportExportError}
@@ -402,21 +401,23 @@
                 </div>
             </div>
 
-            <div class="flex justify-end md:hidden">
-                <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    class="h-8 rounded-lg text-xs"
-                    onclick={() =>
-                        (reportFiltersExpanded = !reportFiltersExpanded)}
-                    aria-expanded={reportFiltersExpanded}
-                >
-                    {reportFiltersExpanded
-                        ? 'Sembunyikan Filter'
-                        : 'Tampilkan Filter'}
-                </Button>
-            </div>
+            <ViewportOnly minWidth={0} maxWidth={767}
+                ><div class="flex justify-end md:hidden">
+                    <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        class="h-8 rounded-lg text-xs"
+                        onclick={() =>
+                            (reportFiltersExpanded = !reportFiltersExpanded)}
+                        aria-expanded={reportFiltersExpanded}
+                    >
+                        {reportFiltersExpanded
+                            ? 'Sembunyikan Filter'
+                            : 'Tampilkan Filter'}
+                    </Button>
+                </div></ViewportOnly
+            >
             <div
                 class={reportFiltersExpanded
                     ? `grid gap-4 rounded-xl border p-4 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`
@@ -424,7 +425,7 @@
             >
                 <label class="flex min-w-0 flex-col gap-2">
                     <span
-                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Kategori laporan
                     </span>
@@ -441,7 +442,7 @@
 
                 <label class="flex min-w-0 flex-col gap-2">
                     <span
-                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Pool
                     </span>
@@ -461,7 +462,7 @@
 
                 <label class="flex min-w-0 flex-col gap-2">
                     <span
-                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Rute Induk
                     </span>
@@ -483,7 +484,7 @@
 
                 <label class="flex min-w-0 flex-col gap-2">
                     <span
-                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Dari tanggal
                     </span>
@@ -500,7 +501,7 @@
 
                 <label class="flex min-w-0 flex-col gap-2">
                     <span
-                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Sampai tanggal
                     </span>
@@ -535,7 +536,7 @@
                 >
                     <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
-                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                            class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
                             Total Pendapatan
                         </p>
@@ -555,7 +556,7 @@
 
                     <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
-                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                            class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
                             Total BOP
                         </p>
@@ -571,7 +572,7 @@
 
                     <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
-                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                            class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
                             Margin
                         </p>
@@ -587,7 +588,7 @@
 
                     <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
-                            class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                            class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                         >
                             Volume Data
                         </p>
@@ -614,7 +615,7 @@
             >
                 <div>
                     <p
-                        class="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
+                        class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
                     >
                         Detail Laporan
                     </p>
@@ -637,120 +638,127 @@
             {#if reportRows.length > 0}
                 <div class="table-container max-h-[70vh]">
                     {#if reportSummary.type === 'booking'}
-                        <div class="grid gap-3 p-3 md:hidden">
-                            {#each asBookingRows(reportRows) as row (row.id)}
-                                <article
-                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-start justify-between gap-3"
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div class="grid gap-3 p-3 md:hidden">
+                                {#each asBookingRows(reportRows) as row (row.id)}
+                                    <article
+                                        class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="truncate text-sm font-semibold text-foreground"
-                                            >
-                                                {row.name || '-'}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate text-xs text-muted-foreground"
-                                            >
-                                                {row.tanggal || '-'} / {shortTime(
-                                                    row.jam,
-                                                )}
-                                            </p>
-                                        </div>
-                                        <p
-                                            class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground"
-                                        >
-                                            {formatCurrency(row.total)}
-                                        </p>
-                                    </div>
-                                    <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span
-                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.pembayaran)}`}
-                                        >
-                                            {row.pembayaran || '-'}
-                                        </span>
-                                        <span
-                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}
-                                        >
-                                            {row.status || '-'}
-                                        </span>
-                                    </div>
-                                    <details
-                                        class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
-                                    >
-                                        <summary
-                                            class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
-                                        >
-                                            Detail
-                                        </summary>
                                         <div
-                                            class="grid gap-2 border-t border-border/70 p-3"
+                                            class="flex items-start justify-between gap-3"
                                         >
-                                            <div
-                                                class="rounded-xl bg-background/80 px-3 py-2"
-                                            >
+                                            <div class="min-w-0">
                                                 <p
-                                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    class="truncate text-sm font-semibold text-foreground"
                                                 >
-                                                    Rute
+                                                    {row.name || '-'}
                                                 </p>
                                                 <p
-                                                    class="mt-1 font-medium text-foreground"
+                                                    class="mt-0.5 truncate text-xs text-muted-foreground"
                                                 >
-                                                    {row.rute || '-'}
-                                                </p>
-                                                <p
-                                                    class="mt-1 text-[11px] text-muted-foreground"
-                                                >
-                                                    {row.pickup_point || '-'}
+                                                    {row.tanggal || '-'} / {shortTime(
+                                                        row.jam,
+                                                    )}
                                                 </p>
                                             </div>
-                                            <div class="grid grid-cols-2 gap-2">
+                                            <p
+                                                class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground"
+                                            >
+                                                {formatCurrency(row.total)}
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="mt-3 flex flex-wrap gap-1.5"
+                                        >
+                                            <span
+                                                class={`rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.pembayaran)}`}
+                                            >
+                                                {row.pembayaran || '-'}
+                                            </span>
+                                            <span
+                                                class={`rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.status)}`}
+                                            >
+                                                {row.status || '-'}
+                                            </span>
+                                        </div>
+                                        <details
+                                            class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
+                                        >
+                                            <summary
+                                                class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
+                                            >
+                                                Detail
+                                            </summary>
+                                            <div
+                                                class="grid gap-2 border-t border-border/70 p-3"
+                                            >
                                                 <div
                                                     class="rounded-xl bg-background/80 px-3 py-2"
                                                 >
                                                     <p
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                        class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                                     >
-                                                        Slot / Seat
+                                                        Rute
                                                     </p>
                                                     <p
                                                         class="mt-1 font-medium text-foreground"
                                                     >
-                                                        {row.unit || '-'} / {row.seat ||
+                                                        {row.rute || '-'}
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                                    >
+                                                        {row.pickup_point ||
                                                             '-'}
                                                     </p>
                                                 </div>
                                                 <div
-                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                    class="grid grid-cols-2 gap-2"
                                                 >
-                                                    <p
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    <div
+                                                        class="rounded-xl bg-background/80 px-3 py-2"
                                                     >
-                                                        Potongan
-                                                    </p>
-                                                    <p
-                                                        class="mt-1 font-medium text-foreground"
+                                                        <p
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Slot / Seat
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 font-medium text-foreground"
+                                                        >
+                                                            {row.unit || '-'} / {row.seat ||
+                                                                '-'}
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        class="rounded-xl bg-background/80 px-3 py-2"
                                                     >
-                                                        {formatCurrency(
-                                                            row.discount,
-                                                        )}
-                                                    </p>
+                                                        <p
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Potongan
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 font-medium text-foreground"
+                                                        >
+                                                            {formatCurrency(
+                                                                row.discount,
+                                                            )}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    </details>
-                                </article>
-                            {/each}
-                        </div>
+                                        </details>
+                                    </article>
+                                {/each}
+                            </div></ViewportOnly
+                        >
                         <table class="hidden w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
                                 <tr
-                                    class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
+                                    class="border-b border-border/70 text-xs md:text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
                                     <th
                                         class="px-4 py-3 text-left font-semibold"
@@ -837,7 +845,7 @@
                                         </td>
                                         <td class="px-4 py-3.5">
                                             <span
-                                                class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.pembayaran)}`}
+                                                class={`inline-flex rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.pembayaran)}`}
                                             >
                                                 {row.pembayaran || '-'}
                                             </span>
@@ -862,140 +870,149 @@
                             </tbody>
                         </table>
                     {:else if reportSummary.type === 'charter'}
-                        <div class="grid gap-3 p-3 md:hidden">
-                            {#each asCharterRows(reportRows) as row (row.id)}
-                                <article
-                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-start justify-between gap-3"
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div class="grid gap-3 p-3 md:hidden">
+                                {#each asCharterRows(reportRows) as row (row.id)}
+                                    <article
+                                        class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="truncate text-sm font-semibold text-foreground"
-                                            >
-                                                {row.name || '-'}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate text-xs text-muted-foreground"
-                                            >
-                                                {row.start_date || '-'} / {shortTime(
-                                                    row.departure_time,
-                                                )}
-                                            </p>
-                                        </div>
-                                        <div class="shrink-0 text-right">
-                                            <p
-                                                class="text-sm font-semibold tabular-nums text-foreground"
-                                            >
-                                                {formatCurrency(row.total)}
-                                            </p>
-                                            {#if row.bop_status}
-                                                <span
-                                                    class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${badgeClass(row.bop_status)}`}
-                                                >
-                                                    {row.bop_status}
-                                                </span>
-                                            {/if}
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span
-                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}
-                                        >
-                                            {row.payment_status || '-'}
-                                        </span>
-                                        <span
-                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status || row.bop_status)}`}
-                                        >
-                                            {row.status ||
-                                                row.bop_status ||
-                                                '-'}
-                                        </span>
-                                    </div>
-                                    <details
-                                        class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
-                                    >
-                                        <summary
-                                            class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
-                                        >
-                                            Detail
-                                        </summary>
                                         <div
-                                            class="grid gap-2 border-t border-border/70 p-3"
+                                            class="flex items-start justify-between gap-3"
                                         >
-                                            <div
-                                                class="rounded-xl bg-background/80 px-3 py-2"
-                                            >
+                                            <div class="min-w-0">
                                                 <p
-                                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    class="truncate text-sm font-semibold text-foreground"
                                                 >
-                                                    Rute Carter
+                                                    {row.name || '-'}
                                                 </p>
                                                 <p
-                                                    class="mt-1 font-medium text-foreground"
+                                                    class="mt-0.5 truncate text-xs text-muted-foreground"
                                                 >
-                                                    {routeLabel(
-                                                        row.pickup_point,
-                                                        row.drop_point,
+                                                    {row.start_date || '-'} / {shortTime(
+                                                        row.departure_time,
                                                     )}
                                                 </p>
                                             </div>
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div
-                                                    class="rounded-xl bg-background/80 px-3 py-2"
-                                                >
-                                                    <p
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                    >
-                                                        Driver
-                                                    </p>
-                                                    <p
-                                                        class="mt-1 font-medium text-foreground"
-                                                    >
-                                                        {row.driver_name || '-'}
-                                                    </p>
-                                                </div>
-                                                <div
-                                                    class="rounded-xl bg-background/80 px-3 py-2"
-                                                >
-                                                    <p
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                    >
-                                                        Armada
-                                                    </p>
-                                                    <p
-                                                        class="mt-1 font-medium text-foreground"
-                                                    >
-                                                        {charterVehicle(row)}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            <div
-                                                class="rounded-xl bg-background/80 px-3 py-2"
-                                            >
+                                            <div class="shrink-0 text-right">
                                                 <p
-                                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    class="text-sm font-semibold tabular-nums text-foreground"
                                                 >
-                                                    Layanan
+                                                    {formatCurrency(row.total)}
                                                 </p>
-                                                <p
-                                                    class="mt-1 font-medium text-foreground"
-                                                >
-                                                    {row.layanan || '-'}
-                                                </p>
+                                                {#if row.bop_status}
+                                                    <span
+                                                        class={`inline-flex rounded-full border px-2 py-0.5 text-xs md:text-[10px] font-semibold ${badgeClass(row.bop_status)}`}
+                                                    >
+                                                        {row.bop_status}
+                                                    </span>
+                                                {/if}
                                             </div>
                                         </div>
-                                    </details>
-                                </article>
-                            {/each}
-                        </div>
+                                        <div
+                                            class="mt-3 flex flex-wrap gap-1.5"
+                                        >
+                                            <span
+                                                class={`rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.payment_status)}`}
+                                            >
+                                                {row.payment_status || '-'}
+                                            </span>
+                                            <span
+                                                class={`rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.status || row.bop_status)}`}
+                                            >
+                                                {row.status ||
+                                                    row.bop_status ||
+                                                    '-'}
+                                            </span>
+                                        </div>
+                                        <details
+                                            class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
+                                        >
+                                            <summary
+                                                class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
+                                            >
+                                                Detail
+                                            </summary>
+                                            <div
+                                                class="grid gap-2 border-t border-border/70 p-3"
+                                            >
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Rute Carter
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {routeLabel(
+                                                            row.pickup_point,
+                                                            row.drop_point,
+                                                        )}
+                                                    </p>
+                                                </div>
+                                                <div
+                                                    class="grid grid-cols-2 gap-2"
+                                                >
+                                                    <div
+                                                        class="rounded-xl bg-background/80 px-3 py-2"
+                                                    >
+                                                        <p
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Driver
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 font-medium text-foreground"
+                                                        >
+                                                            {row.driver_name ||
+                                                                '-'}
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        class="rounded-xl bg-background/80 px-3 py-2"
+                                                    >
+                                                        <p
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Armada
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 font-medium text-foreground"
+                                                        >
+                                                            {charterVehicle(
+                                                                row,
+                                                            )}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Layanan
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {row.layanan || '-'}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </article>
+                                {/each}
+                            </div></ViewportOnly
+                        >
                         <table class="hidden w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
                                 <tr
-                                    class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
+                                    class="border-b border-border/70 text-xs md:text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
                                     <th
                                         class="px-4 py-3 text-left font-semibold"
@@ -1092,7 +1109,7 @@
                                         </td>
                                         <td class="px-4 py-3.5">
                                             <span
-                                                class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}
+                                                class={`inline-flex rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.payment_status)}`}
                                             >
                                                 {row.payment_status || '-'}
                                             </span>
@@ -1114,126 +1131,134 @@
                             </tbody>
                         </table>
                     {:else}
-                        <div class="grid gap-3 p-3 md:hidden">
-                            {#each asLuggageRows(reportRows) as row (row.id)}
-                                <article
-                                    class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
-                                >
-                                    <div
-                                        class="flex items-start justify-between gap-3"
+                        <ViewportOnly minWidth={0} maxWidth={767}
+                            ><div class="grid gap-3 p-3 md:hidden">
+                                {#each asLuggageRows(reportRows) as row (row.id)}
+                                    <article
+                                        class="rounded-lg border border-border/80 bg-card/95 p-3 shadow-sm"
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="truncate text-sm font-semibold text-foreground"
-                                            >
-                                                {row.kode_resi || '-'}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate text-xs text-muted-foreground"
-                                            >
-                                                {row.tanggal ||
-                                                    row.created_at ||
-                                                    '-'}
-                                            </p>
-                                        </div>
-                                        <p
-                                            class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground"
-                                        >
-                                            {formatCurrency(row.total)}
-                                        </p>
-                                    </div>
-                                    <div class="mt-3 flex flex-wrap gap-1.5">
-                                        <span
-                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}
-                                        >
-                                            {row.status || '-'}
-                                        </span>
-                                        <span
-                                            class={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.payment_status)}`}
-                                        >
-                                            {row.payment_status || '-'}
-                                        </span>
-                                    </div>
-                                    <details
-                                        class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
-                                    >
-                                        <summary
-                                            class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
-                                        >
-                                            Detail
-                                        </summary>
                                         <div
-                                            class="grid gap-2 border-t border-border/70 p-3"
+                                            class="flex items-start justify-between gap-3"
                                         >
-                                            <div class="grid grid-cols-2 gap-2">
-                                                <div
-                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="truncate text-sm font-semibold text-foreground"
                                                 >
-                                                    <p
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                    >
-                                                        Pengirim
-                                                    </p>
-                                                    <p
-                                                        class="mt-1 font-medium text-foreground"
-                                                    >
-                                                        {row.sender_name || '-'}
-                                                    </p>
-                                                    <p
-                                                        class="mt-1 text-[11px] text-muted-foreground"
-                                                    >
-                                                        {row.sender_phone ||
-                                                            '-'}
-                                                    </p>
-                                                </div>
-                                                <div
-                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                    {row.kode_resi || '-'}
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate text-xs text-muted-foreground"
                                                 >
-                                                    <p
-                                                        class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                    >
-                                                        Penerima
-                                                    </p>
-                                                    <p
-                                                        class="mt-1 font-medium text-foreground"
-                                                    >
-                                                        {row.receiver_name ||
-                                                            '-'}
-                                                    </p>
-                                                    <p
-                                                        class="mt-1 text-[11px] text-muted-foreground"
-                                                    >
-                                                        {row.receiver_phone ||
-                                                            '-'}
-                                                    </p>
-                                                </div>
+                                                    {row.tanggal ||
+                                                        row.created_at ||
+                                                        '-'}
+                                                </p>
                                             </div>
-                                            <div
-                                                class="rounded-xl bg-background/80 px-3 py-2"
+                                            <p
+                                                class="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground"
                                             >
-                                                <p
-                                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                                >
-                                                    Layanan
-                                                </p>
-                                                <p
-                                                    class="mt-1 font-medium text-foreground"
-                                                >
-                                                    {row.service_name || '-'} / {row.quantity}
-                                                    item
-                                                </p>
-                                            </div>
+                                                {formatCurrency(row.total)}
+                                            </p>
                                         </div>
-                                    </details>
-                                </article>
-                            {/each}
-                        </div>
+                                        <div
+                                            class="mt-3 flex flex-wrap gap-1.5"
+                                        >
+                                            <span
+                                                class={`rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.status)}`}
+                                            >
+                                                {row.status || '-'}
+                                            </span>
+                                            <span
+                                                class={`rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.payment_status)}`}
+                                            >
+                                                {row.payment_status || '-'}
+                                            </span>
+                                        </div>
+                                        <details
+                                            class="mt-3 overflow-hidden rounded-xl border border-border/70 bg-muted/20 text-xs"
+                                        >
+                                            <summary
+                                                class="cursor-pointer list-none px-3 py-2 font-semibold text-foreground"
+                                            >
+                                                Detail
+                                            </summary>
+                                            <div
+                                                class="grid gap-2 border-t border-border/70 p-3"
+                                            >
+                                                <div
+                                                    class="grid grid-cols-2 gap-2"
+                                                >
+                                                    <div
+                                                        class="rounded-xl bg-background/80 px-3 py-2"
+                                                    >
+                                                        <p
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Pengirim
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 font-medium text-foreground"
+                                                        >
+                                                            {row.sender_name ||
+                                                                '-'}
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                                        >
+                                                            {row.sender_phone ||
+                                                                '-'}
+                                                        </p>
+                                                    </div>
+                                                    <div
+                                                        class="rounded-xl bg-background/80 px-3 py-2"
+                                                    >
+                                                        <p
+                                                            class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                        >
+                                                            Penerima
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 font-medium text-foreground"
+                                                        >
+                                                            {row.receiver_name ||
+                                                                '-'}
+                                                        </p>
+                                                        <p
+                                                            class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                                                        >
+                                                            {row.receiver_phone ||
+                                                                '-'}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div
+                                                    class="rounded-xl bg-background/80 px-3 py-2"
+                                                >
+                                                    <p
+                                                        class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                    >
+                                                        Layanan
+                                                    </p>
+                                                    <p
+                                                        class="mt-1 font-medium text-foreground"
+                                                    >
+                                                        {row.service_name ||
+                                                            '-'} / {row.quantity}
+                                                        item
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </details>
+                                    </article>
+                                {/each}
+                            </div></ViewportOnly
+                        >
                         <table class="hidden w-full text-sm md:table">
                             <thead
                                 class="sticky top-0 z-10 bg-background/95 backdrop-blur"
                             >
                                 <tr
-                                    class="border-b border-border/70 text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
+                                    class="border-b border-border/70 text-xs md:text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
                                     <th
                                         class="px-4 py-3 text-left font-semibold"
@@ -1327,7 +1352,7 @@
                                         </td>
                                         <td class="px-4 py-3.5">
                                             <span
-                                                class={`inline-flex rounded-full border px-2.5 py-1 text-[11px] font-semibold ${badgeClass(row.status)}`}
+                                                class={`inline-flex rounded-full border px-2.5 py-1 text-xs md:text-[11px] font-semibold ${badgeClass(row.status)}`}
                                             >
                                                 {row.status || '-'}
                                             </span>
@@ -1356,7 +1381,10 @@
                         {reportMeta.last_page} ({reportMeta.total}
                         {resolvedMeta(reportSummary, reportType).dataLabel})
                     </span>
-                    <div class="flex items-center gap-2">
+                    <div
+                        class:mobile-pagination={true}
+                        class="flex items-center gap-2"
+                    >
                         <Button
                             type="button"
                             variant="outline"
@@ -1365,7 +1393,7 @@
                             onclick={() =>
                                 void jumpReportPage(reportMeta.page - 1)}
                         >
-                            Prev
+                            Sebelumnya
                         </Button>
                         <span
                             class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-foreground"
@@ -1381,7 +1409,7 @@
                             onclick={() =>
                                 void jumpReportPage(reportMeta.page + 1)}
                         >
-                            Next
+                            Berikutnya
                         </Button>
                     </div>
                 </div>

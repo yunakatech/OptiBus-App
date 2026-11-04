@@ -1,4 +1,8 @@
 <script lang="ts">
+    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
+
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { page } from '@inertiajs/svelte';
     import {
         ArrowRight,
@@ -150,6 +154,8 @@
     }
 </script>
 
+<NavigationMetrics />
+
 <svelte:head>
     <title>OptiBus — Kendali Operasional Travel</title>
     <meta
@@ -158,7 +164,10 @@
     />
 </svelte:head>
 
-<div class="min-h-screen overflow-x-hidden bg-[#f1eee5] text-[#1a2825]">
+<div
+    class:mobile-page={true}
+    class="min-h-screen overflow-x-hidden bg-[#f1eee5] text-[#1a2825]"
+>
     <nav
         class="sticky top-0 z-40 border-b border-[#d6d0c2] bg-[#f1eee5]/95 py-2 backdrop-blur sm:py-3"
     >
@@ -172,25 +181,27 @@
             >
                 <AppLogo />
             </a>
-            <div
-                class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-[#52615b] md:flex"
+            <ViewportOnly minWidth={768}
+                ><div
+                    class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-[#52615b] md:flex"
+                >
+                    <a
+                        href="#workflow"
+                        class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
+                        >Alur Kerja</a
+                    >
+                    <a
+                        href="#fitur"
+                        class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
+                        >Fitur</a
+                    >
+                    <a
+                        href="/pricing"
+                        class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
+                        >Harga</a
+                    >
+                </div></ViewportOnly
             >
-                <a
-                    href="#workflow"
-                    class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
-                    >Alur Kerja</a
-                >
-                <a
-                    href="#fitur"
-                    class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
-                    >Fitur</a
-                >
-                <a
-                    href="/pricing"
-                    class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
-                    >Harga</a
-                >
-            </div>
             <div class="flex shrink-0 items-center gap-2">
                 {#if !isAuthenticated}
                     <a
@@ -213,16 +224,18 @@
 
     <main>
         <section class="relative overflow-hidden border-b border-[#c9c2b3]">
-            <div
-                class="pointer-events-none absolute inset-y-0 left-1/2 hidden w-full max-w-7xl -translate-x-1/2 opacity-40 lg:block"
-                style="background-image: linear-gradient(#d2cabb 1px, transparent 1px), linear-gradient(90deg, #d2cabb 1px, transparent 1px); background-size: 52px 52px;"
-            ></div>
+            <ViewportOnly minWidth={1024}
+                ><div
+                    class="pointer-events-none absolute inset-y-0 left-1/2 hidden w-full max-w-7xl -translate-x-1/2 opacity-40 lg:block"
+                    style="background-image: linear-gradient(#d2cabb 1px, transparent 1px), linear-gradient(90deg, #d2cabb 1px, transparent 1px); background-size: 52px 52px;"
+                ></div></ViewportOnly
+            >
             <div
                 class="relative mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,0.94fr)_minmax(420px,1.06fr)] lg:items-center lg:gap-12 lg:px-10 lg:py-20"
             >
                 <div class="relative z-10 flex flex-col justify-center">
                     <div
-                        class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#bc6738] pl-3 text-[11px] font-semibold uppercase tracking-[0.16em] text-[#596660] sm:mb-6"
+                        class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#bc6738] pl-3 text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-[#596660] sm:mb-6"
                     >
                         <Clock3 class="h-4 w-4 text-[#a94e28]" />
                         14 hari untuk mencoba alur kerja
@@ -262,7 +275,7 @@
                     >
                         <div>
                             <dt
-                                class="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
                             >
                                 Transaksi
                             </dt>
@@ -274,7 +287,7 @@
                         </div>
                         <div>
                             <dt
-                                class="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
                             >
                                 Cakupan
                             </dt>
@@ -286,7 +299,7 @@
                         </div>
                         <div>
                             <dt
-                                class="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
                             >
                                 Audit
                             </dt>
@@ -303,7 +316,7 @@
                     class="relative -mx-2 flex items-center justify-center bg-[#e8e2d7] px-4 py-3 sm:mx-0 sm:px-8 sm:py-6 lg:min-h-[550px]"
                 >
                     <div
-                        class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#cec6b7] px-4 py-2 text-[9px] font-semibold uppercase tracking-[0.18em] text-[#5d6962] sm:px-6"
+                        class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#cec6b7] px-4 py-2 text-xs md:text-[9px] font-semibold uppercase tracking-[0.18em] text-[#5d6962] sm:px-6"
                     >
                         <span>Ruang kendali / 01</span>
                         <span>OptiBus</span>
@@ -332,7 +345,9 @@
         >
             <div class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
                 <div class="lg:pt-2">
-                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]">
+                    <p
+                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                    >
                         Dari loket ke garasi
                     </p>
                     <h2
@@ -363,7 +378,9 @@
                             <div
                                 class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-5"
                             >
-                                <h3 class="text-base font-semibold text-[#213a34]">
+                                <h3
+                                    class="text-base font-semibold text-[#213a34]"
+                                >
                                     {item.label}
                                 </h3>
                                 <p class="text-sm text-[#59665f]">
@@ -377,13 +394,15 @@
         </section>
 
         <section id="fitur" class="border-y border-[#c9c2b3] bg-[#e8e2d7]">
-            <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+            <div
+                class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
+            >
                 <div
                     class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end"
                 >
                     <div>
                         <p
-                            class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                            class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
                         >
                             Yang tercatat
                         </p>
@@ -400,13 +419,17 @@
                         Lihat semua paket <ArrowRight class="ml-1 h-4 w-4" />
                     </a>
                 </div>
-                <div class="grid border-y border-[#c9c2b3] sm:grid-cols-2 lg:grid-cols-4">
+                <div
+                    class="grid border-y border-[#c9c2b3] sm:grid-cols-2 lg:grid-cols-4"
+                >
                     {#each capabilities as item, index}
                         {@const Icon = item.icon}
                         <article
                             class="border-b border-[#c9c2b3] py-5 sm:px-5 sm:py-6 lg:border-b-0 lg:border-r lg:px-5 lg:first:pl-0 lg:last:border-r-0"
                         >
-                            <div class="flex items-center justify-between gap-4">
+                            <div
+                                class="flex items-center justify-between gap-4"
+                            >
                                 <span class="font-serif text-sm text-[#a94e28]">
                                     0{index + 1}
                                 </span>
@@ -429,12 +452,16 @@
             </div>
         </section>
 
-        <section class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20">
+        <section
+            class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
+        >
             <div
                 class="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end"
             >
                 <div>
-                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]">
+                    <p
+                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                    >
                         Pilih skala
                     </p>
                     <h2
@@ -472,7 +499,7 @@
                             </div>
                             {#if plan.slug === 'pro'}
                                 <span
-                                    class="border border-[#9eb5a8] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-[#174b43]"
+                                    class="border border-[#9eb5a8] px-2 py-1 text-xs md:text-[10px] font-bold uppercase tracking-[0.12em] text-[#174b43]"
                                     >Populer</span
                                 >
                             {/if}
@@ -523,7 +550,9 @@
                 class="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-[1fr_auto] md:items-center lg:px-10 lg:py-16"
             >
                 <div>
-                    <p class="text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9a27d]">
+                    <p
+                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9a27d]"
+                    >
                         Langkah berikutnya
                     </p>
                     <h2

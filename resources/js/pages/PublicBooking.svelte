@@ -1,4 +1,6 @@
 <script lang="ts">
+    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
+
     import {
         ArrowLeft,
         ArrowRight,
@@ -788,6 +790,8 @@
     }
 </script>
 
+<NavigationMetrics />
+
 <svelte:head>
     <title>Booking {tenant.name}</title>
     <meta
@@ -797,6 +801,7 @@
 </svelte:head>
 
 <main
+    class:mobile-page={true}
     class="min-h-screen bg-[#f5f7f2] text-slate-900 selection:bg-emerald-200 dark:bg-slate-950 dark:text-slate-100"
 >
     <div
@@ -857,7 +862,7 @@
                     </h2>
                 </div>
                 <div
-                    class="mt-6 flex items-center gap-2 text-[11px] font-bold text-slate-300"
+                    class="mt-6 flex items-center gap-2 text-xs md:text-[11px] font-bold text-slate-300"
                 >
                     {#each ['Tanggal', 'Kursi', 'Data', 'Review'] as label, index (label)}
                         <div
@@ -865,7 +870,7 @@
                             class="flex items-center gap-2"
                         >
                             <span
-                                class={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-black transition-colors ${step > index + 1 ? 'bg-emerald-400 text-emerald-950' : step === index + 1 ? 'bg-white text-emerald-950 shadow-sm shadow-black/20' : 'bg-white/15 text-white'}`}
+                                class={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-xs md:text-[11px] font-black transition-colors ${step > index + 1 ? 'bg-emerald-400 text-emerald-950' : step === index + 1 ? 'bg-white text-emerald-950 shadow-sm shadow-black/20' : 'bg-white/15 text-white'}`}
                                 >{step > index + 1 ? '✓' : index + 1}</span
                             >
                             <span class="hidden sm:inline">{label}</span>
@@ -1096,7 +1101,7 @@
                                                             {segment.label}
                                                         </span>
                                                         <span
-                                                            class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-bold text-slate-500 dark:text-slate-400"
+                                                            class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs md:text-[11px] font-bold text-slate-500 dark:text-slate-400"
                                                         >
                                                             <span
                                                                 class="inline-flex items-center gap-1"
@@ -1153,7 +1158,7 @@
                             class="mb-4 rounded-2xl bg-slate-50 px-3 py-2.5 dark:bg-slate-800"
                         >
                             <p
-                                class="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
+                                class="text-xs md:text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
                             >
                                 Tujuan dipilih
                             </p>
@@ -1191,7 +1196,7 @@
                                 <span class="min-w-0 flex-1">
                                     {#if selectedSchedule}
                                         <span
-                                            class="block text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300"
+                                            class="block text-xs md:text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-300"
                                         >
                                             Jam terpilih
                                         </span>
@@ -1220,7 +1225,7 @@
                                 </span>
                                 {#if selectedSchedule}
                                     <span
-                                        class="shrink-0 rounded-xl bg-emerald-100 px-2.5 py-2 text-center text-[10px] font-black leading-tight text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-200"
+                                        class="shrink-0 rounded-xl bg-emerald-100 px-2.5 py-2 text-center text-xs md:text-[10px] font-black leading-tight text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-200"
                                     >
                                         <span
                                             class="block text-base leading-none"
@@ -1353,7 +1358,7 @@
                                                             {schedule.unit_label}
                                                         </span>
                                                         <span
-                                                            class="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-slate-400"
+                                                            class="mt-1 flex items-center gap-1.5 text-xs md:text-[11px] font-bold text-slate-500 dark:text-slate-400"
                                                         >
                                                             <Ticket
                                                                 class="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
@@ -1363,7 +1368,7 @@
                                                         </span>
                                                     </span>
                                                     <span
-                                                        class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1.5 text-[10px] font-black text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                                                        class="shrink-0 rounded-full bg-slate-100 px-2.5 py-1.5 text-xs md:text-[10px] font-black text-slate-500 dark:bg-slate-800 dark:text-slate-400"
                                                         class:bg-emerald-100={bookingOpen &&
                                                             available > 0}
                                                         class:text-emerald-800={bookingOpen &&
@@ -1431,7 +1436,7 @@
                             </div>
 
                             <div
-                                class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-[11px] font-bold text-slate-500 dark:text-slate-400"
+                                class="mt-4 flex flex-wrap gap-x-4 gap-y-2 text-xs md:text-[11px] font-bold text-slate-500 dark:text-slate-400"
                             >
                                 <span class="flex items-center gap-1.5"
                                     ><i
@@ -1473,13 +1478,13 @@
                                                     ></div>
                                                 {:else if cellType(cell) === 'driver'}
                                                     <div
-                                                        class="flex h-11 items-center justify-center rounded-xl bg-slate-900 px-1 text-[10px] font-black uppercase tracking-wider text-white"
+                                                        class="flex h-11 items-center justify-center rounded-xl bg-slate-900 px-1 text-xs md:text-[10px] font-black uppercase tracking-wider text-white"
                                                     >
                                                         Driver
                                                     </div>
                                                 {:else if isAisleCell(cell)}
                                                     <div
-                                                        class="flex h-11 items-center justify-center rounded-xl border border-dashed border-amber-300 bg-amber-50 px-1 text-[9px] font-black uppercase tracking-wider text-amber-700 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
+                                                        class="flex h-11 items-center justify-center rounded-xl border border-dashed border-amber-300 bg-amber-50 px-1 text-xs md:text-[9px] font-black uppercase tracking-wider text-amber-700 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-200"
                                                     >
                                                         Lorong
                                                     </div>
@@ -1627,7 +1632,7 @@
                                     </p>
                                 </div>
                                 <span
-                                    class="shrink-0 rounded-full bg-white px-2.5 py-1 text-[10px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-slate-200 dark:bg-slate-700 dark:text-emerald-200 dark:ring-slate-600"
+                                    class="shrink-0 rounded-full bg-white px-2.5 py-1 text-xs md:text-[10px] font-black uppercase tracking-wide text-emerald-700 ring-1 ring-slate-200 dark:bg-slate-700 dark:text-emerald-200 dark:ring-slate-600"
                                 >
                                     Slot {passengerIndex + 1}
                                 </span>
@@ -1636,18 +1641,21 @@
                                 for={`passenger-${seat}`}
                                 class="mb-1 block text-xs font-bold text-slate-500 dark:text-slate-400"
                                 >Nama penumpang</label
-                            ><input
-                                id={`passenger-${seat}`}
-                                value={passengerNames[seat] ?? ''}
-                                oninput={(event) =>
-                                    updatePassengerName(
-                                        seat,
-                                        event.currentTarget.value,
-                                    )}
-                                autocomplete="name"
-                                placeholder="Contoh: BUDI"
-                                class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm uppercase focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
-                            />
+                            ><label
+                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                ><span>Nama penumpang</span><input
+                                    id={`passenger-${seat}`}
+                                    value={passengerNames[seat] ?? ''}
+                                    oninput={(event) =>
+                                        updatePassengerName(
+                                            seat,
+                                            event.currentTarget.value,
+                                        )}
+                                    autocomplete="name"
+                                    placeholder="Contoh: BUDI"
+                                    class="h-12 w-full rounded-2xl border-slate-200 bg-slate-50 px-4 text-sm uppercase focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400"
+                                /></label
+                            >
                         </div>
                     {/each}
                     <div>
@@ -1769,7 +1777,7 @@
                         class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/60"
                     >
                         <p
-                            class="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
+                            class="text-xs md:text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-300"
                         >
                             Perjalanan
                         </p>
@@ -1801,7 +1809,7 @@
                         class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700"
                     >
                         <p
-                            class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
+                            class="text-xs md:text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                         >
                             Penumpang & kursi
                         </p>
@@ -1836,7 +1844,7 @@
                         class="rounded-2xl border border-slate-200 p-4 dark:border-slate-700"
                     >
                         <p
-                            class="text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
+                            class="text-xs md:text-[10px] font-black uppercase tracking-[0.16em] text-slate-500 dark:text-slate-400"
                         >
                             Data pemesan
                         </p>
@@ -1978,13 +1986,18 @@
                             : 'Salin kode request'}</button
                     >
                     {#if copyFailed}
-                        <input
-                            readonly
-                            value={requestResult?.request_code ?? ''}
-                            aria-label="Kode request untuk disalin manual"
-                            onclick={(event) => event.currentTarget.select()}
-                            class="h-12 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 text-center text-sm font-black text-white"
-                        />
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Kode request untuk disalin manual</span
+                            ><input
+                                readonly
+                                value={requestResult?.request_code ?? ''}
+                                aria-label="Kode request untuk disalin manual"
+                                onclick={(event) =>
+                                    event.currentTarget.select()}
+                                class="h-12 w-full rounded-2xl border border-slate-700 bg-slate-900 px-4 text-center text-sm font-black text-white"
+                            /></label
+                        >
                         <p class="text-xs text-slate-400">
                             Salin kode secara manual dari kolom di atas.
                         </p>

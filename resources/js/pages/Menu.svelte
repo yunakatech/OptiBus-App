@@ -189,7 +189,7 @@
                 },
                 { title: 'Langganan', href: '/subscription', icon: CreditCard },
                 {
-                    title: 'Users',
+                    title: 'Pengguna',
                     href: '/settings/users',
                     icon: UserCog,
                     permission: 'user.manage',
@@ -201,7 +201,7 @@
                     permission: 'booking.public.manage',
                 },
                 {
-                    title: 'Logs',
+                    title: 'Log',
                     href: '/settings/logs',
                     icon: History,
                     permission: 'logs.view',
@@ -316,7 +316,8 @@
 <AppHead title="Menu" />
 
 <div
-    class="min-h-[calc(100dvh-4rem)] px-4 py-5 pb-[calc(6rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8"
+    class:mobile-page={true}
+    class="min-h-[calc(100dvh-4rem)] px-4 py-4 sm:px-6 lg:px-8"
 >
     <div class="mx-auto flex w-full max-w-7xl flex-col gap-5">
         <section
@@ -400,7 +401,7 @@
                     >
                         <div class="flex items-center justify-between gap-3">
                             <h2
-                                class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                             >
                                 {section.label}
                             </h2>

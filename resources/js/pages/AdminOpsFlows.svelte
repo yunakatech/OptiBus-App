@@ -10,6 +10,8 @@
 </script>
 
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import { page, router } from '@inertiajs/svelte';
     import { MoreHorizontal } from 'lucide-svelte';
     import { onDestroy, onMount } from 'svelte';
@@ -847,6 +849,7 @@
     };
 
     const initAssignmentPickers = async () => {
+        if (!assignmentDateInput && !assignmentTimeInput) return;
         if (typeof window === 'undefined') {
             return;
         }
@@ -880,6 +883,7 @@
     };
 
     const initExportPickers = async () => {
+        if (!exportFromDateInput && !exportToDateInput) return;
         if (typeof window === 'undefined') {
             return;
         }
@@ -910,6 +914,12 @@
     };
 
     const initCharterPickers = async () => {
+        if (
+            !charterStartDateInput &&
+            !charterEndDateInput &&
+            !charterDepartureTimeInput
+        )
+            return;
         if (typeof window === 'undefined') {
             return;
         }
@@ -4164,6 +4174,7 @@
 <AppHead title={tabTitle(activeTab)} />
 
 <div
+    class:mobile-page={true}
     data-content-density="compact"
     class="space-y-4 bg-[#f1eee5] p-3 pb-28 dark:bg-slate-950 md:p-4"
 >
@@ -4185,6 +4196,9 @@
                 {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view'))}
                     {#if activeTab === 'charters' || activeTab === 'luggages'}
                         <ResponsiveFilterBar
+                            bind:query={filterQuery}
+                            onSearch={() => void reloadActiveFlowList(1)}
+                            searchPlaceholder="Cari nama, kode, atau rute"
                             label={activeTab === 'luggages'
                                 ? 'Bagasi'
                                 : activeTab === 'charters'
@@ -4207,15 +4221,19 @@
                             onCancel={beginFlowFilterDraft}
                         >
                             {#snippet primary()}
-                                <div class="md:hidden">
-                                    <span class="text-xs text-muted-foreground">
-                                        {activeTab === 'luggages'
-                                            ? 'Filter bagasi'
-                                            : activeTab === 'charters'
-                                              ? 'Filter carter'
-                                              : 'Filter data'}
-                                    </span>
-                                </div>
+                                <ViewportOnly minWidth={0} maxWidth={767}
+                                    ><div class="md:hidden">
+                                        <span
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            {activeTab === 'luggages'
+                                                ? 'Filter bagasi'
+                                                : activeTab === 'charters'
+                                                  ? 'Filter carter'
+                                                  : 'Filter data'}
+                                        </span>
+                                    </div></ViewportOnly
+                                >
                             {/snippet}
                             {#snippet filters()}
                                 <div class="grid gap-3">
@@ -4244,7 +4262,9 @@
                                             Status pengiriman
                                             <select
                                                 class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                                bind:value={flowFilterDraft.status}
+                                                bind:value={
+                                                    flowFilterDraft.status
+                                                }
                                             >
                                                 {#each luggageStatusTabs() as tab (tab.key)}
                                                     <option value={tab.key}
@@ -4261,10 +4281,13 @@
                                             Kondisi barang
                                             <select
                                                 class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                                bind:value={flowFilterDraft.condition}
+                                                bind:value={
+                                                    flowFilterDraft.condition
+                                                }
                                             >
                                                 {#each luggageConditionOptions as condition (condition.key)}
-                                                    <option value={condition.key}
+                                                    <option
+                                                        value={condition.key}
                                                         >{condition.label}</option
                                                     >
                                                 {/each}
@@ -4277,7 +4300,9 @@
                                             Kategori armada
                                             <select
                                                 class="h-12 w-full rounded-xl border border-input bg-background px-3 text-base"
-                                                bind:value={flowFilterDraft.unitId}
+                                                bind:value={
+                                                    flowFilterDraft.unitId
+                                                }
                                             >
                                                 <option value={0}
                                                     >Semua kategori</option
@@ -4305,32 +4330,41 @@
                             <div
                                 class="grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)_260px_240px_auto_auto]"
                             >
-                                <input
-                                    bind:this={charterFilterDateInput}
-                                    type="text"
-                                    value={filterFrom}
-                                    readonly
-                                    autocomplete="off"
-                                    placeholder="Tanggal charter"
-                                    class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                />
-                                <Input
-                                    placeholder="Cari nama customer, driver, rute, armada"
-                                    bind:value={filterQuery}
-                                />
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Tanggal carter</span><input
+                                        bind:this={charterFilterDateInput}
+                                        type="text"
+                                        value={filterFrom}
+                                        readonly
+                                        autocomplete="off"
+                                        placeholder="Tanggal charter"
+                                        class="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                    /></label
+                                >
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Pencarian</span><Input
+                                        placeholder="Cari nama pelanggan, driver, rute, armada"
+                                        bind:value={filterQuery}
+                                    /></label
+                                >
                                 <div class="relative">
-                                    <Input
-                                        placeholder="Filter kategori armada"
-                                        bind:value={charterFilterUnitSearch}
-                                        class="rounded-xl"
-                                        onfocus={() => {
-                                            charterFilterUnitLookupOpen = true;
-                                        }}
-                                        oninput={() => {
-                                            charterFilterUnitLookupOpen = true;
-                                        }}
-                                        onblur={onCharterFilterUnitBlur}
-                                    />
+                                    <label
+                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                        ><span>Kategori armada</span><Input
+                                            placeholder="Filter kategori armada"
+                                            bind:value={charterFilterUnitSearch}
+                                            class="rounded-xl"
+                                            onfocus={() => {
+                                                charterFilterUnitLookupOpen = true;
+                                            }}
+                                            oninput={() => {
+                                                charterFilterUnitLookupOpen = true;
+                                            }}
+                                            onblur={onCharterFilterUnitBlur}
+                                        /></label
+                                    >
                                     {#if charterFilterUnitLookupOpen}
                                         <div
                                             class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
@@ -4366,7 +4400,7 @@
                                                                         unit.nama_kategori}</span
                                                                 >
                                                                 <span
-                                                                    class="block text-[11px] text-muted-foreground"
+                                                                    class="block text-xs md:text-[11px] text-muted-foreground"
                                                                     >{charterUnitMeta(
                                                                         unit,
                                                                     )}</span
@@ -4380,32 +4414,37 @@
                                     {/if}
                                 </div>
                                 <div class="relative">
-                                    <Input
-                                        placeholder="Filter nopol armada"
-                                        bind:value={charterFilterArmadaSearch}
-                                        class="rounded-xl"
-                                        onfocus={() => {
-                                            charterFilterArmadaLookupOpen = true;
-
-                                            if (
-                                                charterFilterArmadas.length ===
-                                                0
-                                            ) {
-                                                void loadCharterFilterArmadas(
-                                                    charterFilterArmadaSearch,
-                                                );
+                                    <label
+                                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                        ><span>Nomor polisi</span><Input
+                                            placeholder="Filter nopol armada"
+                                            bind:value={
+                                                charterFilterArmadaSearch
                                             }
-                                        }}
-                                        oninput={(event) => {
-                                            charterFilterArmadaLookupOpen = true;
-                                            queueCharterFilterArmadaSearch(
-                                                (
-                                                    event.currentTarget as HTMLInputElement
-                                                ).value,
-                                            );
-                                        }}
-                                        onblur={onCharterFilterArmadaBlur}
-                                    />
+                                            class="rounded-xl"
+                                            onfocus={() => {
+                                                charterFilterArmadaLookupOpen = true;
+
+                                                if (
+                                                    charterFilterArmadas.length ===
+                                                    0
+                                                ) {
+                                                    void loadCharterFilterArmadas(
+                                                        charterFilterArmadaSearch,
+                                                    );
+                                                }
+                                            }}
+                                            oninput={(event) => {
+                                                charterFilterArmadaLookupOpen = true;
+                                                queueCharterFilterArmadaSearch(
+                                                    (
+                                                        event.currentTarget as HTMLInputElement
+                                                    ).value,
+                                                );
+                                            }}
+                                            onblur={onCharterFilterArmadaBlur}
+                                        /></label
+                                    >
                                     {#if charterFilterArmadaLookupOpen}
                                         <div
                                             class="absolute z-20 mt-2 max-h-56 w-full overflow-auto rounded-lg border border-border/80 bg-popover p-2 shadow-md"
@@ -4443,7 +4482,7 @@
                                                                     >{armada.nopol}</span
                                                                 >
                                                                 <span
-                                                                    class="block text-[11px] text-muted-foreground"
+                                                                    class="block text-xs md:text-[11px] text-muted-foreground"
                                                                     >{[
                                                                         armada.kategori,
                                                                         armada.merk,
@@ -4499,7 +4538,7 @@
                                     </div>
                                     {#if luggageFilterActiveCount() > 0}
                                         <span
-                                            class="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-semibold text-cyan-700"
+                                            class="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-xs md:text-[11px] font-semibold text-cyan-700"
                                         >
                                             {luggageFilterActiveCount()}
                                             filter aktif
@@ -4637,36 +4676,48 @@
                             </div>
                         {:else}
                             <div class="grid gap-3 md:grid-cols-5">
-                                <input
-                                    bind:this={exportFromDateInput}
-                                    type="text"
-                                    value={filterFrom}
-                                    readonly
-                                    autocomplete="off"
-                                    placeholder="Tanggal mulai"
-                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                />
-                                <input
-                                    bind:this={exportToDateInput}
-                                    type="text"
-                                    value={filterTo}
-                                    readonly
-                                    autocomplete="off"
-                                    placeholder="Tanggal akhir"
-                                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                                />
-                                <Input
-                                    placeholder="Cari nama / no hp / resi / rute"
-                                    bind:value={filterQuery}
-                                />
-                                <Input
-                                    type="number"
-                                    min="10"
-                                    max="100"
-                                    bind:value={filterPerPage}
-                                    placeholder="Data per halaman"
-                                    aria-label="Data per halaman"
-                                />
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Tanggal mulai</span><input
+                                        bind:this={exportFromDateInput}
+                                        type="text"
+                                        value={filterFrom}
+                                        readonly
+                                        autocomplete="off"
+                                        placeholder="Tanggal mulai"
+                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                    /></label
+                                >
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Tanggal akhir</span><input
+                                        bind:this={exportToDateInput}
+                                        type="text"
+                                        value={filterTo}
+                                        readonly
+                                        autocomplete="off"
+                                        placeholder="Tanggal akhir"
+                                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                                    /></label
+                                >
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Pencarian</span><Input
+                                        placeholder="Cari nama / no hp / resi / rute"
+                                        bind:value={filterQuery}
+                                    /></label
+                                >
+                                <label
+                                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                    ><span>Data per halaman</span><Input
+                                        type="number"
+                                        min="10"
+                                        max="100"
+                                        bind:value={filterPerPage}
+                                        placeholder="Data per halaman"
+                                        aria-label="Data per halaman"
+                                    /></label
+                                >
                                 <Button
                                     type="button"
                                     onclick={() => void applyFilters()}
@@ -4860,7 +4911,7 @@
                                 variant={charterScope === 'active'
                                     ? 'default'
                                     : 'ghost'}
-                                class="h-7 rounded-lg px-2.5 text-[11px]"
+                                class="h-7 rounded-lg px-2.5 text-xs md:text-[11px]"
                                 onclick={() => void setCharterScope('active')}
                             >
                                 Aktif
@@ -4871,7 +4922,7 @@
                                 variant={charterScope === 'history'
                                     ? 'default'
                                     : 'ghost'}
-                                class="h-7 rounded-lg px-2.5 text-[11px]"
+                                class="h-7 rounded-lg px-2.5 text-xs md:text-[11px]"
                                 onclick={() => void setCharterScope('history')}
                             >
                                 Riwayat
@@ -4891,25 +4942,25 @@
                             </p>
                             <div class="flex flex-wrap items-center gap-1.5">
                                 <span
-                                    class="rounded-full border border-border/70 bg-background px-2 py-0.5 text-[11px] font-medium text-muted-foreground"
+                                    class="rounded-full border border-border/70 bg-background px-2 py-0.5 text-xs md:text-[11px] font-medium text-muted-foreground"
                                 >
                                     Total {charters.length}
                                 </span>
                                 {#if charterScope === 'history'}
                                     <span
-                                        class="rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-700"
+                                        class="rounded-full border border-sky-200 bg-sky-100 px-2 py-0.5 text-xs md:text-[11px] font-medium text-sky-700"
                                     >
                                         Selesai {charterDoneCount()}
                                     </span>
                                 {:else}
                                     <span
-                                        class="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700"
+                                        class="rounded-full border border-emerald-200 bg-emerald-100 px-2 py-0.5 text-xs md:text-[11px] font-medium text-emerald-700"
                                     >
                                         Aktif {charterActiveCount()}
                                     </span>
                                 {/if}
                                 <span
-                                    class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700"
+                                    class="rounded-full border border-rose-200 bg-rose-100 px-2 py-0.5 text-xs md:text-[11px] font-medium text-rose-700"
                                 >
                                     Dibatalkan {charterCanceledCount()}
                                 </span>
@@ -4940,12 +4991,12 @@
                                                     {row.name}
                                                 </p>
                                                 <p
-                                                    class="truncate text-[11px] text-muted-foreground"
+                                                    class="truncate text-xs md:text-[11px] text-muted-foreground"
                                                 >
                                                     {row.company_name ?? '-'}
                                                 </p>
                                                 <p
-                                                    class="truncate text-[11px] text-muted-foreground"
+                                                    class="truncate text-xs md:text-[11px] text-muted-foreground"
                                                 >
                                                     {row.phone ?? '-'}
                                                 </p>
@@ -4954,7 +5005,7 @@
                                                 class="flex shrink-0 items-center gap-1.5"
                                             >
                                                 <span
-                                                    class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${charterStatusClass(row.status)}`}
+                                                    class={`rounded-full px-2 py-0.5 text-xs md:text-[10px] font-semibold ${charterStatusClass(row.status)}`}
                                                 >
                                                     {charterStatusLabel(
                                                         row.status,
@@ -5006,7 +5057,7 @@
                                                                     row,
                                                                 )}
                                                         >
-                                                            Copy Data
+                                                            Salin data
                                                         </DropdownMenuItem>
                                                         {#if canCharterPrint}<DropdownMenuItem
                                                                 onclick={() =>
@@ -5068,7 +5119,7 @@
                                             class="rounded-xl border border-border/60 bg-muted/15 px-2.5 py-2"
                                         >
                                             <p
-                                                class="text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
+                                                class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
                                             >
                                                 Rute Charter
                                             </p>
@@ -5087,7 +5138,7 @@
                                                 class="order-1 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2"
                                             >
                                                 <p
-                                                    class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
+                                                    class="text-xs md:text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
                                                 >
                                                     Jadwal
                                                 </p>
@@ -5097,7 +5148,7 @@
                                                     {row.start_date}
                                                 </p>
                                                 <p
-                                                    class="text-[11px] text-muted-foreground"
+                                                    class="text-xs md:text-[11px] text-muted-foreground"
                                                 >
                                                     {row.end_date} • {row.departure_time
                                                         ? String(
@@ -5110,7 +5161,7 @@
                                                 class="order-3 col-span-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2"
                                             >
                                                 <p
-                                                    class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
+                                                    class="text-xs md:text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
                                                 >
                                                     Driver & Armada
                                                 </p>
@@ -5123,7 +5174,7 @@
                                                         {row.driver_name ?? '-'}
                                                     </p>
                                                     <p
-                                                        class="text-[11px] text-muted-foreground"
+                                                        class="text-xs md:text-[11px] text-muted-foreground"
                                                     >
                                                         {[
                                                             row.unit_category,
@@ -5139,7 +5190,7 @@
                                                 class="order-2 rounded-xl border border-border/60 bg-background/80 px-2.5 py-2"
                                             >
                                                 <p
-                                                    class="text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
+                                                    class="text-xs md:text-[9px] uppercase tracking-[0.08em] text-muted-foreground"
                                                 >
                                                     Biaya
                                                 </p>
@@ -5151,7 +5202,7 @@
                                                     )}
                                                 </p>
                                                 <div
-                                                    class="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 text-[11px] leading-tight text-muted-foreground"
+                                                    class="mt-0.5 flex flex-wrap gap-x-2 gap-y-0.5 text-xs md:text-[11px] leading-tight text-muted-foreground"
                                                 >
                                                     <span
                                                         >DP {formatCurrencyId(
@@ -5172,13 +5223,13 @@
                                             class="mt-1.5 flex flex-wrap items-center gap-1.5"
                                         >
                                             <span
-                                                class={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${charterPaymentClass(row.payment_status)}`}
+                                                class={`rounded-full px-2 py-0.5 text-xs md:text-[10px] font-semibold ${charterPaymentClass(row.payment_status)}`}
                                             >
                                                 {row.payment_status ?? '-'}
                                             </span>
                                             {#if Number(row.down_payment ?? 0) > 0}
                                                 <span
-                                                    class="rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-[10px] font-semibold text-violet-700"
+                                                    class="rounded-full border border-violet-200 bg-violet-100 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-violet-700"
                                                 >
                                                     DP {formatCurrencyId(
                                                         row.down_payment ?? 0,
@@ -5191,7 +5242,7 @@
                                             class="mt-2 flex items-center justify-end border-t border-border/70 pt-2"
                                         >
                                             <p
-                                                class="mr-auto hidden text-[11px] text-muted-foreground sm:block"
+                                                class="mr-auto hidden text-xs md:text-[11px] text-muted-foreground sm:block"
                                             >
                                                 {charterScope === 'history'
                                                     ? 'Riwayat charter tampil ringkas untuk mobile.'
@@ -5201,7 +5252,7 @@
                                                 type="button"
                                                 size="sm"
                                                 variant="ghost"
-                                                class="h-8 rounded-xl px-3 text-[11px]"
+                                                class="h-8 rounded-xl px-3 text-xs md:text-[11px]"
                                                 onclick={() =>
                                                     void openCharterView(
                                                         row.id,
@@ -5221,7 +5272,10 @@
                         <p class="text-xs text-muted-foreground">
                             Total data: {charterMeta.total}
                         </p>
-                        <div class="flex items-center gap-2">
+                        <div
+                            class:mobile-pagination={true}
+                            class="flex items-center gap-2"
+                        >
                             <Button
                                 type="button"
                                 variant="outline"
@@ -5231,7 +5285,7 @@
                                     void jumpPage(
                                         charterMeta.page - 1,
                                         'charter',
-                                    )}>Prev</Button
+                                    )}>Sebelumnya</Button
                             >
                             <span
                                 class="rounded-full border border-border/70 bg-background px-3 py-1 text-xs font-medium text-foreground"
@@ -5247,7 +5301,7 @@
                                     void jumpPage(
                                         charterMeta.page + 1,
                                         'charter',
-                                    )}>Next</Button
+                                    )}>Berikutnya</Button
                             >
                         </div>
                     </div>
@@ -5297,14 +5351,14 @@
                                 </div>
                                 <div class="flex flex-wrap gap-2">
                                     <span
-                                        class="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-[11px] font-medium text-muted-foreground"
+                                        class="rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-xs md:text-[11px] font-medium text-muted-foreground"
                                     >
                                         {luggageForm.id
                                             ? 'Mode Edit'
                                             : 'Data Baru'}
                                     </span>
                                     <span
-                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-[11px] font-medium text-emerald-700"
+                                        class="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs md:text-[11px] font-medium text-emerald-700"
                                     >
                                         {luggageForm.payment_status ||
                                             'Belum Bayar'}
@@ -5329,8 +5383,8 @@
                                         <p
                                             class="text-sm font-medium text-foreground"
                                         >
-                                            Cari customer bagasi pengirim supaya
-                                            kontak terisi otomatis
+                                            Cari pelanggan bagasi pengirim
+                                            supaya kontak terisi otomatis
                                         </p>
                                     </div>
                                     <div class="grid gap-3 md:grid-cols-2">
@@ -5345,7 +5399,7 @@
                                                     id="luggage-sender-name"
                                                     class="rounded-xl"
                                                     type="search"
-                                                    placeholder="Cari nama customer bagasi pengirim"
+                                                    placeholder="Cari nama pelanggan bagasi pengirim"
                                                     value={luggageForm.sender_name}
                                                     oninput={(event) =>
                                                         onLuggageCustomerInput(
@@ -5373,7 +5427,8 @@
                                                             <div
                                                                 class="px-3 py-3 text-xs text-muted-foreground"
                                                             >
-                                                                Mencari customer
+                                                                Mencari
+                                                                pelanggan
                                                                 bagasi...
                                                             </div>
                                                         {:else if luggageSenderLookupResults.length > 0}
@@ -5399,7 +5454,7 @@
                                                                             >{customer.nama}</span
                                                                         >
                                                                         <span
-                                                                            class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                                            class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
                                                                             >{customer.tipe ??
                                                                                 '-'}</span
                                                                         >
@@ -5419,7 +5474,7 @@
                                                             <div
                                                                 class="px-3 py-3 text-xs text-muted-foreground"
                                                             >
-                                                                Customer bagasi
+                                                                Pelanggan bagasi
                                                                 pengirim tidak
                                                                 ditemukan.
                                                             </div>
@@ -5470,8 +5525,8 @@
                                         <p
                                             class="text-sm font-medium text-foreground"
                                         >
-                                            Cari customer bagasi penerima supaya
-                                            kontak terisi otomatis
+                                            Cari pelanggan bagasi penerima
+                                            supaya kontak terisi otomatis
                                         </p>
                                     </div>
                                     <div class="grid gap-3 md:grid-cols-2">
@@ -5486,7 +5541,7 @@
                                                     id="luggage-receiver-name"
                                                     class="rounded-xl"
                                                     type="search"
-                                                    placeholder="Cari nama customer bagasi penerima"
+                                                    placeholder="Cari nama pelanggan bagasi penerima"
                                                     value={luggageForm.receiver_name}
                                                     oninput={(event) =>
                                                         onLuggageCustomerInput(
@@ -5514,7 +5569,8 @@
                                                             <div
                                                                 class="px-3 py-3 text-xs text-muted-foreground"
                                                             >
-                                                                Mencari customer
+                                                                Mencari
+                                                                pelanggan
                                                                 bagasi...
                                                             </div>
                                                         {:else if luggageReceiverLookupResults.length > 0}
@@ -5540,7 +5596,7 @@
                                                                             >{customer.nama}</span
                                                                         >
                                                                         <span
-                                                                            class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
+                                                                            class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
                                                                             >{customer.tipe ??
                                                                                 '-'}</span
                                                                         >
@@ -5560,7 +5616,7 @@
                                                             <div
                                                                 class="px-3 py-3 text-xs text-muted-foreground"
                                                             >
-                                                                Customer bagasi
+                                                                Pelanggan bagasi
                                                                 penerima tidak
                                                                 ditemukan.
                                                             </div>
@@ -5642,7 +5698,7 @@
                                                 {/each}
                                             </select>
                                             <p
-                                                class="text-[11px] text-muted-foreground"
+                                                class="text-xs md:text-[11px] text-muted-foreground"
                                             >
                                                 Dipakai untuk akses user dan
                                                 laporan pool.
@@ -5739,7 +5795,7 @@
                                             </select>
                                             {#if selectedLuggageCategory && !selectedLuggageCategory.configured}
                                                 <p
-                                                    class="text-[11px] font-medium text-amber-700"
+                                                    class="text-xs md:text-[11px] font-medium text-amber-700"
                                                 >
                                                     Tarif masih Rp0 dan belum
                                                     dikonfirmasi admin.
@@ -5797,7 +5853,7 @@
                                             />
                                             {#if selectedLuggageCategory}
                                                 <p
-                                                    class="text-[11px] text-muted-foreground"
+                                                    class="text-xs md:text-[11px] text-muted-foreground"
                                                 >
                                                     {formatCurrencyId(
                                                         luggageEffectiveUnitPrice,
@@ -5919,7 +5975,7 @@
                                             class="rounded-xl border border-white/10 bg-white/5 p-3 text-xs"
                                         >
                                             <p
-                                                class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                class="text-xs md:text-[10px] uppercase tracking-[0.08em] text-slate-300"
                                             >
                                                 Pengirim
                                             </p>
@@ -5940,7 +5996,7 @@
                                             class="rounded-xl border border-white/10 bg-white/5 p-3 text-xs"
                                         >
                                             <p
-                                                class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                class="text-xs md:text-[10px] uppercase tracking-[0.08em] text-slate-300"
                                             >
                                                 Penerima
                                             </p>
@@ -5964,7 +6020,7 @@
                                                 class="rounded-xl border border-white/10 bg-white/5 p-2.5"
                                             >
                                                 <p
-                                                    class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                    class="text-xs md:text-[10px] uppercase tracking-[0.08em] text-slate-300"
                                                 >
                                                     Tanggal
                                                 </p>
@@ -5976,7 +6032,7 @@
                                                 class="rounded-xl border border-white/10 bg-white/5 p-2.5"
                                             >
                                                 <p
-                                                    class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                    class="text-xs md:text-[10px] uppercase tracking-[0.08em] text-slate-300"
                                                 >
                                                     Jumlah
                                                 </p>
@@ -5988,7 +6044,7 @@
                                                 class="rounded-xl border border-white/10 bg-white/5 p-2.5"
                                             >
                                                 <p
-                                                    class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                    class="text-xs md:text-[10px] uppercase tracking-[0.08em] text-slate-300"
                                                 >
                                                     Status
                                                 </p>
@@ -6002,7 +6058,7 @@
                                                 class="rounded-xl border border-white/10 bg-white/5 p-2.5"
                                             >
                                                 <p
-                                                    class="text-[10px] uppercase tracking-[0.08em] text-slate-300"
+                                                    class="text-xs md:text-[10px] uppercase tracking-[0.08em] text-slate-300"
                                                 >
                                                     Bayar
                                                 </p>
@@ -6375,7 +6431,7 @@
                                                                 class="flex flex-wrap items-center gap-2"
                                                             >
                                                                 <span
-                                                                    class="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-700"
+                                                                    class="rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-xs md:text-[10px] font-semibold text-orange-700"
                                                                 >
                                                                     {luggageIncidentTypeLabel(
                                                                         incident.type,
@@ -6383,14 +6439,14 @@
                                                                     barang
                                                                 </span>
                                                                 <span
-                                                                    class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold"
+                                                                    class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-xs md:text-[10px] font-semibold"
                                                                 >
                                                                     {luggageIncidentStatusLabel(
                                                                         incident.status,
                                                                     )}
                                                                 </span>
                                                                 <span
-                                                                    class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-[10px] font-semibold"
+                                                                    class="rounded-full border border-border/70 bg-muted/30 px-2 py-0.5 text-xs md:text-[10px] font-semibold"
                                                                 >
                                                                     Klaim: {luggageClaimHistoryLabel(
                                                                         incident.claim_status,
@@ -6444,7 +6500,7 @@
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
-                                                                    class="h-7 rounded-lg px-2 text-[10px]"
+                                                                    class="h-7 rounded-lg px-2 text-xs md:text-[10px]"
                                                                     onclick={() =>
                                                                         void updateLuggageIncident(
                                                                             incident,
@@ -6459,7 +6515,7 @@
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
-                                                                    class="h-7 rounded-lg px-2 text-[10px]"
+                                                                    class="h-7 rounded-lg px-2 text-xs md:text-[10px]"
                                                                     onclick={() =>
                                                                         void updateLuggageIncident(
                                                                             incident,
@@ -6474,7 +6530,7 @@
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
-                                                                    class="h-7 rounded-lg px-2 text-[10px] text-rose-700"
+                                                                    class="h-7 rounded-lg px-2 text-xs md:text-[10px] text-rose-700"
                                                                     onclick={() =>
                                                                         void updateLuggageIncident(
                                                                             incident,
@@ -6488,7 +6544,7 @@
                                                                 <Button
                                                                     type="button"
                                                                     variant="outline"
-                                                                    class="h-7 rounded-lg px-2 text-[10px]"
+                                                                    class="h-7 rounded-lg px-2 text-xs md:text-[10px]"
                                                                     onclick={() =>
                                                                         void updateLuggageIncident(
                                                                             incident,
@@ -6502,7 +6558,7 @@
                                                             {#if canLuggageClaim && ['approved', 'resolved'].includes(incident.status) && !isFinalLuggageClaimStatus(incident.claim_status)}
                                                                 <Button
                                                                     type="button"
-                                                                    class="h-7 rounded-lg px-2 text-[10px]"
+                                                                    class="h-7 rounded-lg px-2 text-xs md:text-[10px]"
                                                                     onclick={() =>
                                                                         openLuggageClaim(
                                                                             incident,
@@ -6521,732 +6577,72 @@
                             </dialog>
                         </div>
                     {/if}
-                    <div class="grid gap-3 md:hidden">
-                        {#if luggages.length === 0}
-                            <div
-                                class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
-                            >
-                                Belum ada data bagasi yang cocok dengan filter
-                                saat ini.
-                            </div>
-                        {:else}
-                            {#each luggages as row (row.id)}
-                                {@const normalizedLuggageStatus =
-                                    normalizeLuggageStatus(row.status)}
-                                {@const normalizedLuggageCondition =
-                                    normalizeLuggageCondition(
-                                        row.condition_status,
-                                        row.damaged_quantity,
-                                        row.lost_quantity,
-                                    )}
-                                {@const departureInfo =
-                                    luggageDepartureInfo(row)}
-                                {@const lockedLuggageActions = [
-                                    luggagePickedUpStatus,
-                                    luggageArrivedStatus,
-                                ].includes(normalizedLuggageStatus)}
-                                <article
-                                    class="rounded-lg border border-border/70 bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900"
+                    <ViewportOnly minWidth={0} maxWidth={767}
+                        ><div class="grid gap-3 md:hidden">
+                            {#if luggages.length === 0}
+                                <div
+                                    class="rounded-lg border border-dashed border-border/70 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
                                 >
-                                    <div
-                                        class="flex items-start justify-between gap-2.5"
+                                    Belum ada data bagasi yang cocok dengan
+                                    filter saat ini.
+                                </div>
+                            {:else}
+                                {#each luggages as row (row.id)}
+                                    {@const normalizedLuggageStatus =
+                                        normalizeLuggageStatus(row.status)}
+                                    {@const normalizedLuggageCondition =
+                                        normalizeLuggageCondition(
+                                            row.condition_status,
+                                            row.damaged_quantity,
+                                            row.lost_quantity,
+                                        )}
+                                    {@const departureInfo =
+                                        luggageDepartureInfo(row)}
+                                    {@const lockedLuggageActions = [
+                                        luggagePickedUpStatus,
+                                        luggageArrivedStatus,
+                                    ].includes(normalizedLuggageStatus)}
+                                    <article
+                                        class="rounded-lg border border-border/70 bg-white p-2.5 dark:border-slate-700 dark:bg-slate-900"
                                     >
-                                        <div class="min-w-0">
-                                            <p
-                                                class="truncate text-[10px] font-semibold text-foreground"
-                                            >
-                                                {row.kode_resi ??
-                                                    `Bagasi #${row.id}`}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate text-[9px] text-muted-foreground"
-                                            >
-                                                {row.service_name ?? '-'} / {row.quantity}
-                                                barang
-                                            </p>
-                                        </div>
                                         <div
-                                            class="flex max-w-[72%] shrink-0 flex-wrap items-center justify-end gap-1"
+                                            class="flex items-start justify-between gap-2.5"
                                         >
-                                            <span
-                                                class={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${luggageStatusClass(row.status)}`}
-                                            >
-                                                {luggageStatusLabel(row.status)}
-                                            </span>
-                                            <span
-                                                class={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${luggageConditionClass(normalizedLuggageCondition)}`}
-                                            >
-                                                {luggageConditionLabel(
-                                                    normalizedLuggageCondition,
-                                                )}
-                                            </span>
-                                            {#if row.has_incident_history && row.incident_history_label}
-                                                {#if row.latest_incident_status}
-                                                    <span
-                                                        class="rounded-full border border-border/70 bg-muted/30 px-1.5 py-0.5 text-[8px] font-semibold text-muted-foreground"
-                                                    >
-                                                        {luggageIncidentStatusLabel(
-                                                            row.latest_incident_status,
-                                                        )}
-                                                    </span>
-                                                {/if}
-                                                <span
-                                                    class="rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[8px] font-semibold text-sky-700"
+                                            <div class="min-w-0">
+                                                <p
+                                                    class="truncate text-xs md:text-[10px] font-semibold text-foreground"
                                                 >
-                                                    {row.incident_history_label}
+                                                    {row.kode_resi ??
+                                                        `Bagasi #${row.id}`}
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate text-xs md:text-[9px] text-muted-foreground"
+                                                >
+                                                    {row.service_name ?? '-'} / {row.quantity}
+                                                    barang
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="flex max-w-[72%] shrink-0 flex-wrap items-center justify-end gap-1"
+                                            >
+                                                <span
+                                                    class={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${luggageStatusClass(row.status)}`}
+                                                >
+                                                    {luggageStatusLabel(
+                                                        row.status,
+                                                    )}
                                                 </span>
-                                            {/if}
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    {#snippet children(props)}
-                                                        <Button
-                                                            type="button"
-                                                            size="sm"
-                                                            variant="outline"
-                                                            class="h-7 w-7 rounded-md border-border/70 p-0"
-                                                            onclick={props.onclick}
-                                                            aria-expanded={props[
-                                                                'aria-expanded'
-                                                            ]}
-                                                            data-state={props[
-                                                                'data-state'
-                                                            ]}
-                                                        >
-                                                            <MoreHorizontal
-                                                                class="h-3.5 w-3.5"
-                                                            />
-                                                        </Button>
-                                                    {/snippet}
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent
-                                                    align="end"
-                                                    side="top"
-                                                    sideOffset={8}
-                                                    class="w-52 text-[10px]"
-                                                >
-                                                    {#if canLuggageUpdate && !lockedLuggageActions}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                openLuggageEditor(
-                                                                    row,
-                                                                )}
-                                                        >
-                                                            Edit Data
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
-                                                        <DropdownMenuItem
-                                                            disabled={pendingLuggageActionKey ===
-                                                                `action-${row.id}-active`}
-                                                            onclick={() =>
-                                                                void luggageAction(
-                                                                    row,
-                                                                    'active',
-                                                                )}
-                                                        >
-                                                            {pendingLuggageActionKey ===
-                                                            `action-${row.id}-active`
-                                                                ? 'Memproses...'
-                                                                : 'Tandai Dalam Perjalanan'}
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
-                                                        <DropdownMenuItem
-                                                            disabled={pendingLuggageActionKey ===
-                                                                `action-${row.id}-paid`}
-                                                            onclick={() =>
-                                                                void luggageAction(
-                                                                    row,
-                                                                    'paid',
-                                                                )}
-                                                        >
-                                                            {pendingLuggageActionKey ===
-                                                            `action-${row.id}-paid`
-                                                                ? 'Memproses...'
-                                                                : 'Tandai Lunas'}
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if canLuggagePrint}<DropdownMenuItem
-                                                            onclick={() =>
-                                                                openLuggagePrint(
-                                                                    row.id,
-                                                                )}
-                                                        >
-                                                            Print Resi
-                                                        </DropdownMenuItem>{/if}
-                                                    <DropdownMenuItem
-                                                        onclick={() =>
-                                                            void loadLuggageIncidents(
-                                                                row,
-                                                                'history',
-                                                            )}
-                                                    >
-                                                        Lihat Insiden
-                                                    </DropdownMenuItem>
-                                                    {#if canLuggageIncident && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                openLuggageIncidentReport(
-                                                                    row,
-                                                                    'damaged',
-                                                                )}
-                                                        >
-                                                            Laporkan Rusak
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                openLuggageIncidentReport(
-                                                                    row,
-                                                                    'lost',
-                                                                )}
-                                                        >
-                                                            Laporkan Hilang
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if canLuggageClaim && normalizedLuggageCondition !== 'normal' && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
-                                                        <DropdownMenuItem
-                                                            onclick={() =>
-                                                                void loadLuggageIncidents(
-                                                                    row,
-                                                                    'history',
-                                                                )}
-                                                        >
-                                                            Proses Klaim
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                    {#if canLuggageUpdate && !lockedLuggageActions}
-                                                        <DropdownMenuItem
-                                                            disabled={pendingLuggageActionKey ===
-                                                                `action-${row.id}-canceled`}
-                                                            onclick={() =>
-                                                                void luggageAction(
-                                                                    row,
-                                                                    'canceled',
-                                                                )}
-                                                        >
-                                                            {pendingLuggageActionKey ===
-                                                            `action-${row.id}-canceled`
-                                                                ? 'Memproses...'
-                                                                : 'Batalkan Pengiriman'}
-                                                        </DropdownMenuItem>
-                                                    {/if}
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="mt-2 grid grid-cols-2 gap-1.5 text-[9px]"
-                                    >
-                                        <div
-                                            class="rounded-xl bg-muted/30 px-2 py-1.25"
-                                        >
-                                            <p
-                                                class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Pengirim
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate font-medium text-foreground"
-                                            >
-                                                {row.sender_name || '-'}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate text-[9px] text-muted-foreground"
-                                            >
-                                                {row.sender_phone || '-'}
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="rounded-xl bg-muted/30 px-2 py-1.25"
-                                        >
-                                            <p
-                                                class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Penerima
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate font-medium text-foreground"
-                                            >
-                                                {row.receiver_name || '-'}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 truncate text-[9px] text-muted-foreground"
-                                            >
-                                                {row.receiver_phone || '-'}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="mt-2 rounded-xl bg-muted/30 px-2.5 py-1.5 text-[10px]"
-                                    >
-                                        <p
-                                            class="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                        >
-                                            Rute
-                                        </p>
-                                        <p
-                                            class="mt-1 font-semibold text-foreground"
-                                        >
-                                            {row.route_name ??
-                                                row.rute ??
-                                                routes.find(
-                                                    (route) =>
-                                                        route.id ===
-                                                        Number(
-                                                            row.rute_id || 0,
-                                                        ),
-                                                )?.name ??
-                                                '-'}
-                                        </p>
-                                        <p
-                                            class="mt-0.5 text-[11px] text-muted-foreground"
-                                        >
-                                            {row.tanggal || '-'}
-                                        </p>
-                                    </div>
-
-                                    {#if luggageConditionSummary(row)}
-                                        <p
-                                            class="mt-2 rounded-lg border border-rose-200/70 bg-rose-50/70 px-2 py-1 text-[8px] font-medium text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/20 dark:text-rose-300"
-                                        >
-                                            Kondisi: {luggageConditionSummary(
-                                                row,
-                                            )}
-                                        </p>
-                                    {/if}
-
-                                    <div
-                                        class="mt-2 grid grid-cols-2 gap-1.5 text-[9px]"
-                                    >
-                                        <div
-                                            class="rounded-xl bg-emerald-50/70 px-2 py-1 dark:bg-emerald-950/25"
-                                        >
-                                            <p
-                                                class="text-[7px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
-                                            >
-                                                Biaya
-                                            </p>
-                                            <p
-                                                class="mt-0.5 font-medium text-emerald-800 dark:text-emerald-200"
-                                            >
-                                                {formatCurrencyId(row.price)}
-                                            </p>
-                                        </div>
-                                        <div
-                                            class="rounded-xl bg-amber-50/80 px-2 py-1 dark:bg-amber-950/25"
-                                        >
-                                            <p
-                                                class="text-[7px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
-                                            >
-                                                Pembayaran
-                                            </p>
-                                            <p class="mt-0.5">
                                                 <span
-                                                    class={`inline-flex rounded-full px-1.5 py-0.5 text-[7px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                    class={`rounded-full px-1.5 py-0.5 text-[8px] font-semibold ${luggageConditionClass(normalizedLuggageCondition)}`}
                                                 >
-                                                    {row.payment_status ?? '-'}
-                                                </span>
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <div
-                                        class="mt-2 rounded-xl border border-border/60 bg-background/80 px-2 py-1 text-[8px]"
-                                    >
-                                        <p
-                                            class="text-[7px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                        >
-                                            Keberangkatan
-                                        </p>
-                                        {#if departureInfo}
-                                            <p
-                                                class="mt-0.5 font-medium text-foreground"
-                                            >
-                                                {departureInfo.primary}
-                                            </p>
-                                            <p
-                                                class="mt-0.5 text-[8px] text-muted-foreground"
-                                            >
-                                                {departureInfo.secondary}
-                                            </p>
-                                        {:else if normalizedLuggageStatus === luggageReceivedStatus}
-                                            <p
-                                                class="mt-0.5 text-[8px] text-muted-foreground"
-                                            >
-                                                Belum dimapping ke keberangkatan
-                                            </p>
-                                        {:else}
-                                            <p
-                                                class="mt-0.5 text-[8px] text-muted-foreground"
-                                            >
-                                                -
-                                            </p>
-                                        {/if}
-                                    </div>
-
-                                    {#if row.notes}
-                                        <p
-                                            class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-2 py-1 text-[8px] text-muted-foreground"
-                                        >
-                                            {row.notes}
-                                        </p>
-                                    {/if}
-                                </article>
-                            {/each}
-                        {/if}
-                    </div>
-
-                    <div
-                        class="hidden overflow-x-auto rounded-lg border border-border/70 bg-background md:block"
-                    >
-                        <table
-                            class="min-w-full table-fixed text-[11px] leading-tight"
-                        >
-                            <thead
-                                class="bg-muted/30 text-[9px] uppercase tracking-[0.12em] text-muted-foreground"
-                            >
-                                <tr>
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Aksi</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Pengirim</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Penerima</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Rute</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Layanan</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Nomor Resi</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Jumlah</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Status</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Kondisi</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Berangkat</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Pembayaran</th
-                                    >
-                                    <th
-                                        class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
-                                        >Biaya</th
-                                    >
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {#if luggages.length === 0}
-                                    <tr>
-                                        <td
-                                            colspan="12"
-                                            class="px-4 py-8 text-center text-[11px] text-muted-foreground"
-                                        >
-                                            Belum ada data bagasi yang cocok
-                                            dengan filter saat ini.
-                                        </td>
-                                    </tr>
-                                {:else}
-                                    {#each luggages as row (row.id)}
-                                        {@const normalizedLuggageStatus =
-                                            normalizeLuggageStatus(row.status)}
-                                        {@const normalizedLuggageCondition =
-                                            normalizeLuggageCondition(
-                                                row.condition_status,
-                                                row.damaged_quantity,
-                                                row.lost_quantity,
-                                            )}
-                                        {@const departureInfo =
-                                            luggageDepartureInfo(row)}
-                                        <tr
-                                            class="border-b border-border/60 align-top transition-colors hover:bg-muted/20 last:border-b-0"
-                                        >
-                                            <td class="px-2.5 py-2 align-top">
-                                                <div
-                                                    class="flex items-center gap-1"
-                                                >
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger
-                                                            asChild
-                                                        >
-                                                            {#snippet children(
-                                                                props,
-                                                            )}
-                                                                <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    class="h-7 rounded-md px-2"
-                                                                    onclick={props.onclick}
-                                                                    aria-expanded={props[
-                                                                        'aria-expanded'
-                                                                    ]}
-                                                                    data-state={props[
-                                                                        'data-state'
-                                                                    ]}
-                                                                >
-                                                                    <MoreHorizontal
-                                                                        class="h-3.5 w-3.5"
-                                                                    />
-                                                                </Button>
-                                                            {/snippet}
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent
-                                                            align="start"
-                                                            side="bottom"
-                                                            sideOffset={8}
-                                                            class="w-52"
-                                                        >
-                                                            {@const lockedLuggageActions =
-                                                                [
-                                                                    luggagePickedUpStatus,
-                                                                    luggageArrivedStatus,
-                                                                ].includes(
-                                                                    normalizedLuggageStatus,
-                                                                )}
-                                                            {#if canLuggageUpdate && !lockedLuggageActions}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        openLuggageEditor(
-                                                                            row,
-                                                                        )}
-                                                                >
-                                                                    Edit Data
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
-                                                                <DropdownMenuItem
-                                                                    disabled={pendingLuggageActionKey ===
-                                                                        `action-${row.id}-active`}
-                                                                    onclick={() =>
-                                                                        void luggageAction(
-                                                                            row,
-                                                                            'active',
-                                                                        )}
-                                                                >
-                                                                    {pendingLuggageActionKey ===
-                                                                    `action-${row.id}-active`
-                                                                        ? 'Memproses...'
-                                                                        : 'Tandai Dalam Perjalanan'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
-                                                                <DropdownMenuItem
-                                                                    disabled={pendingLuggageActionKey ===
-                                                                        `action-${row.id}-paid`}
-                                                                    onclick={() =>
-                                                                        void luggageAction(
-                                                                            row,
-                                                                            'paid',
-                                                                        )}
-                                                                >
-                                                                    {pendingLuggageActionKey ===
-                                                                    `action-${row.id}-paid`
-                                                                        ? 'Memproses...'
-                                                                        : 'Tandai Lunas'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggagePrint}<DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        openLuggagePrint(
-                                                                            row.id,
-                                                                        )}
-                                                                >
-                                                                    Print Resi
-                                                                </DropdownMenuItem>{/if}
-                                                            <DropdownMenuItem
-                                                                onclick={() =>
-                                                                    void loadLuggageIncidents(
-                                                                        row,
-                                                                        'history',
-                                                                    )}
-                                                            >
-                                                                Lihat Insiden
-                                                            </DropdownMenuItem>
-                                                            {#if canLuggageIncident && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        openLuggageIncidentReport(
-                                                                            row,
-                                                                            'damaged',
-                                                                        )}
-                                                                >
-                                                                    Laporkan
-                                                                    Rusak
-                                                                </DropdownMenuItem>
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        openLuggageIncidentReport(
-                                                                            row,
-                                                                            'lost',
-                                                                        )}
-                                                                >
-                                                                    Laporkan
-                                                                    Hilang
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggageClaim && normalizedLuggageCondition !== 'normal' && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
-                                                                <DropdownMenuItem
-                                                                    onclick={() =>
-                                                                        void loadLuggageIncidents(
-                                                                            row,
-                                                                            'history',
-                                                                        )}
-                                                                >
-                                                                    Proses Klaim
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                            {#if canLuggageUpdate && !lockedLuggageActions}
-                                                                <DropdownMenuItem
-                                                                    disabled={pendingLuggageActionKey ===
-                                                                        `action-${row.id}-canceled`}
-                                                                    onclick={() =>
-                                                                        void luggageAction(
-                                                                            row,
-                                                                            'canceled',
-                                                                        )}
-                                                                >
-                                                                    {pendingLuggageActionKey ===
-                                                                    `action-${row.id}-canceled`
-                                                                        ? 'Memproses...'
-                                                                        : 'Batalkan Pengiriman'}
-                                                                </DropdownMenuItem>
-                                                            {/if}
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class="block text-[9px] font-medium text-foreground"
-                                                    >{row.sender_name}</span
-                                                >
-                                                <span
-                                                    class="mt-0.5 block text-[7px] text-muted-foreground"
-                                                    >{row.sender_phone ||
-                                                        '-'}</span
-                                                >
-                                                <span
-                                                    class="mt-0.5 block max-w-[18rem] truncate text-[8px] text-muted-foreground"
-                                                    >{row.sender_address ||
-                                                        '-'}</span
-                                                >
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class="block text-[8px] font-medium text-foreground"
-                                                    >{row.receiver_name}</span
-                                                >
-                                                <span
-                                                    class="mt-0.5 block text-[8px] text-muted-foreground"
-                                                    >{row.receiver_phone ||
-                                                        '-'}</span
-                                                >
-                                                <span
-                                                    class="mt-0.5 block max-w-[18rem] truncate text-[8px] text-muted-foreground"
-                                                    >{row.receiver_address ||
-                                                        '-'}</span
-                                                >
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class="block text-[9px] font-medium text-foreground"
-                                                    >{row.route_name ??
-                                                        row.rute ??
-                                                        routes.find(
-                                                            (route) =>
-                                                                route.id ===
-                                                                Number(
-                                                                    row.rute_id ||
-                                                                        0,
-                                                                ),
-                                                        )?.name ??
-                                                        '-'}</span
-                                                >
-                                                <span
-                                                    class="mt-0.5 block text-[8px] text-muted-foreground"
-                                                    >{row.tanggal || '-'}</span
-                                                >
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class="block text-[9px] font-medium text-foreground"
-                                                    >{row.service_name ??
-                                                        '-'}</span
-                                                >
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class="block text-[8px] font-medium text-foreground"
-                                                    >{row.kode_resi ??
-                                                        '-'}</span
-                                                >
-                                                <span
-                                                    class="mt-0.5 block max-w-[14rem] truncate text-[7px] text-muted-foreground"
-                                                    >{row.notes ??
-                                                        'Tanpa catatan'}</span
-                                                >
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class="block text-[8px] font-medium text-foreground"
-                                                    >{row.quantity} barang</span
-                                                >
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <div
-                                                    class="flex flex-col items-start gap-1"
-                                                >
-                                                    <span
-                                                        class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageStatusClass(row.status)}`}
-                                                        >{luggageStatusLabel(
-                                                            row.status,
-                                                        )}</span
-                                                    >
-                                                </div>
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageConditionClass(normalizedLuggageCondition)}`}
-                                                    >{luggageConditionLabel(
+                                                    {luggageConditionLabel(
                                                         normalizedLuggageCondition,
-                                                    )}</span
-                                                >
-                                                {#if luggageConditionSummary(row)}
-                                                    <span
-                                                        class="mt-1 block text-[7px] text-muted-foreground"
-                                                        >{luggageConditionSummary(
-                                                            row,
-                                                        )}</span
-                                                    >
-                                                {/if}
+                                                    )}
+                                                </span>
                                                 {#if row.has_incident_history && row.incident_history_label}
                                                     {#if row.latest_incident_status}
                                                         <span
-                                                            class="mt-1 mr-1 inline-flex rounded-md border border-border/70 bg-muted/30 px-1.5 py-0.5 text-[7px] font-semibold text-muted-foreground"
+                                                            class="rounded-full border border-border/70 bg-muted/30 px-1.5 py-0.5 text-[8px] font-semibold text-muted-foreground"
                                                         >
                                                             {luggageIncidentStatusLabel(
                                                                 row.latest_incident_status,
@@ -7254,59 +6650,765 @@
                                                         </span>
                                                     {/if}
                                                     <span
-                                                        class="mt-1 inline-flex rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[7px] font-semibold text-sky-700"
+                                                        class="rounded-full border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[8px] font-semibold text-sky-700"
                                                     >
                                                         {row.incident_history_label}
                                                     </span>
                                                 {/if}
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                {#if departureInfo}
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger
+                                                        asChild
+                                                    >
+                                                        {#snippet children(
+                                                            props,
+                                                        )}
+                                                            <Button
+                                                                type="button"
+                                                                size="sm"
+                                                                variant="outline"
+                                                                class="h-7 w-7 rounded-md border-border/70 p-0"
+                                                                onclick={props.onclick}
+                                                                aria-expanded={props[
+                                                                    'aria-expanded'
+                                                                ]}
+                                                                data-state={props[
+                                                                    'data-state'
+                                                                ]}
+                                                            >
+                                                                <MoreHorizontal
+                                                                    class="h-3.5 w-3.5"
+                                                                />
+                                                            </Button>
+                                                        {/snippet}
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent
+                                                        align="end"
+                                                        side="top"
+                                                        sideOffset={8}
+                                                        class="w-52 text-xs md:text-[10px]"
+                                                    >
+                                                        {#if canLuggageUpdate && !lockedLuggageActions}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openLuggageEditor(
+                                                                        row,
+                                                                    )}
+                                                            >
+                                                                Edit Data
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
+                                                            <DropdownMenuItem
+                                                                disabled={pendingLuggageActionKey ===
+                                                                    `action-${row.id}-active`}
+                                                                onclick={() =>
+                                                                    void luggageAction(
+                                                                        row,
+                                                                        'active',
+                                                                    )}
+                                                            >
+                                                                {pendingLuggageActionKey ===
+                                                                `action-${row.id}-active`
+                                                                    ? 'Memproses...'
+                                                                    : 'Tandai Dalam Perjalanan'}
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
+                                                            <DropdownMenuItem
+                                                                disabled={pendingLuggageActionKey ===
+                                                                    `action-${row.id}-paid`}
+                                                                onclick={() =>
+                                                                    void luggageAction(
+                                                                        row,
+                                                                        'paid',
+                                                                    )}
+                                                            >
+                                                                {pendingLuggageActionKey ===
+                                                                `action-${row.id}-paid`
+                                                                    ? 'Memproses...'
+                                                                    : 'Tandai Lunas'}
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if canLuggagePrint}<DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openLuggagePrint(
+                                                                        row.id,
+                                                                    )}
+                                                            >
+                                                                Print Resi
+                                                            </DropdownMenuItem>{/if}
+                                                        <DropdownMenuItem
+                                                            onclick={() =>
+                                                                void loadLuggageIncidents(
+                                                                    row,
+                                                                    'history',
+                                                                )}
+                                                        >
+                                                            Lihat Insiden
+                                                        </DropdownMenuItem>
+                                                        {#if canLuggageIncident && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openLuggageIncidentReport(
+                                                                        row,
+                                                                        'damaged',
+                                                                    )}
+                                                            >
+                                                                Laporkan Rusak
+                                                            </DropdownMenuItem>
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    openLuggageIncidentReport(
+                                                                        row,
+                                                                        'lost',
+                                                                    )}
+                                                            >
+                                                                Laporkan Hilang
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if canLuggageClaim && normalizedLuggageCondition !== 'normal' && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
+                                                            <DropdownMenuItem
+                                                                onclick={() =>
+                                                                    void loadLuggageIncidents(
+                                                                        row,
+                                                                        'history',
+                                                                    )}
+                                                            >
+                                                                Proses Klaim
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                        {#if canLuggageUpdate && !lockedLuggageActions}
+                                                            <DropdownMenuItem
+                                                                disabled={pendingLuggageActionKey ===
+                                                                    `action-${row.id}-canceled`}
+                                                                onclick={() =>
+                                                                    void luggageAction(
+                                                                        row,
+                                                                        'canceled',
+                                                                    )}
+                                                            >
+                                                                {pendingLuggageActionKey ===
+                                                                `action-${row.id}-canceled`
+                                                                    ? 'Memproses...'
+                                                                    : 'Batalkan Pengiriman'}
+                                                            </DropdownMenuItem>
+                                                        {/if}
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="mt-2 grid grid-cols-2 gap-1.5 text-xs md:text-[9px]"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-muted/30 px-2 py-1.25"
+                                            >
+                                                <p
+                                                    class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Pengirim
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate font-medium text-foreground"
+                                                >
+                                                    {row.sender_name || '-'}
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate text-xs md:text-[9px] text-muted-foreground"
+                                                >
+                                                    {row.sender_phone || '-'}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-muted/30 px-2 py-1.25"
+                                            >
+                                                <p
+                                                    class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                                >
+                                                    Penerima
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate font-medium text-foreground"
+                                                >
+                                                    {row.receiver_name || '-'}
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 truncate text-xs md:text-[9px] text-muted-foreground"
+                                                >
+                                                    {row.receiver_phone || '-'}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="mt-2 rounded-xl bg-muted/30 px-2.5 py-1.5 text-xs md:text-[10px]"
+                                        >
+                                            <p
+                                                class="text-xs md:text-[9px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Rute
+                                            </p>
+                                            <p
+                                                class="mt-1 font-semibold text-foreground"
+                                            >
+                                                {row.route_name ??
+                                                    row.rute ??
+                                                    routes.find(
+                                                        (route) =>
+                                                            route.id ===
+                                                            Number(
+                                                                row.rute_id ||
+                                                                    0,
+                                                            ),
+                                                    )?.name ??
+                                                    '-'}
+                                            </p>
+                                            <p
+                                                class="mt-0.5 text-xs md:text-[11px] text-muted-foreground"
+                                            >
+                                                {row.tanggal || '-'}
+                                            </p>
+                                        </div>
+
+                                        {#if luggageConditionSummary(row)}
+                                            <p
+                                                class="mt-2 rounded-lg border border-rose-200/70 bg-rose-50/70 px-2 py-1 text-[8px] font-medium text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/20 dark:text-rose-300"
+                                            >
+                                                Kondisi: {luggageConditionSummary(
+                                                    row,
+                                                )}
+                                            </p>
+                                        {/if}
+
+                                        <div
+                                            class="mt-2 grid grid-cols-2 gap-1.5 text-xs md:text-[9px]"
+                                        >
+                                            <div
+                                                class="rounded-xl bg-emerald-50/70 px-2 py-1 dark:bg-emerald-950/25"
+                                            >
+                                                <p
+                                                    class="text-[7px] font-semibold uppercase tracking-wide text-emerald-700 dark:text-emerald-300"
+                                                >
+                                                    Biaya
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 font-medium text-emerald-800 dark:text-emerald-200"
+                                                >
+                                                    {formatCurrencyId(
+                                                        row.price,
+                                                    )}
+                                                </p>
+                                            </div>
+                                            <div
+                                                class="rounded-xl bg-amber-50/80 px-2 py-1 dark:bg-amber-950/25"
+                                            >
+                                                <p
+                                                    class="text-[7px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300"
+                                                >
+                                                    Pembayaran
+                                                </p>
+                                                <p class="mt-0.5">
                                                     <span
-                                                        class="block text-[8px] font-medium text-foreground"
-                                                        >{departureInfo.primary}</span
+                                                        class={`inline-flex rounded-full px-1.5 py-0.5 text-[7px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                    >
+                                                        {row.payment_status ??
+                                                            '-'}
+                                                    </span>
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <div
+                                            class="mt-2 rounded-xl border border-border/60 bg-background/80 px-2 py-1 text-[8px]"
+                                        >
+                                            <p
+                                                class="text-[7px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Keberangkatan
+                                            </p>
+                                            {#if departureInfo}
+                                                <p
+                                                    class="mt-0.5 font-medium text-foreground"
+                                                >
+                                                    {departureInfo.primary}
+                                                </p>
+                                                <p
+                                                    class="mt-0.5 text-[8px] text-muted-foreground"
+                                                >
+                                                    {departureInfo.secondary}
+                                                </p>
+                                            {:else if normalizedLuggageStatus === luggageReceivedStatus}
+                                                <p
+                                                    class="mt-0.5 text-[8px] text-muted-foreground"
+                                                >
+                                                    Belum dimapping ke
+                                                    keberangkatan
+                                                </p>
+                                            {:else}
+                                                <p
+                                                    class="mt-0.5 text-[8px] text-muted-foreground"
+                                                >
+                                                    -
+                                                </p>
+                                            {/if}
+                                        </div>
+
+                                        {#if row.notes}
+                                            <p
+                                                class="mt-2 line-clamp-2 rounded-xl bg-muted/20 px-2 py-1 text-[8px] text-muted-foreground"
+                                            >
+                                                {row.notes}
+                                            </p>
+                                        {/if}
+                                    </article>
+                                {/each}
+                            {/if}
+                        </div></ViewportOnly
+                    >
+
+                    <ViewportOnly minWidth={768}
+                        ><div
+                            class="hidden overflow-x-auto rounded-lg border border-border/70 bg-background md:block"
+                        >
+                            <table
+                                class="min-w-full table-fixed text-xs md:text-[11px] leading-tight"
+                            >
+                                <thead
+                                    class="bg-muted/30 text-xs md:text-[9px] uppercase tracking-[0.12em] text-muted-foreground"
+                                >
+                                    <tr>
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Aksi</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Pengirim</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Penerima</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Rute</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Layanan</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Nomor Resi</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Jumlah</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Status</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Kondisi</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Berangkat</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Pembayaran</th
+                                        >
+                                        <th
+                                            class="border-b border-border/60 px-2.5 py-1.5 text-left font-semibold"
+                                            >Biaya</th
+                                        >
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {#if luggages.length === 0}
+                                        <tr>
+                                            <td
+                                                colspan="12"
+                                                class="px-4 py-8 text-center text-xs md:text-[11px] text-muted-foreground"
+                                            >
+                                                Belum ada data bagasi yang cocok
+                                                dengan filter saat ini.
+                                            </td>
+                                        </tr>
+                                    {:else}
+                                        {#each luggages as row (row.id)}
+                                            {@const normalizedLuggageStatus =
+                                                normalizeLuggageStatus(
+                                                    row.status,
+                                                )}
+                                            {@const normalizedLuggageCondition =
+                                                normalizeLuggageCondition(
+                                                    row.condition_status,
+                                                    row.damaged_quantity,
+                                                    row.lost_quantity,
+                                                )}
+                                            {@const departureInfo =
+                                                luggageDepartureInfo(row)}
+                                            <tr
+                                                class="border-b border-border/60 align-top transition-colors hover:bg-muted/20 last:border-b-0"
+                                            >
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <div
+                                                        class="flex items-center gap-1"
+                                                    >
+                                                        <DropdownMenu>
+                                                            <DropdownMenuTrigger
+                                                                asChild
+                                                            >
+                                                                {#snippet children(
+                                                                    props,
+                                                                )}
+                                                                    <Button
+                                                                        type="button"
+                                                                        size="sm"
+                                                                        variant="outline"
+                                                                        class="h-7 rounded-md px-2"
+                                                                        onclick={props.onclick}
+                                                                        aria-expanded={props[
+                                                                            'aria-expanded'
+                                                                        ]}
+                                                                        data-state={props[
+                                                                            'data-state'
+                                                                        ]}
+                                                                    >
+                                                                        <MoreHorizontal
+                                                                            class="h-3.5 w-3.5"
+                                                                        />
+                                                                    </Button>
+                                                                {/snippet}
+                                                            </DropdownMenuTrigger>
+                                                            <DropdownMenuContent
+                                                                align="start"
+                                                                side="bottom"
+                                                                sideOffset={8}
+                                                                class="w-52"
+                                                            >
+                                                                {@const lockedLuggageActions =
+                                                                    [
+                                                                        luggagePickedUpStatus,
+                                                                        luggageArrivedStatus,
+                                                                    ].includes(
+                                                                        normalizedLuggageStatus,
+                                                                    )}
+                                                                {#if canLuggageUpdate && !lockedLuggageActions}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            openLuggageEditor(
+                                                                                row,
+                                                                            )}
+                                                                    >
+                                                                        Edit
+                                                                        Data
+                                                                    </DropdownMenuItem>
+                                                                {/if}
+                                                                {#if canLuggageUpdate && normalizedLuggageStatus === luggageReceivedStatus}
+                                                                    <DropdownMenuItem
+                                                                        disabled={pendingLuggageActionKey ===
+                                                                            `action-${row.id}-active`}
+                                                                        onclick={() =>
+                                                                            void luggageAction(
+                                                                                row,
+                                                                                'active',
+                                                                            )}
+                                                                    >
+                                                                        {pendingLuggageActionKey ===
+                                                                        `action-${row.id}-active`
+                                                                            ? 'Memproses...'
+                                                                            : 'Tandai Dalam Perjalanan'}
+                                                                    </DropdownMenuItem>
+                                                                {/if}
+                                                                {#if canLuggageUpdate && row.payment_status !== 'Lunas'}
+                                                                    <DropdownMenuItem
+                                                                        disabled={pendingLuggageActionKey ===
+                                                                            `action-${row.id}-paid`}
+                                                                        onclick={() =>
+                                                                            void luggageAction(
+                                                                                row,
+                                                                                'paid',
+                                                                            )}
+                                                                    >
+                                                                        {pendingLuggageActionKey ===
+                                                                        `action-${row.id}-paid`
+                                                                            ? 'Memproses...'
+                                                                            : 'Tandai Lunas'}
+                                                                    </DropdownMenuItem>
+                                                                {/if}
+                                                                {#if canLuggagePrint}<DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            openLuggagePrint(
+                                                                                row.id,
+                                                                            )}
+                                                                    >
+                                                                        Print
+                                                                        Resi
+                                                                    </DropdownMenuItem>{/if}
+                                                                <DropdownMenuItem
+                                                                    onclick={() =>
+                                                                        void loadLuggageIncidents(
+                                                                            row,
+                                                                            'history',
+                                                                        )}
+                                                                >
+                                                                    Lihat
+                                                                    Insiden
+                                                                </DropdownMenuItem>
+                                                                {#if canLuggageIncident && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            openLuggageIncidentReport(
+                                                                                row,
+                                                                                'damaged',
+                                                                            )}
+                                                                    >
+                                                                        Laporkan
+                                                                        Rusak
+                                                                    </DropdownMenuItem>
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            openLuggageIncidentReport(
+                                                                                row,
+                                                                                'lost',
+                                                                            )}
+                                                                    >
+                                                                        Laporkan
+                                                                        Hilang
+                                                                    </DropdownMenuItem>
+                                                                {/if}
+                                                                {#if canLuggageClaim && normalizedLuggageCondition !== 'normal' && !luggageIncidentActionsClosed(row, normalizedLuggageStatus)}
+                                                                    <DropdownMenuItem
+                                                                        onclick={() =>
+                                                                            void loadLuggageIncidents(
+                                                                                row,
+                                                                                'history',
+                                                                            )}
+                                                                    >
+                                                                        Proses
+                                                                        Klaim
+                                                                    </DropdownMenuItem>
+                                                                {/if}
+                                                                {#if canLuggageUpdate && !lockedLuggageActions}
+                                                                    <DropdownMenuItem
+                                                                        disabled={pendingLuggageActionKey ===
+                                                                            `action-${row.id}-canceled`}
+                                                                        onclick={() =>
+                                                                            void luggageAction(
+                                                                                row,
+                                                                                'canceled',
+                                                                            )}
+                                                                    >
+                                                                        {pendingLuggageActionKey ===
+                                                                        `action-${row.id}-canceled`
+                                                                            ? 'Memproses...'
+                                                                            : 'Batalkan Pengiriman'}
+                                                                    </DropdownMenuItem>
+                                                                {/if}
+                                                            </DropdownMenuContent>
+                                                        </DropdownMenu>
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <span
+                                                        class="block text-xs md:text-[9px] font-medium text-foreground"
+                                                        >{row.sender_name}</span
                                                     >
                                                     <span
                                                         class="mt-0.5 block text-[7px] text-muted-foreground"
-                                                        >{departureInfo.secondary}</span
+                                                        >{row.sender_phone ||
+                                                            '-'}</span
                                                     >
-                                                {:else if normalizedLuggageStatus === luggageReceivedStatus}
                                                     <span
-                                                        class="text-[7px] text-muted-foreground"
-                                                        >Belum dimapping ke
-                                                        keberangkatan</span
+                                                        class="mt-0.5 block max-w-[18rem] truncate text-[8px] text-muted-foreground"
+                                                        >{row.sender_address ||
+                                                            '-'}</span
                                                     >
-                                                {:else}
-                                                    <span
-                                                        class="text-[7px] text-muted-foreground"
-                                                        >-</span
-                                                    >
-                                                {/if}
-                                            </td>
-                                            <td class="px-2.5 py-2 align-top">
-                                                <span
-                                                    class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
-                                                    >{row.payment_status ??
-                                                        '-'}</span
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
                                                 >
-                                            </td>
-                                            <td
-                                                class="px-2.5 py-1.75 align-top text-[8px] font-medium text-foreground"
-                                                >Rp {Number(
-                                                    row.price,
-                                                ).toLocaleString('id-ID')}</td
-                                            >
-                                        </tr>
-                                    {/each}
-                                {/if}
-                            </tbody>
-                        </table>
-                    </div>
+                                                    <span
+                                                        class="block text-[8px] font-medium text-foreground"
+                                                        >{row.receiver_name}</span
+                                                    >
+                                                    <span
+                                                        class="mt-0.5 block text-[8px] text-muted-foreground"
+                                                        >{row.receiver_phone ||
+                                                            '-'}</span
+                                                    >
+                                                    <span
+                                                        class="mt-0.5 block max-w-[18rem] truncate text-[8px] text-muted-foreground"
+                                                        >{row.receiver_address ||
+                                                            '-'}</span
+                                                    >
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <span
+                                                        class="block text-xs md:text-[9px] font-medium text-foreground"
+                                                        >{row.route_name ??
+                                                            row.rute ??
+                                                            routes.find(
+                                                                (route) =>
+                                                                    route.id ===
+                                                                    Number(
+                                                                        row.rute_id ||
+                                                                            0,
+                                                                    ),
+                                                            )?.name ??
+                                                            '-'}</span
+                                                    >
+                                                    <span
+                                                        class="mt-0.5 block text-[8px] text-muted-foreground"
+                                                        >{row.tanggal ||
+                                                            '-'}</span
+                                                    >
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <span
+                                                        class="block text-xs md:text-[9px] font-medium text-foreground"
+                                                        >{row.service_name ??
+                                                            '-'}</span
+                                                    >
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <span
+                                                        class="block text-[8px] font-medium text-foreground"
+                                                        >{row.kode_resi ??
+                                                            '-'}</span
+                                                    >
+                                                    <span
+                                                        class="mt-0.5 block max-w-[14rem] truncate text-[7px] text-muted-foreground"
+                                                        >{row.notes ??
+                                                            'Tanpa catatan'}</span
+                                                    >
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <span
+                                                        class="block text-[8px] font-medium text-foreground"
+                                                        >{row.quantity} barang</span
+                                                    >
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <div
+                                                        class="flex flex-col items-start gap-1"
+                                                    >
+                                                        <span
+                                                            class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageStatusClass(row.status)}`}
+                                                            >{luggageStatusLabel(
+                                                                row.status,
+                                                            )}</span
+                                                        >
+                                                    </div>
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <span
+                                                        class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggageConditionClass(normalizedLuggageCondition)}`}
+                                                        >{luggageConditionLabel(
+                                                            normalizedLuggageCondition,
+                                                        )}</span
+                                                    >
+                                                    {#if luggageConditionSummary(row)}
+                                                        <span
+                                                            class="mt-1 block text-[7px] text-muted-foreground"
+                                                            >{luggageConditionSummary(
+                                                                row,
+                                                            )}</span
+                                                        >
+                                                    {/if}
+                                                    {#if row.has_incident_history && row.incident_history_label}
+                                                        {#if row.latest_incident_status}
+                                                            <span
+                                                                class="mt-1 mr-1 inline-flex rounded-md border border-border/70 bg-muted/30 px-1.5 py-0.5 text-[7px] font-semibold text-muted-foreground"
+                                                            >
+                                                                {luggageIncidentStatusLabel(
+                                                                    row.latest_incident_status,
+                                                                )}
+                                                            </span>
+                                                        {/if}
+                                                        <span
+                                                            class="mt-1 inline-flex rounded-md border border-sky-200 bg-sky-50 px-1.5 py-0.5 text-[7px] font-semibold text-sky-700"
+                                                        >
+                                                            {row.incident_history_label}
+                                                        </span>
+                                                    {/if}
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    {#if departureInfo}
+                                                        <span
+                                                            class="block text-[8px] font-medium text-foreground"
+                                                            >{departureInfo.primary}</span
+                                                        >
+                                                        <span
+                                                            class="mt-0.5 block text-[7px] text-muted-foreground"
+                                                            >{departureInfo.secondary}</span
+                                                        >
+                                                    {:else if normalizedLuggageStatus === luggageReceivedStatus}
+                                                        <span
+                                                            class="text-[7px] text-muted-foreground"
+                                                            >Belum dimapping ke
+                                                            keberangkatan</span
+                                                        >
+                                                    {:else}
+                                                        <span
+                                                            class="text-[7px] text-muted-foreground"
+                                                            >-</span
+                                                        >
+                                                    {/if}
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-2 align-top"
+                                                >
+                                                    <span
+                                                        class={`inline-flex rounded-md px-1.5 py-0.5 text-[7px] font-semibold ${luggagePaymentClass(row.payment_status)}`}
+                                                        >{row.payment_status ??
+                                                            '-'}</span
+                                                    >
+                                                </td>
+                                                <td
+                                                    class="px-2.5 py-1.75 align-top text-[8px] font-medium text-foreground"
+                                                    >Rp {Number(
+                                                        row.price,
+                                                    ).toLocaleString(
+                                                        'id-ID',
+                                                    )}</td
+                                                >
+                                            </tr>
+                                        {/each}
+                                    {/if}
+                                </tbody>
+                            </table>
+                        </div></ViewportOnly
+                    >
                     <div class="flex items-center justify-between">
                         <p class="text-sm text-muted-foreground">
                             Total: {luggageMeta.total}
                         </p>
-                        <div class="flex gap-2">
+                        <div class:mobile-pagination={true} class="flex gap-2">
                             <Button
                                 type="button"
                                 variant="outline"
@@ -7315,7 +7417,7 @@
                                     void jumpPage(
                                         luggageMeta.page - 1,
                                         'luggage',
-                                    )}>Prev</Button
+                                    )}>Sebelumnya</Button
                             >
                             <span class="px-2 py-1 text-sm"
                                 >{luggageMeta.page} / {luggageMeta.last_page}</span
@@ -7329,7 +7431,7 @@
                                     void jumpPage(
                                         luggageMeta.page + 1,
                                         'luggage',
-                                    )}>Next</Button
+                                    )}>Berikutnya</Button
                             >
                         </div>
                     </div>
@@ -7350,47 +7452,62 @@
                         class="grid gap-3 md:grid-cols-4"
                         onsubmit={saveAssignment}
                     >
-                        <Input
-                            placeholder="Rute"
-                            bind:value={assignmentForm.rute}
-                            required
-                        />
-                        <input
-                            bind:this={assignmentDateInput}
-                            type="text"
-                            value={assignmentForm.tanggal}
-                            readonly
-                            autocomplete="off"
-                            placeholder="Tanggal"
-                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                        />
-                        <input
-                            bind:this={assignmentTimeInput}
-                            type="text"
-                            value={assignmentForm.jam}
-                            readonly
-                            autocomplete="off"
-                            placeholder="Jam"
-                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                        />
-                        <Input
-                            type="number"
-                            min="1"
-                            bind:value={assignmentForm.unit}
-                            required
-                            placeholder="Nomor unit"
-                            aria-label="Nomor unit"
-                        />
-                        <select
-                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                            bind:value={assignmentForm.driver_id}
-                            required
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Rute</span><Input
+                                placeholder="Rute"
+                                bind:value={assignmentForm.rute}
+                                required
+                            /></label
                         >
-                            <option value={0}>Pilih Driver</option
-                            >{#each drivers as driver (driver.id)}<option
-                                    value={driver.id}>{driver.nama}</option
-                                >{/each}
-                        </select>
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Tanggal</span><input
+                                bind:this={assignmentDateInput}
+                                type="text"
+                                value={assignmentForm.tanggal}
+                                readonly
+                                autocomplete="off"
+                                placeholder="Tanggal"
+                                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                            /></label
+                        >
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Jam</span><input
+                                bind:this={assignmentTimeInput}
+                                type="text"
+                                value={assignmentForm.jam}
+                                readonly
+                                autocomplete="off"
+                                placeholder="Jam"
+                                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                            /></label
+                        >
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Nomor unit</span><Input
+                                type="number"
+                                min="1"
+                                bind:value={assignmentForm.unit}
+                                required
+                                placeholder="Nomor unit"
+                                aria-label="Nomor unit"
+                            /></label
+                        >
+                        <label
+                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                            ><span>Driver</span><select
+                                class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                                bind:value={assignmentForm.driver_id}
+                                required
+                            >
+                                <option value={0}>Pilih Driver</option
+                                >{#each drivers as driver (driver.id)}<option
+                                        value={driver.id}>{driver.nama}</option
+                                    >{/each}
+                            </select></label
+                        >
                         <div class="flex gap-2">
                             <Button
                                 type="button"
@@ -7407,7 +7524,7 @@
                                     ? 'Menyimpan...'
                                     : 'Assigning...'}
                                 >{assignmentForm.id
-                                    ? 'Update'
+                                    ? 'Simpan'
                                     : 'Assign'}</LoadingButton
                             >
                         </div>
@@ -7522,7 +7639,7 @@
                     <p class="text-sm text-muted-foreground">
                         Total: {assignmentMeta.total}
                     </p>
-                    <div class="flex gap-2">
+                    <div class:mobile-pagination={true} class="flex gap-2">
                         <Button
                             type="button"
                             variant="outline"
@@ -7531,7 +7648,7 @@
                                 void jumpPage(
                                     assignmentMeta.page - 1,
                                     'assignment',
-                                )}>Prev</Button
+                                )}>Sebelumnya</Button
                         >
                         <span class="px-2 py-1 text-sm"
                             >{assignmentMeta.page} / {assignmentMeta.last_page}</span
@@ -7545,7 +7662,7 @@
                                 void jumpPage(
                                     assignmentMeta.page + 1,
                                     'assignment',
-                                )}>Next</Button
+                                )}>Berikutnya</Button
                         >
                     </div>
                 </div>
@@ -7557,32 +7674,41 @@
                         ? 'grid gap-3 md:grid-cols-4'
                         : 'hidden md:grid md:grid-cols-4'}
                 >
-                    <input
-                        bind:this={exportFromDateInput}
-                        type="text"
-                        value={filterFrom}
-                        readonly
-                        autocomplete="off"
-                        placeholder="Tanggal mulai"
-                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                    />
-                    <input
-                        bind:this={exportToDateInput}
-                        type="text"
-                        value={filterTo}
-                        readonly
-                        autocomplete="off"
-                        placeholder="Tanggal akhir"
-                        class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
-                    />
-                    <select
-                        class="h-9 rounded-md border border-input bg-background px-3 text-sm"
-                        bind:value={exportType}
+                    <label
+                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                        ><span>Tanggal mulai</span><input
+                            bind:this={exportFromDateInput}
+                            type="text"
+                            value={filterFrom}
+                            readonly
+                            autocomplete="off"
+                            placeholder="Tanggal mulai"
+                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        /></label
                     >
-                        <option value="reguler">Reguler</option>
-                        <option value="bagasi">Bagasi</option>
-                        <option value="charter">Charter</option>
-                    </select>
+                    <label
+                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                        ><span>Tanggal akhir</span><input
+                            bind:this={exportToDateInput}
+                            type="text"
+                            value={filterTo}
+                            readonly
+                            autocomplete="off"
+                            placeholder="Tanggal akhir"
+                            class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
+                        /></label
+                    >
+                    <label
+                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                        ><span>Jenis ekspor</span><select
+                            class="h-9 rounded-md border border-input bg-background px-3 text-sm"
+                            bind:value={exportType}
+                        >
+                            <option value="reguler">Reguler</option>
+                            <option value="bagasi">Bagasi</option>
+                            <option value="charter">Charter</option>
+                        </select></label
+                    >
                     <a
                         href={exportCsvUrl()}
                         target="_blank"

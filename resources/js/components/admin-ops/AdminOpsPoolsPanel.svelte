@@ -1,4 +1,6 @@
 <script lang="ts">
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+
     import {
         Building2,
         Eye,
@@ -228,19 +230,19 @@
                         </h3>
                         <Badge
                             variant="secondary"
-                            class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
+                            class="rounded-full px-2.5 py-1 text-xs md:text-[10px] uppercase tracking-wide"
                         >
                             {poolStatusLabel(pool.status)}
                         </Badge>
                         <Badge
                             variant="outline"
-                            class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
+                            class="rounded-full px-2.5 py-1 text-xs md:text-[10px] uppercase tracking-wide"
                         >
                             {pool.code || 'Tanpa kode'}
                         </Badge>
                         <Badge
                             variant="outline"
-                            class={`rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide ${poolProgressBadgeClass(achievement)}`}
+                            class={`rounded-full px-2.5 py-1 text-xs md:text-[10px] uppercase tracking-wide ${poolProgressBadgeClass(achievement)}`}
                         >
                             {achievement.toFixed(1)}%
                         </Badge>
@@ -284,7 +286,7 @@
                         class="rounded-xl border border-border/70 bg-card/95 p-3 shadow-sm"
                     >
                         <p
-                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                         >
                             {card.label}
                         </p>
@@ -293,7 +295,9 @@
                         >
                             {card.valueText}
                         </p>
-                        <p class="mt-1 text-[11px] text-muted-foreground">
+                        <p
+                            class="mt-1 text-xs md:text-[11px] text-muted-foreground"
+                        >
                             {card.note}
                         </p>
                     </article>
@@ -309,7 +313,7 @@
                     <div class="flex items-center justify-between gap-3">
                         <div>
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                             >
                                 Informasi Cabang
                             </p>
@@ -321,7 +325,7 @@
                         </div>
                         <Badge
                             variant="secondary"
-                            class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
+                            class="rounded-full px-2.5 py-1 text-xs md:text-[10px] uppercase tracking-wide"
                         >
                             Status {poolStatusLabel(pool.status)}
                         </Badge>
@@ -332,7 +336,7 @@
                             class="rounded-lg border border-border/60 bg-muted/20 p-3"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                             >
                                 Region
                             </p>
@@ -346,7 +350,7 @@
                             class="rounded-lg border border-border/60 bg-muted/20 p-3"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                             >
                                 Kode
                             </p>
@@ -360,7 +364,7 @@
                             class="rounded-lg border border-border/60 bg-muted/20 p-3"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                             >
                                 Kontak
                             </p>
@@ -374,7 +378,7 @@
                             class="rounded-lg border border-border/60 bg-muted/20 p-3"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                             >
                                 Target Aktif
                             </p>
@@ -388,7 +392,7 @@
                             class="rounded-lg border border-border/60 bg-muted/20 p-3 sm:col-span-2"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                             >
                                 Alamat
                             </p>
@@ -400,7 +404,7 @@
                             class="rounded-lg border border-border/60 bg-muted/20 p-3 sm:col-span-2"
                         >
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                             >
                                 Catatan
                             </p>
@@ -417,7 +421,7 @@
                     <div class="flex items-center justify-between gap-3">
                         <div>
                             <p
-                                class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                             >
                                 Rute Terkait
                             </p>
@@ -429,7 +433,7 @@
                         </div>
                         <Badge
                             variant="secondary"
-                            class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
+                            class="rounded-full px-2.5 py-1 text-xs md:text-[10px] uppercase tracking-wide"
                         >
                             {poolReadyLabel(pool)}
                         </Badge>
@@ -444,7 +448,7 @@
                             {#each routes as routeName (routeName)}
                                 <Badge
                                     variant="outline"
-                                    class="max-w-full truncate rounded-full px-2.5 py-1 text-[11px]"
+                                    class="max-w-full truncate rounded-full px-2.5 py-1 text-xs md:text-[11px]"
                                 >
                                     {routeName}
                                 </Badge>
@@ -458,7 +462,7 @@
                         <div class="flex items-center justify-between gap-2">
                             <div>
                                 <p
-                                    class="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                    class="text-xs md:text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
                                 >
                                     Kinerja Finansial
                                 </p>
@@ -471,7 +475,7 @@
                                 </p>
                             </div>
                             <span
-                                class={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${poolProgressBadgeClass(achievement)}`}
+                                class={`inline-flex rounded-full border px-2 py-0.5 text-xs md:text-[10px] font-semibold ${poolProgressBadgeClass(achievement)}`}
                             >
                                 {achievement.toFixed(1)}%
                             </span>
@@ -493,7 +497,7 @@
                 <div class="flex items-center justify-between gap-3">
                     <div>
                         <p
-                            class="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
+                            class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground"
                         >
                             Target Bulanan
                         </p>
@@ -503,7 +507,7 @@
                     </div>
                     <Badge
                         variant="secondary"
-                        class="rounded-full px-2.5 py-1 text-[10px] uppercase tracking-wide"
+                        class="rounded-full px-2.5 py-1 text-xs md:text-[10px] uppercase tracking-wide"
                     >
                         {formatCurrency(poolTargetTotal(pool))}
                     </Badge>
@@ -512,9 +516,9 @@
                 <div
                     class="table-container mt-4 max-h-80 overflow-auto pr-1 scrollbar-thin"
                 >
-                    <table class="w-full text-left text-[11px]">
+                    <table class="w-full text-left text-xs md:text-[11px]">
                         <thead
-                            class="sticky top-0 bg-background/95 text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
+                            class="sticky top-0 bg-background/95 text-xs md:text-[10px] uppercase tracking-[0.16em] text-muted-foreground"
                         >
                             <tr>
                                 <th class="py-2 pr-2 font-semibold">Bulan</th>
@@ -560,7 +564,7 @@
                                                 )}
                                             </div>
                                             <div
-                                                class="text-[10px] text-muted-foreground"
+                                                class="text-xs md:text-[10px] text-muted-foreground"
                                             >
                                                 {target.target_month}
                                             </div>
@@ -636,25 +640,28 @@
             >
                 <div class="min-w-0">
                     <span
-                        class="mb-1.5 block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        class="mb-1.5 block text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                     >
                         Cari Pool
                     </span>
-                    <Input
-                        bind:value={poolSearch}
-                        placeholder="Cari cabang, kode, alamat, atau catatan"
-                        class="h-10"
-                        on:keydown={(event) => {
-                            if (event.key === 'Enter') {
-                                void loadPools();
-                            }
-                        }}
-                    />
+                    <label
+                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                        ><span>Pencarian</span><Input
+                            bind:value={poolSearch}
+                            placeholder="Cari cabang, kode, alamat, atau catatan"
+                            class="h-10"
+                            on:keydown={(event) => {
+                                if (event.key === 'Enter') {
+                                    void loadPools();
+                                }
+                            }}
+                        /></label
+                    >
                 </div>
 
                 <label class="space-y-1.5">
                     <span
-                        class="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        class="block text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                     >
                         Tipe Filter
                     </span>
@@ -670,7 +677,7 @@
 
                 <label class="space-y-1.5">
                     <span
-                        class="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        class="block text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                     >
                         Wilayah/Region
                     </span>
@@ -687,7 +694,7 @@
 
                 <label class="space-y-1.5">
                     <span
-                        class="block text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
+                        class="block text-xs md:text-[11px] font-semibold uppercase tracking-wide text-muted-foreground"
                     >
                         Urutan Kinerja
                     </span>
@@ -713,166 +720,330 @@
         {/snippet}
 
         {#snippet table()}
-            <div
-                class="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 lg:hidden"
-            >
-                {#each pools as row (row.id)}
-                    {@const achievement = poolAchievement(row)}
-                    {@const gross = poolGrossMargin(row)}
-                    {@const net = poolNetMargin(row)}
-                    {@const gap = poolGap(row)}
-                    {@const routes = formatPoolRoutes(row)}
-                    {@const barClass = poolProgressClass(achievement)}
-                    {@const badgeClass = poolProgressBadgeClass(achievement)}
-                    <article
-                        class="group relative overflow-hidden rounded-lg border border-border/70 bg-card/95 p-2.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-md sm:p-3"
-                        title={`Alamat: ${row.address || 'Belum diisi'} | Kontak: ${row.phone || 'Belum diisi'}`}
-                    >
-                        <div class="flex items-start gap-2.5">
-                            <div class="min-w-0 flex-1">
-                                <div
-                                    class="flex items-start justify-between gap-1.5"
-                                >
-                                    <div class="min-w-0">
-                                        <div class="flex items-center gap-1.5">
-                                            <Building2
-                                                class="h-3.5 w-3.5 shrink-0 text-cyan-600"
-                                            />
-                                            <p
-                                                class="truncate text-[12px] font-semibold text-foreground"
+            <ViewportOnly minWidth={0} maxWidth={1023}
+                ><div
+                    class="grid gap-3 p-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 lg:hidden"
+                >
+                    {#each pools as row (row.id)}
+                        {@const achievement = poolAchievement(row)}
+                        {@const gross = poolGrossMargin(row)}
+                        {@const net = poolNetMargin(row)}
+                        {@const gap = poolGap(row)}
+                        {@const routes = formatPoolRoutes(row)}
+                        {@const barClass = poolProgressClass(achievement)}
+                        {@const badgeClass =
+                            poolProgressBadgeClass(achievement)}
+                        <article
+                            class="group relative overflow-hidden rounded-lg border border-border/70 bg-card/95 p-2.5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-cyan-300/70 hover:shadow-md sm:p-3"
+                            title={`Alamat: ${row.address || 'Belum diisi'} | Kontak: ${row.phone || 'Belum diisi'}`}
+                        >
+                            <div class="flex items-start gap-2.5">
+                                <div class="min-w-0 flex-1">
+                                    <div
+                                        class="flex items-start justify-between gap-1.5"
+                                    >
+                                        <div class="min-w-0">
+                                            <div
+                                                class="flex items-center gap-1.5"
                                             >
-                                                {row.name}
+                                                <Building2
+                                                    class="h-3.5 w-3.5 shrink-0 text-cyan-600"
+                                                />
+                                                <p
+                                                    class="truncate text-[12px] font-semibold text-foreground"
+                                                >
+                                                    {row.name}
+                                                </p>
+                                            </div>
+                                            <p
+                                                class="mt-0.5 truncate text-xs md:text-[9px] text-muted-foreground"
+                                            >
+                                                {row.region || 'Lainnya'} · {row.code ||
+                                                    'Tanpa kode'}
                                             </p>
                                         </div>
-                                        <p
-                                            class="mt-0.5 truncate text-[9px] text-muted-foreground"
+                                        <div
+                                            class="flex shrink-0 flex-col items-end gap-0.5"
                                         >
-                                            {row.region || 'Lainnya'} · {row.code ||
-                                                'Tanpa kode'}
-                                        </p>
+                                            <span
+                                                class={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/35 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300'}`}
+                                            >
+                                                {row.status === 'active'
+                                                    ? 'Aktif'
+                                                    : 'Nonaktif'}
+                                            </span>
+                                            <span
+                                                class={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-semibold ${badgeClass}`}
+                                            >
+                                                {achievement.toFixed(0)}%
+                                            </span>
+                                        </div>
                                     </div>
+
                                     <div
-                                        class="flex shrink-0 flex-col items-end gap-0.5"
+                                        class="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs md:text-[9px] text-muted-foreground"
                                     >
                                         <span
-                                            class={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/35 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300'}`}
+                                            class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5"
                                         >
-                                            {row.status === 'active'
-                                                ? 'Aktif'
-                                                : 'Nonaktif'}
+                                            <Users class="h-3 w-3" />
+                                            {row.driver_count || 0} Driver
                                         </span>
                                         <span
-                                            class={`inline-flex rounded-full border px-2 py-0.5 text-[8px] font-semibold ${badgeClass}`}
+                                            class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5"
                                         >
-                                            {achievement.toFixed(0)}%
+                                            <MapPin class="h-3 w-3" />
+                                            {row.armada_count || 0} Armada
+                                        </span>
+                                        <span
+                                            class={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${gap >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}
+                                        >
+                                            Gap {formatCurrency(gap)}
                                         </span>
                                     </div>
-                                </div>
 
-                                <div
-                                    class="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[9px] text-muted-foreground"
-                                >
-                                    <span
-                                        class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5"
+                                    <div
+                                        class="mt-2.5 flex items-center justify-between gap-2"
                                     >
-                                        <Users class="h-3 w-3" />
-                                        {row.driver_count || 0} Driver
-                                    </span>
-                                    <span
-                                        class="inline-flex items-center gap-1 rounded-full bg-muted/60 px-2 py-0.5"
+                                        <div class="min-w-0">
+                                            <p
+                                                class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Revenue Cabang
+                                            </p>
+                                            <p
+                                                class="truncate text-[12px] font-bold text-emerald-600"
+                                            >
+                                                {formatCurrency(
+                                                    Number(row.revenue || 0),
+                                                )}
+                                            </p>
+                                            <p
+                                                class="mt-0.5 truncate text-xs md:text-[9px] text-muted-foreground"
+                                            >
+                                                Gross {formatCurrency(gross)} · BOP
+                                                {formatCurrency(
+                                                    Number(row.bop || 0),
+                                                )} · Net {formatCurrency(net)}
+                                            </p>
+                                        </div>
+                                        <div
+                                            class="shrink-0 rounded-full border border-border/70 bg-muted/30 px-2 py-1 text-right"
+                                        >
+                                            <p
+                                                class="text-[8px] uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Achievement
+                                            </p>
+                                            <p
+                                                class="text-[12px] font-semibold text-foreground"
+                                            >
+                                                {achievement.toFixed(1)}%
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <p
+                                        class="mt-1.5 text-xs md:text-[9px] text-muted-foreground"
                                     >
-                                        <MapPin class="h-3 w-3" />
-                                        {row.armada_count || 0} Armada
-                                    </span>
-                                    <span
-                                        class={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 ${gap >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}
-                                    >
-                                        Gap {formatCurrency(gap)}
-                                    </span>
-                                </div>
-
-                                <div
-                                    class="mt-2.5 flex items-center justify-between gap-2"
-                                >
-                                    <div class="min-w-0">
+                                        Target bulan ini {formatCurrency(
+                                            poolTargetTotal(row),
+                                        )}
+                                    </p>
+                                    <div class="mt-1.5 space-y-1">
                                         <p
                                             class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
                                         >
-                                            Revenue Cabang
+                                            Rute
                                         </p>
-                                        <p
-                                            class="truncate text-[12px] font-bold text-emerald-600"
-                                        >
-                                            {formatCurrency(
-                                                Number(row.revenue || 0),
-                                            )}
-                                        </p>
-                                        <p
-                                            class="mt-0.5 truncate text-[9px] text-muted-foreground"
-                                        >
-                                            Gross {formatCurrency(gross)} · BOP {formatCurrency(
-                                                Number(row.bop || 0),
-                                            )} · Net {formatCurrency(net)}
-                                        </p>
-                                    </div>
-                                    <div
-                                        class="shrink-0 rounded-full border border-border/70 bg-muted/30 px-2 py-1 text-right"
-                                    >
-                                        <p
-                                            class="text-[8px] uppercase tracking-wide text-muted-foreground"
-                                        >
-                                            Achievement
-                                        </p>
-                                        <p
-                                            class="text-[12px] font-semibold text-foreground"
-                                        >
-                                            {achievement.toFixed(1)}%
-                                        </p>
-                                    </div>
-                                </div>
-                                <p
-                                    class="mt-1.5 text-[9px] text-muted-foreground"
-                                >
-                                    Target bulan ini {formatCurrency(
-                                        poolTargetTotal(row),
-                                    )}
-                                </p>
-                                <div class="mt-1.5 space-y-1">
-                                    <p
-                                        class="text-[8px] font-semibold uppercase tracking-wide text-muted-foreground"
-                                    >
-                                        Rute
-                                    </p>
-                                    <div class="flex flex-wrap gap-1">
-                                        {#each routes as routeName (routeName)}
-                                            <span
-                                                class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[8px] font-medium text-foreground"
-                                            >
-                                                <span class="truncate"
-                                                    >{routeName}</span
+                                        <div class="flex flex-wrap gap-1">
+                                            {#each routes as routeName (routeName)}
+                                                <span
+                                                    class="inline-flex max-w-full rounded-full border border-border/70 bg-background px-2 py-0.5 text-[8px] font-medium text-foreground"
                                                 >
-                                            </span>
-                                        {/each}
+                                                    <span class="truncate"
+                                                        >{routeName}</span
+                                                    >
+                                                </span>
+                                            {/each}
+                                        </div>
                                     </div>
                                 </div>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            class="h-7 w-7 shrink-0 rounded-full border border-border/70"
+                                        >
+                                            <MoreHorizontal
+                                                class="h-3.5 w-3.5"
+                                            />
+                                            <span class="sr-only"
+                                                >Aksi cabang</span
+                                            >
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                        align="end"
+                                        sideOffset={8}
+                                        class="z-[120] w-40"
+                                    >
+                                        <DropdownMenuItem
+                                            onclick={() => openPoolView(row)}
+                                        >
+                                            <Eye class="mr-2 h-3.5 w-3.5" />
+                                            Lihat Detail
+                                        </DropdownMenuItem>
+                                        {#if canManagePools}
+                                            <DropdownMenuItem
+                                                onclick={() => {
+                                                    openPoolEditor(row);
+                                                }}
+                                            >
+                                                <Pencil
+                                                    class="mr-2 h-3.5 w-3.5"
+                                                />
+                                                Edit
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onclick={() =>
+                                                    void removeItem(
+                                                        `/api/admin/pools/${row.id}`,
+                                                        'Pool deleted.',
+                                                    )}
+                                            >
+                                                <Trash2
+                                                    class="mr-2 h-3.5 w-3.5"
+                                                />
+                                                Hapus
+                                            </DropdownMenuItem>
+                                        {/if}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
                             </div>
 
+                            <div
+                                class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900/60"
+                            >
+                                <div
+                                    class={`h-full rounded-full transition-[width] duration-300 ${barClass}`}
+                                    style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
+                                ></div>
+                            </div>
+                        </article>
+                    {/each}
+                </div></ViewportOnly
+            >
+
+            <ViewportOnly minWidth={1024}
+                ><div class="hidden lg:block">
+                    <DataTable
+                        columns={poolsColumns}
+                        rows={pools}
+                        density="compact"
+                    >
+                        {#snippet row({ row })}
+                            {@const gross = poolGrossMargin(row)}
+                            {@const achievement = poolAchievement(row)}
+                            {@const gap = poolGap(row)}
+                            {@const routes = formatPoolRoutes(row)}
+                            {@const healthStatus =
+                                achievement >= 100 ? 'Tercapai' : 'Kurang'}
+
+                            <td class="px-2.5 py-1.5 align-top">
+                                <div
+                                    class="truncate text-xs md:text-[10px] font-semibold leading-4 text-foreground"
+                                >
+                                    {row.name}
+                                </div>
+                                <div
+                                    class="mt-0.5 text-xs md:text-[9px] text-muted-foreground"
+                                >
+                                    {row.code || 'Tanpa kode'}
+                                </div>
+                                <span
+                                    class={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/35 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300'}`}
+                                    >{row.status === 'active'
+                                        ? 'Aktif'
+                                        : 'Nonaktif'}</span
+                                >
+                            </td>
+
+                            <td class="px-2.5 py-1.5 align-top">
+                                <div
+                                    class="flex max-w-[220px] flex-wrap gap-1.5"
+                                >
+                                    {#each routes as routeName (routeName)}
+                                        <span
+                                            class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-xs md:text-[9px] font-medium leading-4 text-foreground"
+                                        >
+                                            <span class="truncate"
+                                                >{routeName}</span
+                                            >
+                                        </span>
+                                    {/each}
+                                </div>
+                            </td>
+
+                            <td
+                                class="px-2.5 py-1.5 text-right text-xs md:text-[9px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300"
+                                >{formatCurrency(Number(row.revenue || 0))}</td
+                            >
+                            <td
+                                class="px-2.5 py-1.5 text-right text-xs md:text-[9px] font-semibold tabular-nums text-amber-700 dark:text-amber-300"
+                                >{formatCurrency(Number(row.bop || 0))}</td
+                            >
+                            <td
+                                class="px-2.5 py-1.5 text-right text-xs md:text-[9px] font-semibold tabular-nums"
+                                >{formatCurrency(gross)}</td
+                            >
+                            <td
+                                class="px-2.5 py-1.5 text-right text-xs md:text-[9px] tabular-nums"
+                                >{formatCurrency(
+                                    Number(row.fixed_cost || 0),
+                                )}</td
+                            >
+                            <td
+                                class="px-2.5 py-1.5 text-right text-xs md:text-[9px] tabular-nums"
+                                >{formatCurrency(
+                                    Number(row.target_revenue || 0),
+                                )}</td
+                            >
+                            <td
+                                class={`px-2.5 py-1.5 text-right text-xs md:text-[9px] font-semibold tabular-nums ${gap < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}
+                                >{formatCurrency(gap)}</td
+                            >
+                            <td
+                                class="px-2.5 py-1.5 text-right text-xs md:text-[9px] tabular-nums"
+                                >{achievement.toFixed(1)}%</td
+                            >
+                            <td class="px-2.5 py-1.5 text-center"
+                                ><span
+                                    class={`inline-flex rounded-full border px-1.5 py-0.5 text-xs md:text-[9px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
+                                    >{healthStatus}</span
+                                ></td
+                            >
+                        {/snippet}
+
+                        {#snippet actions({ row })}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        class="h-7 w-7 shrink-0 rounded-full border border-border/70"
+                                        class="h-8 w-8 rounded-full border border-border/70"
                                     >
-                                        <MoreHorizontal class="h-3.5 w-3.5" />
-                                        <span class="sr-only">Aksi cabang</span>
+                                        <MoreHorizontal class="h-4 w-4" />
+                                        <span class="sr-only">Aksi pool</span>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent
                                     align="end"
                                     sideOffset={8}
-                                    class="z-[120] w-40"
+                                    class="z-[120] w-44"
                                 >
                                     <DropdownMenuItem
                                         onclick={() => openPoolView(row)}
@@ -902,153 +1073,10 @@
                                     {/if}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        </div>
-
-                        <div
-                            class="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-900/60"
-                        >
-                            <div
-                                class={`h-full rounded-full transition-[width] duration-300 ${barClass}`}
-                                style={`width: ${Math.max(0, Math.min(100, achievement))}%`}
-                            ></div>
-                        </div>
-                    </article>
-                {/each}
-            </div>
-
-            <div class="hidden lg:block">
-                <DataTable
-                    columns={poolsColumns}
-                    rows={pools}
-                    density="compact"
-                >
-                    {#snippet row({ row })}
-                        {@const gross = poolGrossMargin(row)}
-                        {@const achievement = poolAchievement(row)}
-                        {@const gap = poolGap(row)}
-                        {@const routes = formatPoolRoutes(row)}
-                        {@const healthStatus =
-                            achievement >= 100 ? 'Tercapai' : 'Kurang'}
-
-                        <td class="px-2.5 py-1.5 align-top">
-                            <div
-                                class="truncate text-[10px] font-semibold leading-4 text-foreground"
-                            >
-                                {row.name}
-                            </div>
-                            <div
-                                class="mt-0.5 text-[9px] text-muted-foreground"
-                            >
-                                {row.code || 'Tanpa kode'}
-                            </div>
-                            <span
-                                class={`mt-1.5 inline-flex rounded-full border px-1.5 py-0.5 text-[8px] font-semibold ${row.status === 'active' ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/35 dark:text-emerald-300' : 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300'}`}
-                                >{row.status === 'active'
-                                    ? 'Aktif'
-                                    : 'Nonaktif'}</span
-                            >
-                        </td>
-
-                        <td class="px-2.5 py-1.5 align-top">
-                            <div class="flex max-w-[220px] flex-wrap gap-1.5">
-                                {#each routes as routeName (routeName)}
-                                    <span
-                                        class="inline-flex max-w-full rounded-full border border-border/70 bg-muted/35 px-2 py-0.5 text-[9px] font-medium leading-4 text-foreground"
-                                    >
-                                        <span class="truncate">{routeName}</span
-                                        >
-                                    </span>
-                                {/each}
-                            </div>
-                        </td>
-
-                        <td
-                            class="px-2.5 py-1.5 text-right text-[9px] font-semibold tabular-nums text-emerald-700 dark:text-emerald-300"
-                            >{formatCurrency(Number(row.revenue || 0))}</td
-                        >
-                        <td
-                            class="px-2.5 py-1.5 text-right text-[9px] font-semibold tabular-nums text-amber-700 dark:text-amber-300"
-                            >{formatCurrency(Number(row.bop || 0))}</td
-                        >
-                        <td
-                            class="px-2.5 py-1.5 text-right text-[9px] font-semibold tabular-nums"
-                            >{formatCurrency(gross)}</td
-                        >
-                        <td
-                            class="px-2.5 py-1.5 text-right text-[9px] tabular-nums"
-                            >{formatCurrency(Number(row.fixed_cost || 0))}</td
-                        >
-                        <td
-                            class="px-2.5 py-1.5 text-right text-[9px] tabular-nums"
-                            >{formatCurrency(
-                                Number(row.target_revenue || 0),
-                            )}</td
-                        >
-                        <td
-                            class={`px-2.5 py-1.5 text-right text-[9px] font-semibold tabular-nums ${gap < 0 ? 'text-rose-700 dark:text-rose-300' : 'text-emerald-700 dark:text-emerald-300'}`}
-                            >{formatCurrency(gap)}</td
-                        >
-                        <td
-                            class="px-2.5 py-1.5 text-right text-[9px] tabular-nums"
-                            >{achievement.toFixed(1)}%</td
-                        >
-                        <td class="px-2.5 py-1.5 text-center"
-                            ><span
-                                class={`inline-flex rounded-full border px-1.5 py-0.5 text-[9px] font-semibold ${healthStatus === 'Tercapai' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`}
-                                >{healthStatus}</span
-                            ></td
-                        >
-                    {/snippet}
-
-                    {#snippet actions({ row })}
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    class="h-8 w-8 rounded-full border border-border/70"
-                                >
-                                    <MoreHorizontal class="h-4 w-4" />
-                                    <span class="sr-only">Aksi pool</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent
-                                align="end"
-                                sideOffset={8}
-                                class="z-[120] w-44"
-                            >
-                                <DropdownMenuItem
-                                    onclick={() => openPoolView(row)}
-                                >
-                                    <Eye class="mr-2 h-3.5 w-3.5" />
-                                    Lihat Detail
-                                </DropdownMenuItem>
-                                {#if canManagePools}
-                                    <DropdownMenuItem
-                                        onclick={() => {
-                                            openPoolEditor(row);
-                                        }}
-                                    >
-                                        <Pencil class="mr-2 h-3.5 w-3.5" />
-                                        Edit
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                        onclick={() =>
-                                            void removeItem(
-                                                `/api/admin/pools/${row.id}`,
-                                                'Pool deleted.',
-                                            )}
-                                    >
-                                        <Trash2 class="mr-2 h-3.5 w-3.5" />
-                                        Hapus
-                                    </DropdownMenuItem>
-                                {/if}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    {/snippet}
-                </DataTable>
-            </div>
+                        {/snippet}
+                    </DataTable>
+                </div></ViewportOnly
+            >
         {/snippet}
     </RevenueChartTable>
 {/if}

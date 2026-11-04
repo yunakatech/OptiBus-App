@@ -309,7 +309,10 @@
 
 <AppHead title="Tarif Bagasi" />
 
-<div class="mx-auto w-full max-w-[1500px] space-y-5 px-4 py-5 sm:px-6 lg:px-8">
+<div
+    class:mobile-page={true}
+    class="mx-auto w-full max-w-[1500px] space-y-5 px-4 py-5 sm:px-6 lg:px-8"
+>
     <section
         class="relative overflow-hidden rounded-3xl border border-emerald-900/10 bg-[#f3f0e8] px-5 py-6 shadow-[0_18px_60px_-38px_rgba(16,50,38,0.5)] sm:px-7"
     >
@@ -427,7 +430,8 @@
                                 <span class="block truncate text-sm font-medium"
                                     >{item.name}</span
                                 >
-                                <span class="text-[11px] text-muted-foreground"
+                                <span
+                                    class="text-xs md:text-[11px] text-muted-foreground"
                                     >{item.is_active
                                         ? 'Aktif di semua segment'
                                         : 'Diarsipkan'}</span

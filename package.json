@@ -9,6 +9,8 @@
         "format": "prettier --write resources/",
         "format:check": "prettier --check resources/",
         "guard:navigation": "node scripts/check-internal-navigation.mjs",
+        "guard:mobile-labels": "node scripts/audit-mobile-ui.mjs",
+        "check:mobile-layout": "node scripts/check-mobile-layout.mjs",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
         "types:check": "svelte-check --tsconfig ./tsconfig.json"

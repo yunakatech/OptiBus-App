@@ -49,10 +49,10 @@
 
 <h1 class="sr-only">Security settings</h1>
 
-<div class="space-y-6">
+<div class:mobile-page={true} class="space-y-6">
     <Heading
         variant="small"
-        title="Update password"
+        title="Simpan password"
         description="Ensure your account is using a long, random password to stay secure"
     />
 
@@ -108,7 +108,7 @@
                     disabled={processing}
                     data-test="update-password-button"
                 >
-                    Save password
+                    Simpan password
                 </Button>
             </div>
         {/snippet}

@@ -71,8 +71,11 @@
                 </p>
             </div>
         {:else if breadcrumbs && breadcrumbs.length > 0}
-            <div class="hidden md:block">
-                <Breadcrumbs {breadcrumbs} />
+            <div class="min-w-0">
+                <p class="truncate text-sm font-semibold md:hidden">
+                    {breadcrumbs[breadcrumbs.length - 1].title}
+                </p>
+                <div class="hidden md:block"><Breadcrumbs {breadcrumbs} /></div>
             </div>
         {/if}
     </div>

@@ -242,7 +242,7 @@
 </script>
 
 <AppHead title="Booking Online" />
-<div class="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
+<div class:mobile-page={true} class="mx-auto max-w-4xl space-y-6 p-4 sm:p-6">
     <div>
         <p
             class="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600"
