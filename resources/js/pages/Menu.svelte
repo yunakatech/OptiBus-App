@@ -431,13 +431,13 @@
                 {/each}
 
                 <section
-                    class="rounded-lg border border-[#b9d8d0] bg-[#effaf7] p-3 shadow-sm sm:p-4"
+                    class="rounded-lg border border-[#DCE9E6] bg-[#effaf7] p-3 shadow-sm sm:p-4"
                 >
                     <a
                         href={supportHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="flex min-h-[5.5rem] items-center justify-center gap-2 rounded-lg border border-[#b9d8d0] bg-white px-4 py-3 text-center text-sm font-semibold text-[#17655f] transition hover:-translate-y-0.5 hover:bg-[#f7fffd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168c7c] focus-visible:ring-offset-2"
+                        class="flex min-h-[5.5rem] items-center justify-center gap-2 rounded-lg border border-[#DCE9E6] bg-white px-4 py-3 text-center text-sm font-semibold text-[#087F79] transition hover:-translate-y-0.5 hover:bg-[#f7fffd] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#168c7c] focus-visible:ring-offset-2"
                         aria-label="Hubungi bantuan OptiBus melalui WhatsApp"
                     >
                         <MessageCircle class="size-5 shrink-0" />

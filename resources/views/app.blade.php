@@ -30,7 +30,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <meta name="csrf-token" content="{{ csrf_token() }}">
-        <meta name="theme-color" content="#0f766e">
+        <meta name="theme-color" content="#087F79">
         <meta name="mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-title" content="OptiBus">
@@ -39,11 +39,9 @@
 
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link rel="manifest" href="/manifest.json?v=3">
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=3">
-        <link rel="icon" type="image/x-icon" href="/favicon.ico?v=3" sizes="any">
-        <link rel="shortcut icon" href="/favicon.ico?v=3">
-        <link rel="apple-touch-icon" href="/apple-touch-icon-v2.png?v=3">
+        <link rel="manifest" href="/manifest.json?v=4">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=4">
+        <link rel="apple-touch-icon" href="/apple-touch-icon-v2.png?v=4">
 
         @fonts
 

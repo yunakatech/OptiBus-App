@@ -27,7 +27,7 @@
 
 {#if status}
     <div
-        class="border-l-2 border-[#174b43] bg-[#e5ebe3] px-4 py-3 text-sm font-medium text-[#173a34]"
+        class="border-l-2 border-[#087F79] bg-accent px-4 py-3 text-sm font-medium text-foreground"
     >
         {status}
     </div>
@@ -36,18 +36,18 @@
 <Form
     {...store.form()}
     resetOnSuccess={['password']}
-    class="overflow-hidden border-y border-[#c9c2b3] bg-[#f7f4ec]"
+    class="overflow-hidden border-y border-border bg-card"
 >
     {#snippet children({ errors, processing })}
         <div class="grid gap-5 px-4 py-5 sm:px-6 sm:py-6">
             <a
                 href="/auth/google/redirect"
-                class="group block border border-[#c9c2b3] bg-transparent p-3 transition-colors hover:border-[#174b43] hover:bg-[#eee9dd] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                class="group block border border-border bg-transparent p-3 transition-colors hover:border-[#087F79] hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
             >
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-2.5">
                         <span
-                            class="grid h-10 w-10 place-items-center border border-[#d2cabb] bg-white"
+                            class="grid h-10 w-10 place-items-center border border-border bg-white"
                         >
                             <svg class="h-4 w-4" viewBox="0 0 24 24"
                                 ><path
@@ -66,28 +66,28 @@
                             >
                         </span>
                         <div>
-                            <p class="text-sm font-semibold text-[#213a34]">
+                            <p class="text-sm font-semibold text-foreground">
                                 Masuk dengan Google
                             </p>
-                            <p class="mt-0.5 text-xs text-[#68736c]">
+                            <p class="mt-0.5 text-xs text-muted-foreground">
                                 Paling cepat untuk pemilik dan admin pool.
                             </p>
                         </div>
                     </div>
                     <ArrowRight
-                        class="h-4 w-4 text-[#174b43] transition-transform group-hover:translate-x-0.5"
+                        class="h-4 w-4 text-primary transition-transform group-hover:translate-x-0.5"
                     />
                 </div>
             </a>
 
             <div class="relative">
                 <div class="absolute inset-0 flex items-center">
-                    <span class="w-full border-t border-[#c9c2b3]"></span>
+                    <span class="w-full border-t border-border"></span>
                 </div>
                 <div
                     class="relative flex justify-center text-xs md:text-[10px] font-semibold uppercase tracking-[0.16em]"
                 >
-                    <span class="bg-[#f7f4ec] px-3 text-[#68736c]">
+                    <span class="bg-card px-3 text-muted-foreground">
                         Masuk dengan email
                     </span>
                 </div>
@@ -97,12 +97,9 @@
                 <div class="grid gap-2">
                     <Label
                         for="email"
-                        class="flex items-center gap-2 text-sm font-medium text-[#33433d]"
+                        class="flex items-center gap-2 text-sm font-medium text-foreground"
                     >
-                        <Mail
-                            class="h-4 w-4 text-[#174b43]"
-                            aria-hidden="true"
-                        />
+                        <Mail class="h-4 w-4 text-primary" aria-hidden="true" />
                         Email
                     </Label>
                     <Input
@@ -112,7 +109,7 @@
                         required
                         autocomplete="email"
                         placeholder="email@example.com"
-                        class="h-11 rounded-none border-[#bdb6a8] bg-white px-3 text-sm focus-visible:ring-[#174b43]"
+                        class="h-11 rounded-none border-[#DCE9E6] bg-white px-3 text-sm focus-visible:ring-ring"
                     />
                     <InputError message={errors.email} />
                 </div>
@@ -120,10 +117,10 @@
                 <div class="grid gap-2">
                     <Label
                         for="password"
-                        class="flex items-center gap-2 text-sm font-medium text-[#33433d]"
+                        class="flex items-center gap-2 text-sm font-medium text-foreground"
                     >
                         <LockKeyhole
-                            class="h-4 w-4 text-[#174b43]"
+                            class="h-4 w-4 text-primary"
                             aria-hidden="true"
                         />
                         Kata sandi
@@ -134,7 +131,7 @@
                         required
                         autocomplete="current-password"
                         placeholder="Masukkan kata sandi"
-                        class="h-11 rounded-none border-[#bdb6a8] bg-white px-3 text-sm focus-visible:ring-[#174b43]"
+                        class="h-11 rounded-none border-[#DCE9E6] bg-white px-3 text-sm focus-visible:ring-ring"
                     />
                     <InputError message={errors.password} />
                 </div>
@@ -148,15 +145,15 @@
                             id="remember"
                             name="remember"
                             aria-label="Ingat saya"
-                            class="inline-flex h-5 max-h-5 min-h-5 w-5 max-w-5 min-w-5 shrink-0 aspect-square items-center justify-center rounded-none border-[#aebbb5] p-0 leading-none shadow-none data-[state=checked]:border-[#174b43] data-[state=checked]:bg-[#174b43] focus-visible:ring-[#174b43]/35 sm:h-4 sm:max-h-4 sm:min-h-4 sm:w-4 sm:max-w-4 sm:min-w-4"
+                            class="inline-flex h-5 max-h-5 min-h-5 w-5 max-w-5 min-w-5 shrink-0 aspect-square items-center justify-center rounded-none border-[#AFC9C3] p-0 leading-none shadow-none data-[state=checked]:border-[#087F79] data-[state=checked]:bg-[#087F79] focus-visible:ring-ring/35 sm:h-4 sm:max-h-4 sm:min-h-4 sm:w-4 sm:max-w-4 sm:min-w-4"
                         />
-                        <span class="truncate text-sm text-[#53615b]"
+                        <span class="truncate text-sm text-muted-foreground"
                             >Ingat saya</span
                         >
                     </Label>
                     <TextLink
                         href="/forgot-password"
-                        class="text-sm font-semibold text-[#174b43] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                        class="text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                     >
                         Lupa kata sandi?
                     </TextLink>
@@ -164,7 +161,7 @@
 
                 <Button
                     type="submit"
-                    class="h-12 w-full rounded-none bg-[#174b43] text-sm text-white hover:bg-[#103a34] focus-visible:ring-2 focus-visible:ring-[#a94e28] focus-visible:ring-offset-2"
+                    class="h-12 w-full rounded-none bg-[#087F79] text-sm text-white hover:bg-[#075B5B] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     disabled={processing}
                     data-test="login-button"
                 >
@@ -174,11 +171,11 @@
                 </Button>
             </div>
 
-            <div class="text-center text-sm text-[#68736c]">
+            <div class="text-center text-sm text-muted-foreground">
                 Belum punya akun?
                 <TextLink
                     href={register()}
-                    class="font-semibold text-[#174b43] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                    class="font-semibold text-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                     Mulai uji coba atau pilih paket
                 </TextLink>

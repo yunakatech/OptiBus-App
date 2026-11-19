@@ -4176,7 +4176,7 @@
 <div
     class:mobile-page={true}
     data-content-density="compact"
-    class="space-y-4 bg-[#f1eee5] p-3 pb-28 dark:bg-slate-950 md:p-4"
+    class="space-y-4 bg-[#F7FAF9] p-3 pb-28 dark:bg-slate-950 md:p-4"
 >
     {#if tenantWriteDisabled}
         <div

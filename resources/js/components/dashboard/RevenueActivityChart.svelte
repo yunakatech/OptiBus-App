@@ -64,36 +64,33 @@
     const chartTheme = () =>
         isDark
             ? {
-                  borderColor: '#38bdf8',
+                  borderColor: '#55E8B4',
                   pointBorderColor: '#020617',
-                  pointFillColor: '#38bdf8',
-                  gradientStart: 'rgba(56, 189, 248, 0.3)',
-                  gradientEnd: 'rgba(56, 189, 248, 0.02)',
+                  pointFillColor: '#55E8B4',
+                  gradientStart: 'rgba(85, 232, 180, 0.3)',
+                  gradientEnd: 'rgba(85, 232, 180, 0.02)',
                   tickColor: '#94a3b8',
                   gridColor: 'rgba(148, 163, 184, 0.18)',
-                  panelClass:
-                      'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))] shadow-inner shadow-slate-950/50',
+                  panelClass: 'border-border/80 bg-card',
                   titleClass: 'text-foreground',
-                  subtitleClass:
-                      'border-sky-400/20 bg-sky-950/40 text-sky-100',
-                  countClass: 'text-slate-400',
-                  chartTitleClass: 'text-sky-200',
+                  subtitleClass: 'border-sky-400/20 bg-sky-950/40 text-sky-100',
+                  countClass: 'text-muted-foreground',
+                  chartTitleClass: 'text-[#EAF6F2]',
                   chartBodyClass: 'text-slate-300/80',
               }
             : {
-                  borderColor: '#2563eb',
+                  borderColor: '#087F79',
                   pointBorderColor: '#ffffff',
-                  pointFillColor: '#2563eb',
-                  gradientStart: 'rgba(14, 165, 233, 0.32)',
-                  gradientEnd: 'rgba(14, 165, 233, 0.02)',
-                  tickColor: '#64748b',
-                  gridColor: '#f1f5f9',
-                  panelClass:
-                      'border-border/80 bg-gradient-to-br from-background via-card to-sky-50/20 shadow-xs',
+                  pointFillColor: '#087F79',
+                  gradientStart: 'rgba(8, 127, 121, 0.32)',
+                  gradientEnd: 'rgba(8, 127, 121, 0.02)',
+                  tickColor: '#647C79',
+                  gridColor: '#E7FAF3',
+                  panelClass: 'border-border/80 bg-card shadow-xs',
                   titleClass: 'text-foreground',
                   subtitleClass: 'border-sky-200 bg-sky-50 text-sky-700',
                   countClass: 'text-muted-foreground',
-                  chartTitleClass: 'text-cyan-400',
+                  chartTitleClass: 'text-[#087F79]',
                   chartBodyClass: 'text-white/70',
               };
 
@@ -379,7 +376,9 @@
                 style="left: {tooltipData.x}px; top: {tooltipData.y - 10}px;"
             >
                 <div class="flex items-start justify-between gap-2">
-                    <p class={`text-sm font-semibold ${chartTheme().chartTitleClass}`}>
+                    <p
+                        class={`text-sm font-semibold ${chartTheme().chartTitleClass}`}
+                    >
                         {tooltipData.title}
                     </p>
                     <button
@@ -413,7 +412,9 @@
                     <div
                         class="mt-1 flex items-center justify-between gap-3 border-t border-white/12 pt-2"
                     >
-                        <span class={`font-medium ${chartTheme().chartBodyClass}`}>
+                        <span
+                            class={`font-medium ${chartTheme().chartBodyClass}`}
+                        >
                             Total
                         </span>
                         <span class="font-bold text-emerald-400 tabular-nums">

@@ -710,14 +710,14 @@
                                 Lengkapi Setup
                             </p>
                             <h2
-                                class="mt-1 text-base font-semibold text-[#103d3a]"
+                                class="mt-1 text-base font-semibold text-[#163A39]"
                             >
                                 Data awal belum lengkap.
                             </h2>
                         </div>
                         <Badge
                             variant="outline"
-                            class="shrink-0 rounded-full bg-background/70 dark:border-slate-700/80 dark:bg-slate-900/75"
+                            class="shrink-0 rounded-full bg-background/70 dark:border-slate-700/80 dark:bg-card"
                         >
                             {setupProgress.completed_count}/{setupProgress.total_count}
                         </Badge>
@@ -726,7 +726,7 @@
                         class="mt-3 h-2 overflow-hidden rounded-full bg-amber-100 dark:bg-slate-800"
                     >
                         <div
-                            class="h-full rounded-full bg-[#0d7066] dark:bg-emerald-400"
+                            class="h-full rounded-full bg-[#087F79] dark:bg-emerald-400"
                             style={`width:${setupProgress.percent}%`}
                         ></div>
                     </div>
@@ -745,7 +745,7 @@
                                     />
                                 {/if}
                                 <span
-                                    class={`truncate ${item.done ? 'text-[#103d3a]' : 'text-amber-800'}`}
+                                    class={`truncate ${item.done ? 'text-[#163A39]' : 'text-amber-800'}`}
                                 >
                                     {item.label}
                                 </span>
@@ -755,7 +755,7 @@
                 </div>
                 <a
                     href="/onboarding?continue=1"
-                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#103d3a] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0b2f2c]"
+                    class="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#163A39] px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-[#075B5B]"
                 >
                     Lanjut setup <ArrowRight class="h-4 w-4" />
                 </a>
@@ -870,7 +870,7 @@
                             {#each safeUpcomingCharterReminder.items as item (`upcoming-charter-${item.id}`)}
                                 <a
                                     href={`/charters/view/${item.id}`}
-                                    class="block min-w-0 rounded-xl border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-3 transition hover:border-cyan-300/70 hover:shadow-sm dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.94),rgba(8,47,73,0.28))]"
+                                    class="block min-w-0 rounded-xl border border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(236,254,255,0.82))] p-3 transition hover:border-primary/30 hover:shadow-sm dark:bg-[linear-gradient(180deg,rgba(15,23,42,0.94),rgba(8,47,73,0.28))]"
                                 >
                                     <div
                                         class="mb-2 flex items-start justify-between gap-2"
@@ -890,7 +890,7 @@
                                             </p>
                                         </div>
                                         <span
-                                            class="max-w-[45%] shrink-0 rounded-full bg-cyan-100 px-2 py-0.5 text-center text-xs font-semibold text-cyan-700 dark:bg-cyan-950/45 dark:text-cyan-200"
+                                            class="max-w-[45%] shrink-0 rounded-full bg-accent px-2 py-0.5 text-center text-xs font-semibold text-accent-foreground dark:bg-cyan-950/45 dark:text-cyan-200"
                                         >
                                             {charterReminderTag(item)}
                                         </span>
@@ -918,7 +918,7 @@
                             {#if upcomingCharterOverflow > 0}
                                 <a
                                     href="/charters"
-                                    class="flex flex-col gap-1 rounded-xl border border-dashed border-cyan-300/70 bg-cyan-50/70 px-3 py-2 text-xs font-medium text-cyan-800 transition hover:bg-cyan-100/80 sm:flex-row sm:items-center sm:justify-between dark:border-cyan-500/25 dark:bg-cyan-950/20 dark:text-cyan-100 dark:hover:bg-cyan-950/35"
+                                    class="flex flex-col gap-1 rounded-xl border border-dashed border-primary/30 bg-accent/70 px-3 py-2 text-xs font-medium text-accent-foreground transition hover:bg-accent sm:flex-row sm:items-center sm:justify-between dark:border-primary/30 dark:bg-accent/40 dark:text-accent-foreground dark:hover:bg-accent/60"
                                 >
                                     <span
                                         >Lihat {upcomingCharterOverflow} reminder
