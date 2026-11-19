@@ -68,12 +68,12 @@
     const rowClass = $derived(
         tone === 'default'
             ? 'group text-foreground transition-colors odd:bg-background even:bg-muted/20 hover:bg-accent/60 hover:text-foreground dark:hover:bg-slate-800/60'
-            : 'group text-foreground transition-colors hover:bg-[#ebf3fc] hover:text-foreground dark:hover:bg-slate-800/60',
+            : 'group text-foreground transition-colors hover:bg-[#E7FAF3] hover:text-foreground dark:hover:bg-slate-800/60',
     );
     const stickyCellClass = $derived(
         tone === 'default'
             ? 'sticky z-20 bg-background transition-colors group-even:bg-muted/20 group-hover:bg-accent/60 dark:group-hover:bg-slate-800/60'
-            : 'sticky z-20 bg-card transition-colors group-hover:bg-[#ebf3fc] dark:group-hover:bg-slate-800/60',
+            : 'sticky z-20 bg-card transition-colors group-hover:bg-[#E7FAF3] dark:group-hover:bg-slate-800/60',
     );
     const actionSeparatorClass = $derived(
         tone === 'default' ? 'text-border' : 'text-slate-700',
@@ -184,7 +184,7 @@
                             tablePaddingClass,
                             tone === 'default'
                                 ? 'z-20 border-l border-border/60 bg-background transition-colors group-even:bg-muted/20 group-hover:bg-accent/60 dark:group-hover:bg-slate-800/60'
-                                : 'z-20 border-l border-slate-800 bg-card transition-colors group-hover:bg-[#ebf3fc] dark:group-hover:bg-slate-800/60',
+                                : 'z-20 border-l border-slate-800 bg-card transition-colors group-hover:bg-[#E7FAF3] dark:group-hover:bg-slate-800/60',
                         )}
                     >
                         {#if actions}

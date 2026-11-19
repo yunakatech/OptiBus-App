@@ -652,7 +652,7 @@
                                     class={cn(
                                         'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
                                         activeId === 0
-                                            ? 'bg-primary text-white'
+                                            ? 'bg-primary text-primary-foreground'
                                             : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
                                     )}
                                 >
@@ -678,7 +678,7 @@
                                         class={cn(
                                             'flex h-6 w-6 shrink-0 items-center justify-center rounded-full',
                                             activeId === item.id
-                                                ? 'bg-primary text-white'
+                                                ? 'bg-primary text-primary-foreground'
                                                 : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500',
                                         )}
                                     >

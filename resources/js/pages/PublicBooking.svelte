@@ -802,10 +802,10 @@
 
 <main
     class:mobile-page={true}
-    class="min-h-screen bg-[#f5f7f2] text-slate-900 selection:bg-emerald-200 dark:bg-slate-950 dark:text-slate-100"
+    class="min-h-screen bg-[#F7FAF9] text-slate-900 selection:bg-emerald-200 dark:bg-slate-950 dark:text-slate-100"
 >
     <div
-        class="mobile-public-content mx-auto min-h-screen w-full max-w-xl bg-[#f5f7f2] px-4 pb-[calc(var(--mobile-public-action-height,5.5rem)+1rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 dark:bg-slate-950"
+        class="mobile-public-content mx-auto min-h-screen w-full max-w-xl bg-[#F7FAF9] px-4 pb-[calc(var(--mobile-public-action-height,5.5rem)+1rem+env(safe-area-inset-bottom))] pt-4 sm:px-6 sm:pt-6 dark:bg-slate-950"
     >
         {#if step < 5}
             <section

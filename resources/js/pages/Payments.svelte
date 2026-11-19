@@ -1442,7 +1442,7 @@
 
                             <Button
                                 type="button"
-                                class="h-9 rounded-full bg-cyan-700 text-white hover:bg-cyan-800 dark:bg-cyan-600 dark:hover:bg-cyan-500"
+                                class="h-9 rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
                                 disabled={bulkApplyDisabled}
                                 onclick={() => void applyBulkPayment()}
                             >

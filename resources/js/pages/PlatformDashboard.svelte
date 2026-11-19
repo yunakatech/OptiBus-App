@@ -249,14 +249,14 @@
     class="mx-auto min-w-0 max-w-[1500px] space-y-3 overflow-x-hidden p-2 pb-8 sm:space-y-4 sm:p-3 md:space-y-5 md:p-5"
 >
     <header
-        class="relative min-w-0 overflow-hidden rounded-xl border border-[#173a34] bg-[#173a34] p-4 text-white sm:p-5 md:p-6 dark:border-slate-700 dark:bg-slate-950"
+        class="relative min-w-0 overflow-hidden rounded-xl border border-[#075B5B] bg-[#075B5B] p-4 text-white sm:p-5 md:p-6 dark:border-[#285052] dark:bg-[#0B2223]"
     >
         <div
             class="relative flex min-w-0 flex-col gap-5 md:flex-row md:items-end md:justify-between"
         >
             <div class="min-w-0 max-w-3xl">
                 <p
-                    class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#d9a477]"
+                    class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#55E8B4]"
                 >
                     Ringkasan Platform
                 </p>
@@ -274,7 +274,7 @@
                 <a class="w-full sm:w-auto" href="/platform/saas/invoices">
                     <Button
                         size="sm"
-                        class="w-full justify-center rounded-md bg-[#f2e7d6] text-[#173a34] hover:bg-white dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-white sm:w-auto"
+                        class="w-full justify-center rounded-md bg-[#E7FAF3] text-[#075B5B] hover:bg-white dark:bg-[#E7FAF3] dark:text-[#075B5B] dark:hover:bg-white sm:w-auto"
                         ><Receipt class="mr-1 h-4 w-4" /> Tagihan</Button
                     >
                 </a>
@@ -299,11 +299,11 @@
     </header>
 
     <section
-        class="min-w-0 overflow-hidden rounded-xl border border-[#d7dfd5] bg-white dark:border-slate-800/80 dark:bg-slate-950"
+        class="min-w-0 overflow-hidden rounded-xl border border-[#DCE9E6] bg-white dark:border-slate-800/80 dark:bg-slate-950"
     >
         <div class="grid gap-0 xl:grid-cols-[1.05fr_1.25fr]">
             <div
-                class="min-w-0 border-b border-[#d7dfd5] bg-[#f5f2e9] p-4 dark:border-slate-800 dark:bg-slate-900/80 sm:p-5 xl:border-b-0 xl:border-r"
+                class="min-w-0 border-b border-[#DCE9E6] bg-[#E7FAF3] p-4 dark:border-slate-800 dark:bg-slate-900/80 sm:p-5 xl:border-b-0 xl:border-r"
             >
                 <p
                     class="text-xs font-semibold uppercase tracking-[0.18em] text-[#697570] dark:text-slate-400"
@@ -311,7 +311,7 @@
                     {metrics.month_label}
                 </p>
                 <h2
-                    class="mt-3 break-words font-serif text-2xl font-semibold leading-tight tracking-[-0.04em] text-[#173a34] sm:text-3xl md:text-4xl"
+                    class="mt-3 break-words font-sans text-2xl font-semibold leading-tight tracking-[-0.04em] text-[#163A39] sm:text-3xl md:text-4xl"
                 >
                     {formatRupiah(metrics.mrr)}
                 </h2>
@@ -340,10 +340,10 @@
                 {#each headlineMetrics as metric, index (`headline-${index}-${metric.label}`)}
                     {@const Icon = metric.icon}
                     <div
-                        class="min-w-0 border-b border-[#d7dfd5] p-3 last:border-b-0 sm:p-4 md:odd:border-r md:[&:nth-last-child(-n+2)]:border-b-0 dark:border-slate-800"
+                        class="min-w-0 border-b border-[#DCE9E6] p-3 last:border-b-0 sm:p-4 md:odd:border-r md:[&:nth-last-child(-n+2)]:border-b-0 dark:border-slate-800"
                     >
                         <div
-                            class="mb-3 flex h-9 w-9 items-center justify-center border-l-2 border-[#a94e28] bg-[#f5f2e9] text-[#173a34] dark:bg-slate-800/80 dark:text-emerald-200"
+                            class="mb-3 flex h-9 w-9 items-center justify-center border-l-2 border-[#087F79] bg-[#E7FAF3] text-[#163A39] dark:bg-slate-800/80 dark:text-emerald-200"
                         >
                             <Icon class="h-4 w-4" />
                         </div>
@@ -379,7 +379,7 @@
                     {metric.label}
                 </p>
                 <p
-                    class="mt-2 break-words text-lg font-bold leading-tight tracking-[-0.03em] text-[#103d3a] dark:text-emerald-100 sm:text-xl"
+                    class="mt-2 break-words text-lg font-bold leading-tight tracking-[-0.03em] text-[#163A39] dark:text-emerald-100 sm:text-xl"
                 >
                     {metric.value}
                 </p>
@@ -394,7 +394,7 @@
 
     {#if mrrTrend.length > 0}
         <section
-            class="min-w-0 rounded-xl border border-[#d7dfd5] bg-white p-3 dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
+            class="min-w-0 rounded-xl border border-[#DCE9E6] bg-white p-3 dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
         >
             <div class="mb-5 flex flex-wrap items-start justify-between gap-3">
                 <div class="min-w-0">
@@ -426,7 +426,7 @@
                             class="flex h-full min-w-0 flex-col justify-end gap-1"
                         >
                             <div
-                                class="rounded-t-sm bg-[#176b60]"
+                                class="rounded-t-sm bg-[#087F79]"
                                 style={`height:${height}%`}
                                 title={`${item.name}: ${formatRupiah(item.value)}`}
                             ></div>
@@ -443,7 +443,7 @@
 
     <div class="grid gap-4 xl:grid-cols-[1.45fr_0.85fr]">
         <section
-            class="min-w-0 rounded-xl border border-[#d7dfd5] bg-white p-3 dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
+            class="min-w-0 rounded-xl border border-[#DCE9E6] bg-white p-3 dark:border-slate-800/80 dark:bg-slate-950 sm:p-4 md:p-5"
         >
             <div
                 class="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center"
@@ -460,7 +460,7 @@
                 </div>
                 <a
                     href="/platform/saas/tenants"
-                    class="inline-flex w-full items-center justify-center gap-1 rounded-full border border-[#d7dfd5] px-3 py-1.5 text-xs font-semibold text-[#103d3a] transition hover:bg-[#eef7ef] dark:border-slate-700/80 dark:text-slate-100 dark:hover:bg-slate-800/80 sm:w-auto"
+                    class="inline-flex w-full items-center justify-center gap-1 rounded-full border border-[#DCE9E6] px-3 py-1.5 text-xs font-semibold text-[#163A39] transition hover:bg-[#E7FAF3] dark:border-slate-700/80 dark:text-slate-100 dark:hover:bg-slate-800/80 sm:w-auto"
                 >
                     Kelola <ArrowRight class="h-3.5 w-3.5" />
                 </a>
@@ -470,7 +470,7 @@
                     ><div class="space-y-3 md:hidden">
                         {#each tenants as tenant, index (`tenant-mobile-${index}-${tenant.id}-${tenant.slug}`)}
                             <article
-                                class="rounded-xl border border-[#d7dfd5] bg-[#fbfcf8] p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70"
+                                class="rounded-xl border border-[#DCE9E6] bg-[#FFFFFF] p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-900/70"
                             >
                                 <div
                                     class="flex items-start justify-between gap-3"
@@ -510,7 +510,7 @@
                                             Paket
                                         </p>
                                         <p
-                                            class="mt-1 truncate font-semibold text-[#103d3a] dark:text-emerald-100"
+                                            class="mt-1 truncate font-semibold text-[#163A39] dark:text-emerald-100"
                                         >
                                             {tenant.plan_name}
                                         </p>
@@ -522,7 +522,7 @@
                                             Berakhir
                                         </p>
                                         <p
-                                            class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                            class="mt-1 font-semibold text-[#163A39] dark:text-emerald-100"
                                         >
                                             {formatDate(tenant.ends_at)}
                                         </p>
@@ -534,7 +534,7 @@
                                             User
                                         </p>
                                         <p
-                                            class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                            class="mt-1 font-semibold text-[#163A39] dark:text-emerald-100"
                                         >
                                             {tenant.user_count}
                                         </p>
@@ -546,7 +546,7 @@
                                             Pool
                                         </p>
                                         <p
-                                            class="mt-1 font-semibold text-[#103d3a] dark:text-emerald-100"
+                                            class="mt-1 font-semibold text-[#163A39] dark:text-emerald-100"
                                         >
                                             {tenant.pool_count}
                                         </p>
@@ -644,7 +644,7 @@
 
         <aside class="space-y-4">
             <section
-                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4"
+                class="min-w-0 rounded-2xl border border-[#DCE9E6] bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:p-4"
             >
                 <div class="mb-3 flex items-center justify-between gap-3">
                     <div class="min-w-0">
@@ -708,7 +708,7 @@
                                         )}
                                     </span>
                                     <span
-                                        class="text-right font-semibold text-[#103d3a] dark:text-emerald-100"
+                                        class="text-right font-semibold text-[#163A39] dark:text-emerald-100"
                                     >
                                         {formatRupiah(invoice.amount)}
                                     </span>
@@ -724,10 +724,10 @@
             </section>
 
             <section
-                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4"
+                class="min-w-0 rounded-2xl border border-[#DCE9E6] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4"
             >
                 <div class="mb-3 flex items-start gap-2">
-                    <CalendarClock class="mt-0.5 h-4 w-4 text-[#0d7066]" />
+                    <CalendarClock class="mt-0.5 h-4 w-4 text-[#087F79]" />
                     <div class="min-w-0">
                         <h2 class="text-sm font-semibold text-foreground">
                             Paket Akan Berakhir
@@ -774,10 +774,10 @@
             </section>
 
             <section
-                class="min-w-0 rounded-2xl border border-[#d7dfd5] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4"
+                class="min-w-0 rounded-2xl border border-[#DCE9E6] bg-white p-3 shadow-sm dark:border-slate-800/80 dark:bg-slate-950 sm:p-4"
             >
                 <div class="mb-3 flex items-start gap-2">
-                    <Users class="mt-0.5 h-4 w-4 text-[#0d7066]" />
+                    <Users class="mt-0.5 h-4 w-4 text-[#087F79]" />
                     <div class="min-w-0">
                         <h2 class="text-sm font-semibold text-foreground">
                             Tenant Baru

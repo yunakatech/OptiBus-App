@@ -226,38 +226,38 @@
 <div
     bind:this={landingRoot}
     class:mobile-page={true}
-    class="min-h-screen overflow-x-hidden bg-[#f1eee5] text-[#1a2825]"
+    class="min-h-screen overflow-x-hidden bg-[#F7FAF9] text-[#163A39]"
 >
     <nav
-        class="sticky top-0 z-40 border-b border-[#d6d0c2] bg-[#f1eee5]/95 py-2 backdrop-blur sm:py-3"
+        class="sticky top-0 z-40 border-b border-[#DCE9E6] bg-[#F7FAF9]/95 py-2 backdrop-blur sm:py-3"
     >
         <div
             class="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 sm:px-6 lg:px-10"
         >
             <a
                 href="/"
-                class="flex h-10 max-w-[44vw] items-center overflow-hidden px-1 transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532] sm:max-w-none"
+                class="flex h-10 max-w-[44vw] items-center overflow-hidden px-1 transition-opacity hover:opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087F79] sm:max-w-none"
                 aria-label="OptiBus"
             >
                 <AppLogo />
             </a>
             <ViewportOnly minWidth={768}
                 ><div
-                    class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-[#52615b] md:flex"
+                    class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:flex"
                 >
                     <a
                         href="#workflow"
-                        class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
+                        class="transition-colors hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087F79]"
                         >Alur Kerja</a
                     >
                     <a
                         href="#fitur"
-                        class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
+                        class="transition-colors hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087F79]"
                         >Fitur</a
                     >
                     <a
                         href="/pricing"
-                        class="transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#b96532]"
+                        class="transition-colors hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087F79]"
                         >Harga</a
                     >
                 </div></ViewportOnly
@@ -266,7 +266,7 @@
                 {#if !isAuthenticated}
                     <a
                         href="/login"
-                        class="inline-flex h-10 items-center justify-center px-2 text-xs font-semibold text-[#42514c] transition-colors hover:text-[#b96532] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532] sm:px-3"
+                        class="inline-flex h-10 items-center justify-center px-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79] sm:px-3"
                         >Masuk</a
                     >
                 {/if}
@@ -274,7 +274,7 @@
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="inline-flex h-10 items-center justify-center bg-[#174b43] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#103a34] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
+                    class="inline-flex h-10 items-center justify-center bg-[#087F79] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#075B5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                 >
                     {isAuthenticated ? 'Dasbor' : 'Mulai'}
                 </a>
@@ -283,11 +283,11 @@
     </nav>
 
     <main>
-        <section class="relative overflow-hidden border-b border-[#c9c2b3]">
+        <section class="relative overflow-hidden border-b border-[#DCE9E6]">
             <ViewportOnly minWidth={1024}
                 ><div
                     class="pointer-events-none absolute inset-y-0 left-1/2 hidden w-full max-w-7xl -translate-x-1/2 opacity-40 lg:block"
-                    style="background-image: linear-gradient(#d2cabb 1px, transparent 1px), linear-gradient(90deg, #d2cabb 1px, transparent 1px); background-size: 52px 52px;"
+                    style="background-image: linear-gradient(#DCE9E6 1px, transparent 1px), linear-gradient(90deg, #DCE9E6 1px, transparent 1px); background-size: 52px 52px;"
                 ></div></ViewportOnly
             >
             <div
@@ -297,18 +297,18 @@
                     class="hero-copy relative z-10 flex flex-col justify-center"
                 >
                     <div
-                        class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#bc6738] pl-3 text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-[#596660] sm:mb-6"
+                        class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#55E8B4] pl-3 text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:mb-6"
                     >
-                        <Clock3 class="h-4 w-4 text-[#a94e28]" />
+                        <Clock3 class="h-4 w-4 text-[#087F79]" />
                         14 hari untuk mencoba alur kerja
                     </div>
                     <h1
-                        class="max-w-3xl font-serif text-[2.45rem] font-medium leading-[0.98] tracking-[-0.04em] text-[#173a34] sm:text-5xl lg:text-[4.25rem]"
+                        class="max-w-3xl font-sans text-[2.45rem] font-medium leading-[0.98] tracking-[-0.04em] text-[#163A39] sm:text-5xl lg:text-[4.25rem]"
                     >
                         Setiap perjalanan, dari loket sampai laporan.
                     </h1>
                     <p
-                        class="mt-5 max-w-xl text-[15px] leading-7 text-[#4e5b55] sm:mt-6 sm:text-base sm:leading-8"
+                        class="mt-5 max-w-xl text-[15px] leading-7 text-muted-foreground sm:mt-6 sm:text-base sm:leading-8"
                     >
                         Catat pesanan, atur keberangkatan, pantau pembayaran,
                         dan tutup hari dengan laporan yang sama-sama dibaca tim.
@@ -318,7 +318,7 @@
                             href={isAuthenticated
                                 ? appHref
                                 : '/register?plan=starter&intent=trial'}
-                            class="motion-button inline-flex h-12 items-center justify-center bg-[#174b43] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#103a34] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
+                            class="motion-button inline-flex h-12 items-center justify-center bg-[#087F79] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#075B5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                         >
                             {isAuthenticated
                                 ? 'Buka dasbor'
@@ -327,46 +327,46 @@
                         </a>
                         <a
                             href="/pricing"
-                            class="motion-button inline-flex h-12 items-center justify-center border border-[#aaa494] bg-transparent px-5 text-sm font-semibold text-[#243a34] transition-colors hover:bg-[#e6e0d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#b96532]"
+                            class="motion-button inline-flex h-12 items-center justify-center border border-[#AFC9C3] bg-transparent px-5 text-sm font-semibold text-[#163A39] transition-colors hover:bg-[#E7FAF3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                         >
                             Bandingkan paket
                         </a>
                     </div>
                     <dl
-                        class="mt-8 grid max-w-xl grid-cols-3 gap-2 border-y border-[#c9c2b3] py-4 sm:mt-10 sm:gap-5 sm:py-5"
+                        class="mt-8 grid max-w-xl grid-cols-3 gap-2 border-y border-[#DCE9E6] py-4 sm:mt-10 sm:gap-5 sm:py-5"
                     >
                         <div>
                             <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px]"
                             >
                                 Transaksi
                             </dt>
                             <dd
-                                class="mt-1 text-sm font-semibold text-[#173a34] sm:text-base"
+                                class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
                             >
                                 3 jalur
                             </dd>
                         </div>
                         <div>
                             <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px]"
                             >
                                 Cakupan
                             </dt>
                             <dd
-                                class="mt-1 text-sm font-semibold text-[#173a34] sm:text-base"
+                                class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
                             >
                                 Multi-pool
                             </dd>
                         </div>
                         <div>
                             <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#68736c] sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px]"
                             >
                                 Audit
                             </dt>
                             <dd
-                                class="mt-1 text-sm font-semibold text-[#173a34] sm:text-base"
+                                class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
                             >
                                 Per tenant
                             </dd>
@@ -375,10 +375,10 @@
                 </div>
 
                 <div
-                    class="relative -mx-2 flex items-center justify-center bg-[#e8e2d7] px-4 py-3 sm:mx-0 sm:px-8 sm:py-6 lg:min-h-[550px]"
+                    class="relative -mx-2 flex items-center justify-center bg-[#E7FAF3] px-4 py-3 sm:mx-0 sm:px-8 sm:py-6 lg:min-h-[550px]"
                 >
                     <div
-                        class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#cec6b7] px-4 py-2 text-xs md:text-[9px] font-semibold uppercase tracking-[0.18em] text-[#5d6962] sm:px-6"
+                        class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#DCE9E6] px-4 py-2 text-xs md:text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:px-6"
                     >
                         <span>Ruang kendali / 01</span>
                         <span>OptiBus</span>
@@ -408,23 +408,23 @@
             <div class="grid gap-8 lg:grid-cols-[0.72fr_1.28fr] lg:gap-16">
                 <div data-reveal class="lg:pt-2">
                     <p
-                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#087F79]"
                     >
                         Dari loket ke garasi
                     </p>
                     <h2
-                        class="mt-3 max-w-sm font-serif text-3xl font-medium leading-tight tracking-[-0.03em] text-[#173a34] sm:text-4xl"
+                        class="mt-3 max-w-sm font-sans text-3xl font-medium leading-tight tracking-[-0.03em] text-[#163A39] sm:text-4xl"
                     >
                         Satu catatan untuk seluruh perjalanan.
                     </h2>
-                    <p class="mt-4 max-w-md leading-7 text-[#53615b]">
+                    <p class="mt-4 max-w-md leading-7 text-muted-foreground">
                         Pesanan yang masuk menjadi dasar manifest, status
                         pembayaran, dan laporan harian. Informasi tetap
                         tersambung saat berpindah dari meja reservasi ke
                         operasional pool.
                     </p>
                 </div>
-                <ol class="divide-y divide-[#c9c2b3] border-y border-[#c9c2b3]">
+                <ol class="divide-y divide-[#DCE9E6] border-y border-[#DCE9E6]">
                     {#each workflow as item, index}
                         {@const Icon = item.icon}
                         <li
@@ -432,22 +432,22 @@
                             style:--reveal-delay={`${index * 55}ms`}
                             class="grid grid-cols-[2.5rem_2rem_1fr] items-center gap-3 py-4 sm:grid-cols-[3rem_2.5rem_1fr] sm:gap-4 sm:py-5"
                         >
-                            <span class="font-serif text-lg text-[#a94e28]">
+                            <span class="font-sans text-lg text-[#087F79]">
                                 0{index + 1}
                             </span>
                             <Icon
-                                class="h-5 w-5 text-[#174b43]"
+                                class="h-5 w-5 text-[#087F79]"
                                 aria-hidden="true"
                             />
                             <div
                                 class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between sm:gap-5"
                             >
                                 <h3
-                                    class="text-base font-semibold text-[#213a34]"
+                                    class="text-base font-semibold text-[#163A39]"
                                 >
                                     {item.label}
                                 </h3>
-                                <p class="text-sm text-[#59665f]">
+                                <p class="text-sm text-muted-foreground">
                                     {item.value}
                                 </p>
                             </div>
@@ -457,7 +457,7 @@
             </div>
         </section>
 
-        <section id="fitur" class="border-y border-[#c9c2b3] bg-[#e8e2d7]">
+        <section id="fitur" class="border-y border-[#DCE9E6] bg-[#E7FAF3]">
             <div
                 class="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 lg:px-10 lg:py-20"
             >
@@ -467,50 +467,52 @@
                 >
                     <div>
                         <p
-                            class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                            class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#087F79]"
                         >
                             Yang tercatat
                         </p>
                         <h2
-                            class="mt-3 font-serif text-3xl font-medium leading-tight tracking-[-0.03em] text-[#173a34] sm:text-4xl"
+                            class="mt-3 font-sans text-3xl font-medium leading-tight tracking-[-0.03em] text-[#163A39] sm:text-4xl"
                         >
                             Rincian yang dibutuhkan saat hari berjalan.
                         </h2>
                     </div>
                     <a
                         href="/pricing"
-                        class="inline-flex min-h-10 items-center text-sm font-semibold text-[#174b43] underline decoration-[#af7655] underline-offset-4 hover:text-[#a94e28] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                        class="inline-flex min-h-10 items-center text-sm font-semibold text-[#087F79] underline decoration-[#087F79] underline-offset-4 hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                     >
                         Lihat semua paket <ArrowRight class="ml-1 h-4 w-4" />
                     </a>
                 </div>
                 <div
-                    class="grid border-y border-[#c9c2b3] sm:grid-cols-2 lg:grid-cols-4"
+                    class="grid border-y border-[#DCE9E6] sm:grid-cols-2 lg:grid-cols-4"
                 >
                     {#each capabilities as item, index}
                         {@const Icon = item.icon}
                         <article
                             data-reveal
                             style:--reveal-delay={`${index * 55}ms`}
-                            class="border-b border-[#c9c2b3] py-5 sm:px-5 sm:py-6 lg:border-b-0 lg:border-r lg:px-5 lg:first:pl-0 lg:last:border-r-0"
+                            class="border-b border-[#DCE9E6] py-5 sm:px-5 sm:py-6 lg:border-b-0 lg:border-r lg:px-5 lg:first:pl-0 lg:last:border-r-0"
                         >
                             <div
                                 class="flex items-center justify-between gap-4"
                             >
-                                <span class="font-serif text-sm text-[#a94e28]">
+                                <span class="font-sans text-sm text-[#087F79]">
                                     0{index + 1}
                                 </span>
                                 <Icon
-                                    class="h-5 w-5 text-[#174b43]"
+                                    class="h-5 w-5 text-[#087F79]"
                                     aria-hidden="true"
                                 />
                             </div>
                             <h3
-                                class="mt-5 text-base font-semibold text-[#213a34]"
+                                class="mt-5 text-base font-semibold text-[#163A39]"
                             >
                                 {item.title}
                             </h3>
-                            <p class="mt-2 text-sm leading-6 text-[#53615b]">
+                            <p
+                                class="mt-2 text-sm leading-6 text-muted-foreground"
+                            >
                                 {item.body}
                             </p>
                         </article>
@@ -528,75 +530,75 @@
             >
                 <div>
                     <p
-                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#a94e28]"
+                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#087F79]"
                     >
                         Pilih skala
                     </p>
                     <h2
-                        class="mt-3 font-serif text-3xl font-medium leading-tight tracking-[-0.03em] text-[#173a34] sm:text-4xl"
+                        class="mt-3 font-sans text-3xl font-medium leading-tight tracking-[-0.03em] text-[#163A39] sm:text-4xl"
                     >
                         Mulai dari kebutuhan hari ini.
                     </h2>
                 </div>
                 <a
                     href="/pricing"
-                    class="inline-flex min-h-11 items-center justify-center border border-[#aaa494] px-4 text-sm font-semibold text-[#243a34] transition-colors hover:bg-[#e6e0d4] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                    class="inline-flex min-h-11 items-center justify-center border border-[#AFC9C3] px-4 text-sm font-semibold text-[#163A39] transition-colors hover:bg-[#E7FAF3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                 >
                     Buka harga lengkap
                 </a>
             </div>
             <div
-                class="grid gap-0 border-y border-[#c9c2b3] md:grid-cols-3 md:divide-x md:divide-[#c9c2b3]"
+                class="grid gap-0 border-y border-[#DCE9E6] md:grid-cols-3 md:divide-x md:divide-[#DCE9E6]"
             >
                 {#each featuredPlans as plan, index}
                     <article
                         data-reveal
                         style:--reveal-delay={`${index * 65}ms`}
-                        class={`plan-panel relative border-b border-[#c9c2b3] bg-transparent px-1 py-6 sm:px-5 sm:py-7 md:border-b-0 ${plan.slug === 'pro' ? 'bg-[#e8e2d7] md:-my-px md:border-y-2 md:border-y-[#174b43]' : ''}`}
+                        class={`plan-panel relative border-b border-[#DCE9E6] bg-transparent px-1 py-6 sm:px-5 sm:py-7 md:border-b-0 ${plan.slug === 'pro' ? 'bg-[#E7FAF3] md:-my-px md:border-y-2 md:border-y-[#087F79]' : ''}`}
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <h3
-                                    class="font-serif text-2xl font-medium text-[#173a34]"
+                                    class="font-sans text-2xl font-medium text-[#163A39]"
                                 >
                                     {plan.name}
                                 </h3>
                                 <p
-                                    class="mt-2 min-h-10 text-sm leading-6 text-[#53615b]"
+                                    class="mt-2 min-h-10 text-sm leading-6 text-muted-foreground"
                                 >
                                     {plan.description}
                                 </p>
                             </div>
                             {#if plan.slug === 'pro'}
                                 <span
-                                    class="border border-[#9eb5a8] px-2 py-1 text-xs md:text-[10px] font-bold uppercase tracking-[0.12em] text-[#174b43]"
+                                    class="border border-[#AFC9C3] px-2 py-1 text-xs md:text-[10px] font-bold uppercase tracking-[0.12em] text-[#087F79]"
                                     >Populer</span
                                 >
                             {/if}
                         </div>
                         <div class="mt-4">
                             <span
-                                class="font-serif text-3xl font-medium text-[#173a34]"
+                                class="font-sans text-3xl font-medium text-[#163A39]"
                                 >{formatRupiah(plan.price_monthly)}</span
                             >
                             <span
-                                class="text-xs uppercase tracking-[0.08em] text-[#53615b]"
+                                class="text-xs uppercase tracking-[0.08em] text-muted-foreground"
                                 >/ bulan</span
                             >
                         </div>
                         <div
-                            class="mt-5 space-y-3 border-t border-[#c9c2b3] pt-4 text-sm text-[#33433d]"
+                            class="mt-5 space-y-3 border-t border-[#DCE9E6] pt-4 text-sm text-[#163A39]"
                         >
                             <div class="flex items-center gap-2">
-                                <BusFront class="h-4 w-4 text-[#a94e28]" />
+                                <BusFront class="h-4 w-4 text-[#087F79]" />
                                 {limitLabel(plan.max_armadas, 'armada')}
                             </div>
                             <div class="flex items-center gap-2">
-                                <Route class="h-4 w-4 text-[#a94e28]" />
+                                <Route class="h-4 w-4 text-[#087F79]" />
                                 {limitLabel(plan.max_routes, 'rute')}
                             </div>
                             <div class="flex items-center gap-2">
-                                <UsersRound class="h-4 w-4 text-[#a94e28]" />
+                                <UsersRound class="h-4 w-4 text-[#087F79]" />
                                 {limitLabel(plan.max_users, 'pengguna')}
                             </div>
                         </div>
@@ -604,7 +606,7 @@
                             href={isAuthenticated
                                 ? subscriptionHref
                                 : `/register?plan=${plan.slug}&intent=paid`}
-                            class={`motion-button mt-6 inline-flex h-11 w-full items-center justify-center text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] ${plan.slug === 'pro' ? 'bg-[#174b43] text-white hover:bg-[#103a34]' : 'border border-[#aaa494] text-[#243a34] hover:bg-[#e6e0d4]'}`}
+                            class={`motion-button mt-6 inline-flex h-11 w-full items-center justify-center text-sm font-semibold transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79] ${plan.slug === 'pro' ? 'bg-[#087F79] text-white hover:bg-[#075B5B]' : 'border border-[#AFC9C3] text-[#163A39] hover:bg-[#E7FAF3]'}`}
                         >
                             {isAuthenticated
                                 ? 'Kelola paket'
@@ -615,19 +617,19 @@
             </div>
         </section>
 
-        <section class="border-t border-[#173a34] bg-[#173a34] text-[#f1eee5]">
+        <section class="border-t border-[#163A39] bg-[#163A39] text-[#F7FAF9]">
             <div
                 data-reveal
                 class="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:px-6 sm:py-14 md:grid-cols-[1fr_auto] md:items-center lg:px-10 lg:py-16"
             >
                 <div>
                     <p
-                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#d9a27d]"
+                        class="text-xs md:text-[11px] font-bold uppercase tracking-[0.18em] text-[#55E8B4]"
                     >
                         Langkah berikutnya
                     </p>
                     <h2
-                        class="mt-3 max-w-3xl font-serif text-3xl font-medium leading-tight tracking-[-0.03em] text-[#f8f4eb] sm:text-4xl"
+                        class="mt-3 max-w-3xl font-sans text-3xl font-medium leading-tight tracking-[-0.03em] text-[#EAF6F2] sm:text-4xl"
                     >
                         Lihat bagaimana alur perjalanan Anda bekerja di OptiBus.
                     </h2>
@@ -636,7 +638,7 @@
                     href={isAuthenticated
                         ? appHref
                         : '/register?plan=starter&intent=trial'}
-                    class="motion-button inline-flex h-12 items-center justify-center bg-[#f1eee5] px-5 text-sm font-semibold text-[#173a34] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d9a27d]"
+                    class="motion-button inline-flex h-12 items-center justify-center bg-[#F7FAF9] px-5 text-sm font-semibold text-[#163A39] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55E8B4]"
                 >
                     {isAuthenticated ? 'Buka dasbor' : 'Mulai uji coba'}
                     <ArrowRight class="motion-arrow ml-2 h-4 w-4" />
@@ -645,42 +647,42 @@
         </section>
     </main>
 
-    <footer class="border-t border-[#c9c2b3] bg-[#f1eee5]">
+    <footer class="border-t border-[#DCE9E6] bg-[#F7FAF9]">
         <div
-            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-[#53615b] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-10"
+            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6 md:flex-row md:items-center md:justify-between lg:px-10"
         >
-            <span class="font-serif text-base text-[#173a34]">
+            <span class="font-sans text-base text-[#163A39]">
                 OptiBus
-                <span class="font-sans text-xs text-[#68736c]">
+                <span class="font-sans text-xs text-muted-foreground">
                     / operasional perjalanan
                 </span>
             </span>
             <div class="flex flex-wrap gap-x-5 gap-y-2">
                 <a
                     href="/pricing"
-                    class="inline-flex min-h-10 items-center hover:text-[#a94e28] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                    class="inline-flex min-h-10 items-center hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                     >Harga</a
                 >
                 {#if isAuthenticated}
                     <a
                         href={appHref}
-                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        class="inline-flex min-h-10 items-center hover:text-[#087F79]"
                         >Dasbor</a
                     >
                     <a
                         href={subscriptionHref}
-                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        class="inline-flex min-h-10 items-center hover:text-[#087F79]"
                         >Langganan</a
                     >
                 {:else}
                     <a
                         href="/login"
-                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        class="inline-flex min-h-10 items-center hover:text-[#087F79]"
                         >Masuk</a
                     >
                     <a
                         href="/register?plan=starter&intent=trial"
-                        class="inline-flex min-h-10 items-center hover:text-[#a94e28]"
+                        class="inline-flex min-h-10 items-center hover:text-[#087F79]"
                         >Daftar</a
                     >
                 {/if}
@@ -760,7 +762,7 @@
             }
             .plan-panel:hover,
             .plan-panel:focus-within {
-                background-color: #e8e2d7;
+                background-color: #e7faf3;
             }
         }
     }

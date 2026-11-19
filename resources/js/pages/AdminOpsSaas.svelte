@@ -165,11 +165,11 @@
     let payMessage = $state('');
 
     const shellClass =
-        'overflow-hidden rounded-xl border border-[#d7d1c3] bg-[#fbfaf6] dark:border-slate-700 dark:bg-slate-950';
+        'overflow-hidden rounded-xl border border-[#DCE9E6] bg-[#FFFFFF] dark:border-slate-700 dark:bg-slate-950';
     const panelClass =
-        'rounded-lg border border-[#d7d1c3] bg-[#fbfaf6] dark:border-slate-700 dark:bg-slate-950';
+        'rounded-lg border border-[#DCE9E6] bg-[#FFFFFF] dark:border-slate-700 dark:bg-slate-950';
     const tableShellClass =
-        'overflow-hidden rounded-lg border border-[#d7d1c3] bg-white dark:border-slate-700 dark:bg-slate-950';
+        'overflow-hidden rounded-lg border border-[#DCE9E6] bg-white dark:border-slate-700 dark:bg-slate-950';
 
     async function loadPaymentSettings() {
         payBusy = true;
@@ -771,7 +771,7 @@
 
 <div
     class:mobile-page={true}
-    class="min-h-screen overflow-x-hidden bg-[#f1eee5] dark:bg-slate-950"
+    class="min-h-screen overflow-x-hidden bg-[#F7FAF9] dark:bg-slate-950"
 >
     <div
         class="mx-auto w-full max-w-[1600px] space-y-4 px-3 py-4 sm:space-y-6 sm:px-6 sm:py-6 lg:px-8"
@@ -814,21 +814,23 @@
             <!-- Header -->
             <section class={shellClass}>
                 <div
-                    class="relative isolate overflow-hidden rounded-xl bg-[#173a34] text-white dark:bg-[#101f1c]"
+                    class="relative isolate overflow-hidden rounded-xl bg-[#163A39] text-white dark:bg-[#101f1c]"
                 >
                     <div
                         class="relative grid gap-5 p-4 sm:gap-6 sm:p-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] xl:items-end"
                     >
                         <div class="space-y-4">
                             <div
-                                class="inline-flex items-center gap-2 border-l-2 border-[#d9a477] pl-2 py-1 text-xs md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#f0c59f]"
+                                class="inline-flex items-center gap-2 border-l-2 border-[#55E8B4] pl-2 py-1 text-xs md:text-[11px] font-semibold uppercase tracking-[0.2em] text-[#EAF6F2]"
                             >
-                                <ShieldCheck class="h-3.5 w-3.5 text-sky-500" />
+                                <ShieldCheck
+                                    class="h-3.5 w-3.5 text-[#55E8B4]"
+                                />
                                 Administrasi SaaS
                             </div>
                             <div class="space-y-2">
                                 <h1
-                                    class="font-serif text-2xl font-semibold tracking-tight text-white sm:text-4xl"
+                                    class="font-sans text-2xl font-semibold tracking-tight text-white sm:text-4xl"
                                 >
                                     Tenant, paket, dan tagihan.
                                 </h1>
@@ -855,9 +857,9 @@
                         <div
                             class="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3"
                         >
-                            {#each [{ label: 'Tenant', value: summary?.tenant_count ?? 0, note: 'Terdaftar', icon: Building2, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Langganan aktif', value: summary?.active_subscription_count ?? 0, note: 'Berjalan', icon: CreditCard, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Paket', value: summary?.plan_count ?? 0, note: 'Tersedia', icon: Package, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Tagihan tertunda', value: summary?.invoice_pending_count ?? 0, note: 'Menunggu pembayaran', icon: FileText, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Lewat jatuh tempo', value: summary?.invoice_overdue_count ?? 0, note: 'Perlu ditindaklanjuti', icon: AlertTriangle, tone: 'border-[#d9b7a5] bg-[#f7eee8] text-[#873d24] dark:border-red-900 dark:bg-red-950/40 dark:text-red-200' }, { label: 'Lunas bulan ini', value: summary?.invoice_paid_month_count ?? 0, note: 'Pembayaran tercatat', icon: TrendingUp, tone: 'border-[#c8d8cc] bg-[#eef3eb] text-[#173a34] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }] as item}
+                            {#each [{ label: 'Tenant', value: summary?.tenant_count ?? 0, note: 'Terdaftar', icon: Building2, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Langganan aktif', value: summary?.active_subscription_count ?? 0, note: 'Berjalan', icon: CreditCard, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Paket', value: summary?.plan_count ?? 0, note: 'Tersedia', icon: Package, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Tagihan tertunda', value: summary?.invoice_pending_count ?? 0, note: 'Menunggu pembayaran', icon: FileText, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Lewat jatuh tempo', value: summary?.invoice_overdue_count ?? 0, note: 'Perlu ditindaklanjuti', icon: AlertTriangle, tone: 'border-[#d9b7a5] bg-[#f7eee8] text-[#873d24] dark:border-red-900 dark:bg-red-950/40 dark:text-red-200' }, { label: 'Lunas bulan ini', value: summary?.invoice_paid_month_count ?? 0, note: 'Pembayaran tercatat', icon: TrendingUp, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }] as item}
                                 <div
-                                    class="border-t border-[#d7d1c3] bg-[#fbfaf6] p-3 dark:border-slate-700 dark:bg-slate-950 sm:p-4"
+                                    class="border-t border-[#DCE9E6] bg-[#FFFFFF] p-3 dark:border-slate-700 dark:bg-slate-950 sm:p-4"
                                 >
                                     <div
                                         class="flex items-start justify-between gap-3"
@@ -869,7 +871,7 @@
                                                 {item.label}
                                             </p>
                                             <p
-                                                class="mt-2 text-2xl font-semibold tracking-tight text-[#173a34] dark:text-slate-100"
+                                                class="mt-2 text-2xl font-semibold tracking-tight text-[#163A39] dark:text-slate-100"
                                             >
                                                 {item.value}
                                             </p>
@@ -894,7 +896,7 @@
 
             <nav class="z-20 md:sticky md:top-4">
                 <div
-                    class="rounded-lg border border-[#d7d1c3] bg-[#fbfaf6] p-2 dark:border-slate-700 dark:bg-slate-950"
+                    class="rounded-lg border border-[#DCE9E6] bg-[#FFFFFF] p-2 dark:border-slate-700 dark:bg-slate-950"
                 >
                     <div
                         class="flex gap-2 overflow-x-auto overscroll-x-contain pb-1"
@@ -908,12 +910,12 @@
                                 class={`group flex min-w-[7.75rem] items-center gap-2 rounded-full border px-3 py-2.5 text-xs font-medium transition sm:min-w-[150px] sm:gap-3 sm:px-4 sm:py-3 sm:text-sm
                                 ${
                                     activeTab === tab.key
-                                        ? 'border-[#173a34] bg-[#173a34] text-white dark:border-emerald-100 dark:bg-emerald-100 dark:text-slate-950'
-                                        : 'border-[#d7d1c3] bg-white text-muted-foreground hover:border-[#9da99e] hover:text-foreground dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600'
+                                        ? 'border-[#163A39] bg-[#163A39] text-white dark:border-emerald-100 dark:bg-emerald-100 dark:text-slate-950'
+                                        : 'border-[#DCE9E6] bg-white text-muted-foreground hover:border-[#9da99e] hover:text-foreground dark:border-slate-700 dark:bg-slate-950 dark:hover:border-slate-600'
                                 }`}
                             >
                                 <tab.icon
-                                    class={`h-4 w-4 shrink-0 ${activeTab === tab.key ? 'text-white dark:text-slate-950' : 'text-[#176b60] dark:text-emerald-300'}`}
+                                    class={`h-4 w-4 shrink-0 ${activeTab === tab.key ? 'text-white dark:text-slate-950' : 'text-[#087F79] dark:text-emerald-300'}`}
                                 />
                                 <span class="truncate">{tab.label}</span>
                                 <span

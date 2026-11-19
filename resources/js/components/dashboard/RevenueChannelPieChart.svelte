@@ -81,35 +81,35 @@
         isDark
             ? {
                   borderColor: '#020617',
-                  panelClass:
-                      'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))] shadow-inner shadow-slate-950/50',
+                  panelClass: 'border-border/80 bg-card',
                   titleClass: 'text-foreground',
                   subtitleClass: 'text-muted-foreground',
                   toggleClass: 'bg-slate-950/75',
                   toggleActiveClass: 'bg-slate-900 text-foreground shadow-sm',
-                  toggleInactiveClass: 'text-slate-400 hover:text-foreground',
-                  totalLabelClass: 'text-slate-400',
+                  toggleInactiveClass:
+                      'text-muted-foreground hover:text-foreground',
+                  totalLabelClass: 'text-muted-foreground',
                   totalValueClass: 'text-foreground',
-                  footerLabelClass: 'text-slate-400',
+                  footerLabelClass: 'text-muted-foreground',
                   footerValueClass: 'text-foreground',
-                  chartTitleClass: 'text-sky-200',
+                  chartTitleClass: 'text-[#EAF6F2]',
                   chartBodyClass: 'text-slate-300/80',
                   dividerClass: 'bg-slate-700/80',
               }
             : {
                   borderColor: '#ffffff',
-                  panelClass:
-                      'border-border/80 bg-gradient-to-br from-background via-card to-cyan-50/20 shadow-xs',
+                  panelClass: 'border-border/80 bg-card shadow-xs',
                   titleClass: 'text-foreground',
                   subtitleClass: 'text-muted-foreground',
                   toggleClass: 'bg-muted/80',
                   toggleActiveClass: 'bg-background text-foreground shadow-sm',
-                  toggleInactiveClass: 'text-muted-foreground hover:text-foreground',
+                  toggleInactiveClass:
+                      'text-muted-foreground hover:text-foreground',
                   totalLabelClass: 'text-muted-foreground',
                   totalValueClass: 'text-foreground',
                   footerLabelClass: 'text-muted-foreground',
                   footerValueClass: 'text-foreground',
-                  chartTitleClass: 'text-cyan-400',
+                  chartTitleClass: 'text-[#087F79]',
                   chartBodyClass: 'text-white/70',
                   dividerClass: 'bg-slate-100',
               };
@@ -145,9 +145,9 @@
                         data: dataValues,
                         backgroundColor: hasData
                             ? [
-                                  'rgba(56, 189, 248, 0.9)',
-                                  'rgba(129, 140, 248, 0.9)',
-                                  'rgba(52, 211, 153, 0.9)',
+                                  'rgba(85, 232, 180, 0.9)',
+                                  'rgba(7, 91, 91, 0.9)',
+                                  'rgba(85, 232, 180, 0.9)',
                               ]
                             : ['#e2e8f0', '#e2e8f0', '#e2e8f0'],
                         borderColor: theme.borderColor,
@@ -173,60 +173,59 @@
                         external: (context) => {
                             const { chart, tooltip } = context;
 
-                                if (tooltip.opacity === 0) {
-                                    tooltipData.visible = false;
-                                    dismissedTooltipKey = '';
-                                    activeTooltipSignature = '';
-                                    return;
-                                }
+                            if (tooltip.opacity === 0) {
+                                tooltipData.visible = false;
+                                dismissedTooltipKey = '';
+                                activeTooltipSignature = '';
+                                return;
+                            }
 
-                                if (!tooltip.dataPoints?.length) {
-                                    tooltipData.visible = false;
-                                    return;
-                                }
+                            if (!tooltip.dataPoints?.length) {
+                                tooltipData.visible = false;
+                                return;
+                            }
 
-                                const point = tooltip.dataPoints[0];
-                                const label = String(point.label || '');
-                                const key = label || String(point.dataIndex);
+                            const point = tooltip.dataPoints[0];
+                            const label = String(point.label || '');
+                            const key = label || String(point.dataIndex);
 
-                                if (dismissedTooltipKey === key) {
-                                    tooltipData.visible = false;
-                                    return;
-                                }
+                            if (dismissedTooltipKey === key) {
+                                tooltipData.visible = false;
+                                return;
+                            }
 
-                                const left = tooltip.caretX;
-                                const width = chart.width;
-                                let align: 'left' | 'right' | 'center' =
-                                    'center';
+                            const left = tooltip.caretX;
+                            const width = chart.width;
+                            let align: 'left' | 'right' | 'center' = 'center';
 
-                                if (left < width * 0.2) align = 'left';
-                                else if (left > width * 0.8) align = 'right';
+                            if (left < width * 0.2) align = 'left';
+                            else if (left > width * 0.8) align = 'right';
 
-                                const nextSignature = [
-                                    key,
-                                    align,
-                                    Number(point.raw ?? 0),
-                                    label,
-                                ].join('|');
+                            const nextSignature = [
+                                key,
+                                align,
+                                Number(point.raw ?? 0),
+                                label,
+                            ].join('|');
 
-                                if (
-                                    activeTooltipSignature === nextSignature &&
-                                    tooltipData.visible
-                                ) {
-                                    return;
-                                }
+                            if (
+                                activeTooltipSignature === nextSignature &&
+                                tooltipData.visible
+                            ) {
+                                return;
+                            }
 
-                                activeTooltipSignature = nextSignature;
+                            activeTooltipSignature = nextSignature;
 
-                                tooltipData = {
-                                    visible: true,
-                                    x: tooltip.caretX,
-                                    y: tooltip.caretY,
-                                    key,
-                                    label,
-                                    value: hasData ? Number(point.raw ?? 0) : 0,
-                                    align,
-                                };
+                            tooltipData = {
+                                visible: true,
+                                x: tooltip.caretX,
+                                y: tooltip.caretY,
+                                key,
+                                label,
+                                value: hasData ? Number(point.raw ?? 0) : 0,
+                                align,
+                            };
                         },
                     },
                 },
@@ -277,9 +276,13 @@
     <div class="flex items-start justify-between">
         <div>
             <p class="text-[13px] font-semibold text-muted-foreground">
-                Sebaran <span class={`font-bold ${chartTheme().titleClass}`}>Revenue</span>
+                Sebaran <span class={`font-bold ${chartTheme().titleClass}`}
+                    >Revenue</span
+                >
             </p>
-            <p class={`mt-0.5 text-[11px] ${chartTheme().subtitleClass}`}>Layanan</p>
+            <p class={`mt-0.5 text-[11px] ${chartTheme().subtitleClass}`}>
+                Layanan
+            </p>
         </div>
         <div class={`flex rounded-lg p-0.5 ${chartTheme().toggleClass}`}>
             <button
@@ -300,7 +303,9 @@
                 style="left: {tooltipData.x}px; top: {tooltipData.y - 10}px;"
             >
                 <div class="flex items-start justify-between gap-2">
-                    <p class={`text-sm font-semibold ${chartTheme().chartTitleClass}`}>
+                    <p
+                        class={`text-sm font-semibold ${chartTheme().chartTitleClass}`}
+                    >
                         {tooltipData.label}
                     </p>
                     <button
@@ -314,7 +319,9 @@
                 </div>
                 <div class="mt-2 text-[12px]">
                     <div class="flex items-center justify-between gap-3">
-                        <span class={chartTheme().chartBodyClass}>Total Revenue</span>
+                        <span class={chartTheme().chartBodyClass}
+                            >Total Revenue</span
+                        >
                         <span class="font-semibold tabular-nums">
                             {toCurrency(tooltipData.value)}
                         </span>
@@ -343,14 +350,16 @@
     <div class="mt-auto pt-6 grid grid-cols-3 gap-2">
         <div class="text-center">
             <div
-                class="mx-auto mb-1.5 h-2.5 w-2.5 rounded-full shadow-sm bg-sky-400"
+                class="mx-auto mb-1.5 h-2.5 w-2.5 rounded-full shadow-sm bg-primary"
             ></div>
             <p
                 class={`text-[9px] uppercase tracking-wider font-semibold ${chartTheme().footerLabelClass}`}
             >
                 Booking
             </p>
-            <p class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}>
+            <p
+                class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}
+            >
                 {toCurrency(Number(summaryStats.revenue_booking || 0))}
             </p>
         </div>
@@ -366,7 +375,9 @@
             >
                 Carter
             </p>
-            <p class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}>
+            <p
+                class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}
+            >
                 {toCurrency(Number(summaryStats.revenue_charter || 0))}
             </p>
         </div>
@@ -382,7 +393,9 @@
             >
                 Bagasi
             </p>
-            <p class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}>
+            <p
+                class={`mt-0.5 text-[11px] font-bold break-words ${chartTheme().footerValueClass}`}
+            >
                 {toCurrency(Number(summaryStats.revenue_luggage || 0))}
             </p>
         </div>

@@ -118,21 +118,21 @@
 <Form
     {...store.form()}
     resetOnSuccess={['password', 'password_confirmation']}
-    class="overflow-hidden border-y border-[#c9c2b3] bg-[#f7f4ec] text-sm md:[&_input]:h-11 md:[&_input]:px-3 md:[&_input]:text-sm md:[&_label]:text-sm"
+    class="overflow-hidden border-y border-border bg-card text-sm md:[&_input]:h-11 md:[&_input]:px-3 md:[&_input]:text-sm md:[&_label]:text-sm"
 >
     {#snippet children({ errors, processing })}
         <div class="grid gap-5 px-4 py-5 sm:px-6 sm:py-6">
             <div class="grid gap-2">
                 <a
                     href={`/auth/google/redirect?intent=${isPaymentFlow ? 'paid' : 'trial'}&plan=${selectedPlan}`}
-                    class="group block border border-[#c9c2b3] bg-transparent p-3 transition-colors hover:border-[#174b43] hover:bg-[#eee9dd] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                    class="group block border border-border bg-transparent p-3 transition-colors hover:border-[#087F79] hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                     <div
                         class="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between"
                     >
                         <div class="flex items-center gap-2.5">
                             <span
-                                class="grid h-10 w-10 shrink-0 place-items-center border border-[#d2cabb] bg-white"
+                                class="grid h-10 w-10 shrink-0 place-items-center border border-border bg-white"
                             >
                                 <svg class="h-4 w-4" viewBox="0 0 24 24"
                                     ><path
@@ -151,13 +151,15 @@
                                 >
                             </span>
                             <div>
-                                <p class="text-sm font-semibold text-[#213a34]">
+                                <p
+                                    class="text-sm font-semibold text-foreground"
+                                >
                                     Daftar dengan Google
                                 </p>
                             </div>
                         </div>
                         <span
-                            class="inline-flex min-h-10 items-center justify-center bg-[#174b43] px-3 text-xs font-semibold text-white transition-colors group-hover:bg-[#103a34]"
+                            class="inline-flex min-h-10 items-center justify-center bg-[#087F79] px-3 text-xs font-semibold text-white transition-colors group-hover:bg-[#075B5B]"
                         >
                             Lanjut dengan Google
                             <ArrowRight class="ml-2 h-4 w-4" />
@@ -166,43 +168,45 @@
                 </a>
                 <div class="relative py-1">
                     <div class="absolute inset-0 flex items-center">
-                        <span class="w-full border-t border-[#c9c2b3]"></span>
+                        <span class="w-full border-t border-border"></span>
                     </div>
                     <div
                         class="relative flex justify-center text-xs md:text-[10px] font-semibold uppercase tracking-[0.16em]"
                     >
-                        <span class="bg-[#f7f4ec] px-3 text-[#68736c]">
+                        <span class="bg-card px-3 text-muted-foreground">
                             Isi data akun
                         </span>
                     </div>
                 </div>
 
                 <div class="grid gap-2">
-                    <Label class="text-sm font-medium text-[#33433d]"
+                    <Label class="text-sm font-medium text-foreground"
                         >Pilih cara memulai</Label
                     >
                     <div class="grid grid-cols-2 gap-2">
                         <button
                             type="button"
                             onclick={chooseTrial}
-                            class={`min-h-16 border px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] ${isTrialFlow ? 'border-[#174b43] bg-[#e8eee7] text-[#173a34]' : 'border-[#c9c2b3] bg-transparent hover:bg-[#eee9dd]'}`}
+                            class={`min-h-16 border px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${isTrialFlow ? 'border-[#087F79] bg-accent text-foreground' : 'border-border bg-transparent hover:bg-accent'}`}
                         >
                             <span class="block text-xs font-semibold"
                                 >Uji coba</span
                             >
-                            <span class="mt-0.5 block text-xs text-[#68736c]"
+                            <span
+                                class="mt-0.5 block text-xs text-muted-foreground"
                                 >Mulai tanpa bayar</span
                             >
                         </button>
                         <button
                             type="button"
                             onclick={chooseSubscription}
-                            class={`min-h-16 border px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] ${isPaymentFlow ? 'border-[#174b43] bg-[#e8eee7] text-[#173a34]' : 'border-[#c9c2b3] bg-transparent hover:bg-[#eee9dd]'}`}
+                            class={`min-h-16 border px-3 py-2.5 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${isPaymentFlow ? 'border-[#087F79] bg-accent text-foreground' : 'border-border bg-transparent hover:bg-accent'}`}
                         >
                             <span class="block text-xs font-semibold"
                                 >Langganan</span
                             >
-                            <span class="mt-0.5 block text-xs text-[#68736c]"
+                            <span
+                                class="mt-0.5 block text-xs text-muted-foreground"
                                 >Pilih paket</span
                             >
                         </button>
@@ -211,7 +215,7 @@
 
                 {#if isPaymentFlow}
                     <div class="grid gap-2">
-                        <Label class="text-sm font-medium text-[#33433d]"
+                        <Label class="text-sm font-medium text-foreground"
                             >Pilih paket langganan</Label
                         >
                         <div class="grid gap-2 sm:grid-cols-3">
@@ -219,32 +223,32 @@
                                 <button
                                     type="button"
                                     onclick={() => choosePlan(plan.slug)}
-                                    class={`border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28] ${selectedPlan === plan.slug ? 'border-[#174b43] bg-[#e8eee7]' : 'border-[#c9c2b3] bg-transparent hover:bg-[#eee9dd]'}`}
+                                    class={`border p-3 text-left transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${selectedPlan === plan.slug ? 'border-[#087F79] bg-accent' : 'border-border bg-transparent hover:bg-accent'}`}
                                 >
                                     <div
                                         class="flex items-start justify-between gap-2"
                                     >
                                         <div>
                                             <p
-                                                class="text-sm font-semibold text-[#213a34]"
+                                                class="text-sm font-semibold text-foreground"
                                             >
                                                 {plan.name}
                                             </p>
                                             <p
-                                                class="mt-1 text-sm font-semibold text-[#174b43]"
+                                                class="mt-1 text-sm font-semibold text-primary"
                                             >
                                                 {formatRupiah(
                                                     plan.price_monthly,
                                                 )}
                                                 <span
-                                                    class="text-xs font-normal text-[#68736c]"
+                                                    class="text-xs font-normal text-muted-foreground"
                                                     >/ bulan</span
                                                 >
                                             </p>
                                         </div>
                                         {#if selectedPlan === plan.slug}
                                             <span
-                                                class="grid h-5 w-5 place-items-center bg-[#174b43] text-white"
+                                                class="grid h-5 w-5 place-items-center bg-[#087F79] text-white"
                                             >
                                                 <Check class="h-3 w-3" />
                                             </span>
@@ -259,7 +263,7 @@
                 {#if isPaymentFlow && plans.length === 0}
                     <button
                         type="button"
-                        class="min-h-14 w-full border border-[#9eb5a8] bg-[#e8eee7] px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                        class="min-h-14 w-full border border-[#AFC9C3] bg-accent px-3 py-2 text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                         onclick={chooseTrial}
                     >
                         <span class="block text-sm font-semibold">Starter</span>
@@ -276,7 +280,7 @@
                 />
             </div>
 
-            <section class="grid gap-4 border-y border-[#c9c2b3] py-4">
+            <section class="grid gap-4 border-y border-border py-4">
                 <div class="grid gap-3 sm:grid-cols-2">
                     <div class="grid gap-1.5">
                         <Label for="name"
@@ -344,7 +348,7 @@
 
             <Button
                 type="submit"
-                class="h-12 w-full rounded-none bg-[#174b43] text-sm text-white hover:bg-[#103a34] focus-visible:ring-2 focus-visible:ring-[#a94e28] focus-visible:ring-offset-2"
+                class="h-12 w-full rounded-none bg-[#087F79] text-sm text-white hover:bg-[#075B5B] focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                 disabled={processing}
             >
                 {#if processing}<Spinner />{/if}
@@ -352,11 +356,11 @@
                 {#if !processing}<ArrowRight class="ml-2 h-4 w-4" />{/if}
             </Button>
 
-            <div class="text-center text-sm text-[#68736c]">
+            <div class="text-center text-sm text-muted-foreground">
                 Sudah punya akun?
                 <TextLink
                     href={login()}
-                    class="font-semibold text-[#174b43] underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#a94e28]"
+                    class="font-semibold text-primary underline underline-offset-4 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                     >Masuk</TextLink
                 >
             </div>

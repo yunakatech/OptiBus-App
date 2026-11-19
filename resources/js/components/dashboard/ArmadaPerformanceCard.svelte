@@ -64,7 +64,7 @@
 </script>
 
 <div
-    class={`overflow-hidden rounded-lg border p-3 text-card-foreground shadow-xs transition hover:shadow-sm sm:rounded-lg sm:p-5 ${isDark ? 'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))]' : 'border-border/80 bg-gradient-to-br from-background via-card to-cyan-50/20'}`}
+    class={`overflow-hidden rounded-lg border p-3 text-card-foreground shadow-xs transition hover:shadow-sm sm:rounded-lg sm:p-5 ${isDark ? 'border-border/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))]' : 'border-border/80 bg-card'}`}
 >
     <div
         class="mb-3 flex flex-col gap-2 sm:mb-4 sm:flex-row sm:items-start sm:justify-between"
@@ -89,11 +89,11 @@
     </div>
 
     <div
-        class="mb-3 grid grid-cols-3 gap-1 rounded-lg bg-muted/70 p-1 dark:bg-slate-950/75"
+        class="mb-3 grid grid-cols-3 gap-1 rounded-lg bg-muted/70 p-1 dark:bg-muted"
     >
         {#each categoryOptions as category (category)}
             <button
-                class={`min-w-0 rounded-md px-1 py-2 text-xs font-semibold transition sm:px-3 ${selectedCategory === category ? 'bg-background text-foreground shadow-sm dark:bg-slate-900/95' : 'text-muted-foreground hover:text-foreground dark:text-slate-400 dark:hover:bg-slate-900/60 dark:hover:text-slate-100'}`}
+                class={`min-w-0 rounded-md px-1 py-2 text-xs font-semibold transition sm:px-3 ${selectedCategory === category ? 'bg-background text-foreground shadow-sm dark:bg-card' : 'text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:bg-slate-900/60 dark:hover:text-slate-100'}`}
                 onclick={() => (selectedCategory = category)}
             >
                 {category}
@@ -118,7 +118,7 @@
                           )
                         : 6}
                 <div
-                    class={`group relative rounded-xl border p-2 transition ${index === 0 ? 'border-cyan-400/40 bg-cyan-50/70 hover:border-cyan-300 hover:bg-cyan-50 dark:border-cyan-400/30 dark:bg-cyan-950/18 dark:hover:bg-cyan-950/28' : 'border-border/70 bg-background/85 hover:border-border hover:bg-muted/40 dark:border-slate-800/80 dark:bg-slate-900/75 dark:hover:bg-slate-900/88'}`}
+                    class={`group relative rounded-xl border p-2 transition ${index === 0 ? 'border-cyan-400/40 bg-accent/70 hover:border-cyan-300 hover:bg-cyan-50 dark:border-cyan-400/30 dark:bg-cyan-950/18 dark:hover:bg-cyan-950/28' : 'border-border/70 bg-background/85 hover:border-border hover:bg-muted/40 dark:border-border/80 dark:bg-card dark:hover:bg-slate-900/88'}`}
                 >
                     <div class="mb-1.5 flex items-start justify-between gap-2">
                         <div class="min-w-0">

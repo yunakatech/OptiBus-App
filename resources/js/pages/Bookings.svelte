@@ -6606,7 +6606,7 @@
                                 {#each mobileStepItems as item (item.step)}
                                     <button
                                         type="button"
-                                        class={`rounded-xl border px-2 py-2 text-center transition ${mobileBookingStep === item.step ? 'border-cyan-500 bg-cyan-600 text-white shadow-sm' : mobileBookingStep > item.step ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-border bg-background text-muted-foreground'}`}
+                                        class={`rounded-xl border px-2 py-2 text-center transition ${mobileBookingStep === item.step ? 'border-primary bg-primary text-primary-foreground shadow-sm' : mobileBookingStep > item.step ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-border bg-background text-muted-foreground'}`}
                                         onclick={() => {
                                             if (item.step === 1) {
                                                 mobileBookingStep = 1;

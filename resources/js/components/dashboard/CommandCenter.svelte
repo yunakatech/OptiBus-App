@@ -47,46 +47,44 @@
                   targetBorder: '#94a3b8',
                   targetFillStart: 'rgba(148, 163, 184, 0.24)',
                   targetFillEnd: 'rgba(148, 163, 184, 0.02)',
-                  revenueBorder: '#38bdf8',
-                  revenueFillStart: 'rgba(56, 189, 248, 0.36)',
-                  revenueFillEnd: 'rgba(56, 189, 248, 0.02)',
+                  revenueBorder: '#55E8B4',
+                  revenueFillStart: 'rgba(85, 232, 180, 0.36)',
+                  revenueFillEnd: 'rgba(85, 232, 180, 0.02)',
                   targetPointFill: '#020617',
-                  revenuePointFill: '#38bdf8',
+                  revenuePointFill: '#55E8B4',
                   targetPointBorder: '#94a3b8',
                   revenuePointBorder: '#020617',
                   tickColor: '#94a3b8',
                   gridColor: 'rgba(148, 163, 184, 0.18)',
-                  panelClass:
-                      'border-slate-800/80 bg-[linear-gradient(180deg,rgba(2,6,23,0.98),rgba(15,23,42,0.9))] shadow-inner shadow-slate-950/50',
-                  titleClass: 'text-foreground',
-                  subtitleClass: 'text-muted-foreground',
-                  legendTextClass: 'text-slate-400',
-                  chartTitleClass: 'text-sky-200',
-                  chartBodyClass: 'text-slate-300/80',
-                  totalLabelClass: 'text-slate-400',
-                  totalValueClass: 'text-foreground',
-                  footerLabelClass: 'text-slate-400',
-                  footerValueClass: 'text-foreground',
-              }
-            : {
-                  targetBorder: '#cbd5e1',
-                  targetFillStart: 'rgba(203, 213, 225, 0.3)',
-                  targetFillEnd: 'rgba(203, 213, 225, 0.0)',
-                  revenueBorder: '#0ea5e9',
-                  revenueFillStart: 'rgba(14, 165, 233, 0.4)',
-                  revenueFillEnd: 'rgba(14, 165, 233, 0.01)',
-                  targetPointFill: '#ffffff',
-                  revenuePointFill: '#0ea5e9',
-                  targetPointBorder: '#cbd5e1',
-                  revenuePointBorder: '#ffffff',
-                  tickColor: '#64748b',
-                  gridColor: '#f1f5f9',
-                  panelClass:
-                      'border-border/80 bg-gradient-to-br from-background via-card to-sky-50/20 shadow-xs',
+                  panelClass: 'border-border/80 bg-card',
                   titleClass: 'text-foreground',
                   subtitleClass: 'text-muted-foreground',
                   legendTextClass: 'text-muted-foreground',
-                  chartTitleClass: 'text-cyan-400',
+                  chartTitleClass: 'text-[#EAF6F2]',
+                  chartBodyClass: 'text-slate-300/80',
+                  totalLabelClass: 'text-muted-foreground',
+                  totalValueClass: 'text-foreground',
+                  footerLabelClass: 'text-muted-foreground',
+                  footerValueClass: 'text-foreground',
+              }
+            : {
+                  targetBorder: '#DCE9E6',
+                  targetFillStart: 'rgba(203, 213, 225, 0.3)',
+                  targetFillEnd: 'rgba(203, 213, 225, 0.0)',
+                  revenueBorder: '#087F79',
+                  revenueFillStart: 'rgba(8, 127, 121, 0.4)',
+                  revenueFillEnd: 'rgba(8, 127, 121, 0.01)',
+                  targetPointFill: '#ffffff',
+                  revenuePointFill: '#087F79',
+                  targetPointBorder: '#DCE9E6',
+                  revenuePointBorder: '#ffffff',
+                  tickColor: '#647C79',
+                  gridColor: '#E7FAF3',
+                  panelClass: 'border-border/80 bg-card shadow-xs',
+                  titleClass: 'text-foreground',
+                  subtitleClass: 'text-muted-foreground',
+                  legendTextClass: 'text-muted-foreground',
+                  chartTitleClass: 'text-[#087F79]',
                   chartBodyClass: 'text-white/70',
                   totalLabelClass: 'text-muted-foreground',
                   totalValueClass: 'text-foreground',
@@ -331,7 +329,7 @@
                 >
             </div>
             <div class="flex items-center gap-1.5">
-                <div class="h-2 w-2 rounded-sm bg-sky-500"></div>
+                <div class="h-2 w-2 rounded-sm bg-primary"></div>
                 <span
                     class={`text-[10px] font-bold uppercase tracking-wider sm:text-[11px] ${chartTheme().legendTextClass}`}
                     >Revenue</span
@@ -421,7 +419,7 @@
                         class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
                     >
                         <div
-                            class="h-full rounded-full bg-sky-500"
+                            class="h-full rounded-full bg-primary"
                             style={`width:${target > 0 ? Math.min(100, Math.round((revenue / target) * 100)) : 0}%`}
                         ></div>
                     </div>
