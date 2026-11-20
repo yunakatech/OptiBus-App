@@ -26,7 +26,10 @@ jobs:
       - name: Test PHP output patch
         run: node --test tests/Unit/patch-vercel-php-output.test.mjs
       - name: Pull production settings
-        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+        run: |
+          vercel whoami --token="$VERCEL_TOKEN"
+          vercel project inspect "$VERCEL_PROJECT_ID" --scope=yunaka-dev --token="$VERCEL_TOKEN"
+          vercel pull --yes --environment=production --project="$VERCEL_PROJECT_ID" --scope=yunaka-dev --token="$VERCEL_TOKEN"
       - name: Build on Linux
         run: vercel build --prod --token="$VERCEL_TOKEN"
       - name: Patch PHP function output
