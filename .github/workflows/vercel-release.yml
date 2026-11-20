@@ -5,7 +5,7 @@ on:
 
 jobs:
   release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment: production
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -16,6 +16,11 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version-file: .nvmrc
+      - name: Install PHP runtime library for local build
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes libxml2
+          ldconfig -p | grep 'libxml2.so.2'
       - name: Check Vercel credentials
         run: |
           test -n "$VERCEL_TOKEN"
