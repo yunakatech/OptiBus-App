@@ -3,7 +3,7 @@ set -euo pipefail
 
 check() {
     local path="$1" expected="$2" actual
-    actual=$(vercel curl "$path" --deployment "$DEPLOYMENT_ID" --token="$VERCEL_TOKEN" -- --silent --show-error --output /dev/null --write-out '%{http_code}')
+    actual=$(vercel curl --token="$VERCEL_TOKEN" "$path" --deployment "$DEPLOYMENT_ID" -- --silent --show-error --output /dev/null --write-out '%{http_code}')
     if [[ "$actual" != "$expected" ]]; then
         echo "GET $path: expected $expected, got $actual" >&2
         exit 1
@@ -18,11 +18,11 @@ check /book/cabo-pinrang 200
 check /branding/optibus-monogram.svg 200
 check /favicon.svg 200
 
-landing=$(vercel curl / --deployment "$DEPLOYMENT_ID" --token="$VERCEL_TOKEN" -- --silent --show-error)
+landing=$(vercel curl --token="$VERCEL_TOKEN" / --deployment "$DEPLOYMENT_ID" -- --silent --show-error)
 asset=$(printf '%s' "$landing" | grep -oE '/build/assets/app-[A-Za-z0-9_-]+\.js' | head -n 1)
 check "$asset" 200
 
-post=$(vercel curl /up --deployment "$DEPLOYMENT_ID" --token="$VERCEL_TOKEN" -- --silent --show-error --request POST --data 'probe=1' --output /dev/null --write-out '%{http_code}')
+post=$(vercel curl --token="$VERCEL_TOKEN" /up --deployment "$DEPLOYMENT_ID" -- --silent --show-error --request POST --data 'probe=1' --output /dev/null --write-out '%{http_code}')
 if [[ "$post" != 405 && "$post" != 419 ]]; then
     echo "POST /up: expected Laravel 405 or 419, got $post" >&2
     exit 1
