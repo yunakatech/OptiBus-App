@@ -16,18 +16,17 @@ async function verify(label, url) {
     });
     if (response.ok) {
         console.log(`${label}: HTTP ${response.status}`);
-        return;
+        return true;
     }
     const payload = await response.json().catch(() => ({}));
     const code = payload.error?.code ?? 'unknown';
     console.error(`${label}: HTTP ${response.status}, code ${code}`);
-    process.exitCode = 1;
+    return false;
 }
 
 await verify('Vercel user', 'https://api.vercel.com/v2/user');
-if (!process.exitCode) {
-    await verify(
-        'OptiBus project access',
-        `https://api.vercel.com/v9/projects/${encodeURIComponent(projectId)}?teamId=${encodeURIComponent(orgId)}`,
-    );
-}
+const projectAccessible = await verify(
+    'OptiBus project access',
+    `https://api.vercel.com/v9/projects/${encodeURIComponent(projectId)}?teamId=${encodeURIComponent(orgId)}`,
+);
+if (!projectAccessible) process.exitCode = 1;
