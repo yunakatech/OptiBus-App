@@ -1,0 +1,47 @@
+name: Vercel release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version-file: .nvmrc
+      - name: Check Vercel credentials
+        run: |
+          test -n "$VERCEL_TOKEN"
+          test -n "$VERCEL_ORG_ID"
+          test -n "$VERCEL_PROJECT_ID"
+      - name: Install Vercel CLI
+        run: npm install --global vercel@59.1.3
+      - name: Test PHP output patch
+        run: node --test --test-isolation=none tests/Unit/patch-vercel-php-output.test.mjs
+      - name: Pull production settings
+        run: vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Build on Linux
+        run: vercel build --prod --token="$VERCEL_TOKEN"
+      - name: Patch PHP function output
+        run: node scripts/patch-vercel-php-output.mjs
+      - name: Deploy without changing domains
+        id: deploy
+        run: |
+          # .vercelignore would exclude files referenced by the prebuilt filePathMap.
+          rm .vercelignore
+          vercel deploy --prebuilt --prod --skip-domain --yes --token="$VERCEL_TOKEN" --json > deployment.json
+          node -e 'const d=require("./deployment.json"); if (!d.deployment?.id) process.exit(1); require("fs").appendFileSync(process.env.GITHUB_OUTPUT, `id=${d.deployment.id}\nurl=${d.deployment.url}\n`)'
+      - name: Smoke test deployment
+        env:
+          DEPLOYMENT_ID: ${{ steps.deploy.outputs.id }}
+        run: bash scripts/smoke-vercel-deployment.sh
+      - name: Report deployment for manual promotion
+        run: |
+          echo "Verified deployment ID: ${{ steps.deploy.outputs.id }}" >> "$GITHUB_STEP_SUMMARY"
