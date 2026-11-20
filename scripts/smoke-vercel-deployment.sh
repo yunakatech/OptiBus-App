@@ -18,7 +18,8 @@ check /book/cabo-pinrang 200
 check /branding/optibus-monogram.svg 200
 check /favicon.svg 200
 
-asset=$(node -e 'const m=require("./public/build/manifest.json"); process.stdout.write("/build/" + m["resources/js/app.ts"].file)')
+landing=$(vercel curl / --deployment "$DEPLOYMENT_ID" --token="$VERCEL_TOKEN" -- --silent --show-error)
+asset=$(printf '%s' "$landing" | grep -oE '/build/assets/app-[A-Za-z0-9_-]+\.js' | head -n 1)
 check "$asset" 200
 
 post=$(vercel curl /up --deployment "$DEPLOYMENT_ID" --token="$VERCEL_TOKEN" -- --silent --show-error --request POST --data 'probe=1' --output /dev/null --write-out '%{http_code}')

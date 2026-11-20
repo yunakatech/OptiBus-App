@@ -43,8 +43,8 @@ jobs:
         run: |
           # .vercelignore would exclude files referenced by the prebuilt filePathMap.
           rm .vercelignore
-          vercel deploy --prebuilt --prod --skip-domain --yes --token="$VERCEL_TOKEN" --json > deployment.json
-          node -e 'const d=require("./deployment.json"); if (!d.deployment?.id) process.exit(1); require("fs").appendFileSync(process.env.GITHUB_OUTPUT, `id=${d.deployment.id}\nurl=${d.deployment.url}\n`)'
+          vercel deploy --prebuilt --prod --skip-domain --no-wait --yes --token="$VERCEL_TOKEN" --json > deployment.json
+          node scripts/wait-vercel-deployment.mjs deployment.json
       - name: Smoke test deployment
         env:
           DEPLOYMENT_ID: ${{ steps.deploy.outputs.id }}
