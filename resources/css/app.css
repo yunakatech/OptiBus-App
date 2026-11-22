@@ -356,7 +356,8 @@
 }
 
 @layer base {
-    @media (max-width: 767px) {
+    /* Mobile Safari zooms focused form fields rendered below 16px. */
+    @media (max-width: 767px), (pointer: coarse) {
         input:not([type='checkbox']):not([type='radio']),
         select,
         textarea {

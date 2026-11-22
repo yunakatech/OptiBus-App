@@ -73,7 +73,13 @@ export function initializeMobileRuntime() {
         root.style.setProperty('--mobile-keyboard-offset', `${bottom}px`);
 
         if (keyboard && !previousKeyboard && active instanceof HTMLElement) {
-            active.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+            const bounds = active.getBoundingClientRect();
+            const visibleTop = (viewport?.offsetTop ?? 0) + 12;
+            const visibleBottom = visibleTop + height - 24;
+
+            if (bounds.top < visibleTop || bounds.bottom > visibleBottom) {
+                active.scrollIntoView({ block: 'nearest', behavior: 'auto' });
+            }
         }
 
         previousKeyboard = keyboard;
