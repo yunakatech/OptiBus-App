@@ -418,8 +418,12 @@ class OperationsApiController extends Controller
             'driver_name' => ['nullable', 'string', 'max:120'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'layanan' => ['nullable', 'string', 'max:120'],
-            'bop_price' => ['nullable', 'numeric', 'min:0'],
+            'bop_price' => ['required', 'numeric', 'gt:0'],
             'pool_id' => ['nullable', 'integer', 'min:1'],
+        ], [
+            'bop_price.required' => 'Nominal BOP wajib diisi dan harus lebih dari Rp 0.',
+            'bop_price.numeric' => 'Nominal BOP harus berupa angka.',
+            'bop_price.gt' => 'Nominal BOP harus lebih dari Rp 0.',
         ]);
 
         $payload = [

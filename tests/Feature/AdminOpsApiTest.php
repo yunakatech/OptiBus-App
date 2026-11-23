@@ -2408,6 +2408,84 @@ class AdminOpsApiTest extends TestCase
         ]);
     }
 
+    public function test_charter_bop_must_be_positive_when_saved(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $poolId = $this->activatePoolForTenant($tenantId, 'POOL BOP TEST', 'BOP-TEST');
+        $payload = [
+            'pool_id' => $poolId,
+            'name' => 'CARTER BOP TEST',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'price' => 1500000,
+            'bop_price' => 0,
+            'payment_status' => 'Lunas',
+        ];
+
+        $this->postJson(route('api.admin.charters.save'), $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('bop_price');
+        $this->postJson(route('api.admin.charters.save'), array_diff_key($payload, ['bop_price' => true]))
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('bop_price');
+        $this->assertDatabaseMissing('charters', ['name' => 'CARTER BOP TEST']);
+
+        $payload['bop_price'] = 150000;
+        $charterId = (int) $this->postJson(route('api.admin.charters.save'), $payload)
+            ->assertCreated()
+            ->json('id');
+
+        $this->postJson(route('api.admin.charters.save'), $payload + ['id' => $charterId])
+            ->assertOk();
+        $this->postJson(route('api.admin.charters.save'), array_merge($payload, [
+            'id' => $charterId,
+            'bop_price' => 0,
+        ]))->assertUnprocessable()->assertJsonValidationErrors('bop_price');
+        $this->assertDatabaseHas('charters', ['id' => $charterId, 'bop_price' => 150000]);
+    }
+
+    public function test_charter_with_zero_bop_cannot_be_marked_done(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $poolId = $this->activatePoolForTenant($tenantId, 'POOL ZERO BOP', 'ZERO-BOP');
+        $charterId = DB::table('charters')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $poolId,
+            'name' => 'CARTER LAMA',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'bop_price' => 0,
+            'bop_status' => 'pending',
+            'payment_status' => 'Lunas',
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
+
+        $this->postJson(route('api.admin.charters.mark-done', ['id' => $charterId]))
+            ->assertUnprocessable()
+            ->assertJsonPath('error', 'Nominal BOP harus lebih dari Rp 0 sebelum charter diselesaikan.');
+        $this->postJson(route('api.admin.charters.mark-bop-done', ['id' => $charterId]))
+            ->assertUnprocessable();
+        $this->assertDatabaseHas('charters', [
+            'id' => $charterId,
+            'status' => 'active',
+            'bop_status' => 'pending',
+        ]);
+
+        DB::table('charters')->where('id', $charterId)->update(['bop_price' => 150000]);
+        $this->postJson(route('api.admin.charters.mark-bop-done', ['id' => $charterId]))
+            ->assertOk();
+        $this->postJson(route('api.admin.charters.mark-done', ['id' => $charterId]))
+            ->assertOk();
+        $this->assertDatabaseHas('charters', [
+            'id' => $charterId,
+            'status' => 'done',
+            'bop_status' => 'done',
+        ]);
+    }
+
     public function test_ops_lifecycle_actions_and_revenue_csv_work(): void
     {
         $this->actingAsSuperAdmin();
@@ -2425,6 +2503,7 @@ class AdminOpsApiTest extends TestCase
             'pickup_point' => 'Pinrang',
             'drop_point' => 'Makassar',
             'price' => 2200000,
+            'bop_price' => 200000,
             'bop_status' => 'pending',
             'payment_status' => 'DP',
             'created_at' => now(),

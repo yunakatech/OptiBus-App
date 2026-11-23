@@ -2007,7 +2007,8 @@
         !!row &&
         !charterIsCanceled(row.status) &&
         !charterIsDone(row.status) &&
-        isPaymentLunas(row.payment_status);
+        isPaymentLunas(row.payment_status) &&
+        Number(row.bop_price ?? 0) > 0;
 
     const charterMarkDoneHint = (row: Charter | null | undefined) => {
         if (!row) {
@@ -2024,6 +2025,10 @@
 
         if (charterIsCanceled(row.status)) {
             return 'Perjalanan yang dibatalkan tidak bisa diselesaikan.';
+        }
+
+        if (Number(row.bop_price ?? 0) <= 0) {
+            return 'Isi nominal BOP lebih dari Rp 0 sebelum perjalanan diselesaikan.';
         }
 
         if (!isPaymentLunas(row.payment_status)) {
@@ -3090,6 +3095,14 @@
 
             return;
         }
+        if (parseCurrencyInput(charterForm.bop_price) <= 0) {
+            error = 'Nominal BOP harus lebih dari Rp 0.';
+            (event.currentTarget as HTMLFormElement)
+                .querySelector<HTMLInputElement>('#charter-bop-price')
+                ?.focus();
+
+            return;
+        }
         savingCharter = true;
 
         try {
@@ -3357,6 +3370,14 @@
         const status = String(row.status ?? 'active').toLowerCase();
 
         if (status === 'canceled' || status === 'done') {
+            return;
+        }
+
+        if (Number(row.bop_price ?? 0) <= 0) {
+            error =
+                'Nominal BOP harus lebih dari Rp 0 sebelum charter diselesaikan.';
+            message = '';
+
             return;
         }
 

@@ -849,7 +849,8 @@
                             class="rounded-lg"
                             type="text"
                             inputmode="numeric"
-                            placeholder="Rp 0"
+                            placeholder="Masukkan nominal BOP"
+                            aria-describedby="charter-bop-hint"
                             value={formatCurrencyInput(charterForm.bop_price)}
                             oninput={(event) => {
                                 const target =
@@ -859,6 +860,12 @@
                                 );
                             }}
                         />
+                        <p
+                            id="charter-bop-hint"
+                            class="text-xs text-muted-foreground"
+                        >
+                            Wajib lebih dari Rp 0.
+                        </p>
                     </div>
                 </div>
             </section>

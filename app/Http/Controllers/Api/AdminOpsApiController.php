@@ -2883,11 +2883,15 @@ class AdminOpsApiController extends Controller
             'driver_name' => ['nullable', 'string', 'max:120'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'layanan' => ['nullable', 'string', 'max:120'],
-            'bop_price' => ['nullable', 'numeric', 'min:0'],
+            'bop_price' => ['required', 'numeric', 'gt:0'],
             'bop_status' => ['nullable', 'string', 'max:30'],
             'down_payment' => ['nullable', 'numeric', 'min:0'],
             'payment_status' => ['nullable', 'string', 'max:30'],
             'status' => ['nullable', Rule::in(['active', 'canceled', 'done'])],
+        ], [
+            'bop_price.required' => 'Nominal BOP wajib diisi dan harus lebih dari Rp 0.',
+            'bop_price.numeric' => 'Nominal BOP harus berupa angka.',
+            'bop_price.gt' => 'Nominal BOP harus lebih dari Rp 0.',
         ]);
 
         $id = (int) ($data['id'] ?? 0);
@@ -3188,6 +3192,9 @@ class AdminOpsApiController extends Controller
         if (! $this->transactionPoolSnapshotAccessible((int) ($before['pool_id'] ?? 0), [$before['pickup_point'] ?? '', $before['drop_point'] ?? ''])) {
             return $this->error('Anda tidak memiliki akses ke data charter ini.', 403);
         }
+        if ((float) ($before['bop_price'] ?? 0) <= 0) {
+            return $this->error('Nominal BOP harus lebih dari Rp 0 sebelum diselesaikan.', 422);
+        }
         $updated = DB::table('charters')->where('id', $id)->update(['bop_status' => 'done']);
         if ($updated === 0) {
             return $this->error('Charter not found.', 404);
@@ -3245,6 +3252,10 @@ class AdminOpsApiController extends Controller
 
         if (! $this->transactionPoolSnapshotAccessible((int) ($row->pool_id ?? 0), [$row->pickup_point ?? '', $row->drop_point ?? ''])) {
             return $this->error('Anda tidak memiliki akses ke data charter ini.', 403);
+        }
+
+        if ((float) ($row->bop_price ?? 0) <= 0) {
+            return $this->error('Nominal BOP harus lebih dari Rp 0 sebelum charter diselesaikan.', 422);
         }
 
         $paymentStatus = strtolower(trim((string) ($row->payment_status ?? '')));

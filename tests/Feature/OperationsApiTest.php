@@ -23,6 +23,21 @@ class OperationsApiTest extends TestCase
         return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
+    public function test_operational_charter_submit_rejects_zero_bop(): void
+    {
+        $this->actingAsSuperAdmin();
+
+        $this->postJson(route('api.ops.charters.submit'), [
+            'name' => 'CARTER BOP NOL',
+            'start_date' => now()->toDateString(),
+            'end_date' => now()->toDateString(),
+            'unit_id' => 1,
+            'bop_price' => 0,
+        ])->assertUnprocessable()->assertJsonValidationErrors('bop_price');
+
+        $this->assertDatabaseMissing('charters', ['name' => 'CARTER BOP NOL']);
+    }
+
     public function test_master_data_endpoints_return_data(): void
     {
         $this->actingAsSuperAdmin();
