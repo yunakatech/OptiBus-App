@@ -10,7 +10,6 @@
 </script>
 
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page } from '@inertiajs/svelte';
     import {
@@ -38,21 +37,13 @@
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
-    import { Checkbox } from '@/components/ui/checkbox';
     import {
         Card,
         CardContent,
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
-    import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuItem,
-        DropdownMenuTrigger,
-    } from '@/components/ui/dropdown-menu';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Checkbox } from '@/components/ui/checkbox';
     import {
         Dialog,
         DialogClose,
@@ -61,6 +52,15 @@
         DialogFooter,
         DialogTitle,
     } from '@/components/ui/dialog';
+    import {
+        DropdownMenu,
+        DropdownMenuContent,
+        DropdownMenuItem,
+        DropdownMenuTrigger,
+    } from '@/components/ui/dropdown-menu';
+    import { Input } from '@/components/ui/input';
+    import { Label } from '@/components/ui/label';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     type TabName =
         | 'tenants'
@@ -174,20 +174,29 @@
     async function loadPaymentSettings() {
         payBusy = true;
         const data = await apiFetch('/api/admin/payment-settings');
+
         if (data) {
             paymentSettings = data.settings;
         }
+
         payBusy = false;
     }
 
     // â”€â”€â”€ Init â”€â”€â”€
     onMount(() => {
         activeTab = initialTab ?? 'tenants';
-        if (activeTab === 'tenants') loadTenants();
-        else if (activeTab === 'subscriptions') loadSubscriptions();
-        else if (activeTab === 'plans') loadPlans();
-        else if (activeTab === 'billing') loadInvoices();
-        else if (activeTab === 'payment') loadPaymentSettings();
+
+        if (activeTab === 'tenants') {
+loadTenants();
+} else if (activeTab === 'subscriptions') {
+loadSubscriptions();
+} else if (activeTab === 'plans') {
+loadPlans();
+} else if (activeTab === 'billing') {
+loadInvoices();
+} else if (activeTab === 'payment') {
+loadPaymentSettings();
+}
     });
 
     function switchTab(tab: TabName) {
@@ -196,17 +205,25 @@
         statusFilter = '';
         error = '';
         message = '';
-        if (tab === 'tenants') loadTenants();
-        else if (tab === 'subscriptions') loadSubscriptions();
-        else if (tab === 'plans') loadPlans();
-        else if (tab === 'billing') loadInvoices();
-        else if (tab === 'payment') loadPaymentSettings();
+
+        if (tab === 'tenants') {
+loadTenants();
+} else if (tab === 'subscriptions') {
+loadSubscriptions();
+} else if (tab === 'plans') {
+loadPlans();
+} else if (tab === 'billing') {
+loadInvoices();
+} else if (tab === 'payment') {
+loadPaymentSettings();
+}
     }
 
     // â”€â”€â”€ API helpers â”€â”€â”€
     async function apiFetch(url: string, options?: RequestInit) {
         busy = true;
         error = '';
+
         try {
             const res = await fetch(url, {
                 headers: {
@@ -216,12 +233,15 @@
                 ...options,
             });
             const json = await res.json();
+
             if (!json.success) {
                 error = json.error || 'Request failed';
             }
+
             return json;
         } catch (e: any) {
             error = e.message || 'Network error';
+
             return null;
         } finally {
             busy = false;
@@ -235,8 +255,13 @@
             page: String(pageNum),
             per_page: '15',
         });
-        if (searchQuery) params.set('q', searchQuery);
+
+        if (searchQuery) {
+params.set('q', searchQuery);
+}
+
         const data = await apiFetch(`/api/admin/tenants?${params}`);
+
         if (data) {
             tenants = data.tenants ?? [];
             tenantPlans = data.plans ?? [];
@@ -268,6 +293,7 @@
                 trial_days: 14,
             };
         }
+
         showTenantForm = true;
     }
 
@@ -279,6 +305,7 @@
             phone: tenantForm.phone || null,
             address: tenantForm.address || null,
         };
+
         if (editingTenant) {
             body.id = editingTenant.id;
             body.status = editingTenant.status;
@@ -286,6 +313,7 @@
             body.plan_id = tenantForm.plan_id;
             body.trial_days = tenantForm.trial_days;
         }
+
         const data = await apiFetch('/api/admin/tenants', {
             method: 'POST',
             headers: {
@@ -294,6 +322,7 @@
             },
             body: JSON.stringify(body),
         });
+
         if (data?.success) {
             message = data.message;
             showTenantForm = false;
@@ -302,11 +331,15 @@
     }
 
     async function archiveTenant(id: number) {
-        if (!confirm('Arsipkan tenant ini? Data tetap akan disimpan.')) return;
+        if (!confirm('Arsipkan tenant ini? Data tetap akan disimpan.')) {
+return;
+}
+
         const data = await apiFetch(`/api/admin/tenants/${id}/archive`, {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': (page.props as any).csrf_token || '' },
         });
+
         if (data?.success) {
             message = data.message;
             loadTenants(tenantPagination?.page ?? 1);
@@ -326,24 +359,32 @@
         const data = await apiFetch(
             `/api/admin/tenants/${tenant.id}/deletion-preview`,
         );
+
         if (data?.success) {
             deletionPreview = data;
+
             if (data.active_job) {
                 deletionJob = data.active_job;
                 pollDeletion(data.active_job.id);
             }
         }
+
         deletionBusy = false;
     }
 
     async function purgeTenant() {
-        if (!deletionTenant || !deletionConfirmAll) return;
+        if (!deletionTenant || !deletionConfirmAll) {
+return;
+}
+
         const confirmation = deletionConfirmation.trim();
+
         if (
             confirmation !== deletionTenant.name &&
             confirmation !== deletionTenant.slug
         ) {
             error = 'Ketik nama atau slug tenant dengan tepat.';
+
             return;
         }
 
@@ -363,6 +404,7 @@
             },
         );
         deletionBusy = false;
+
         if (data?.success) {
             deletionJob = data.job;
             message = data.message;
@@ -371,13 +413,21 @@
     }
 
     async function pollDeletion(jobId: number) {
-        if (!jobId) return;
+        if (!jobId) {
+return;
+}
+
         const data = await apiFetch(`/api/admin/tenant-deletions/${jobId}`);
-        if (!data?.success) return;
+
+        if (!data?.success) {
+return;
+}
 
         deletionJob = data.job;
+
         if (['queued', 'running'].includes(data.job.status)) {
             deletionPollTimer = setTimeout(() => pollDeletion(jobId), 2500);
+
             return;
         }
 
@@ -400,7 +450,10 @@
     }
 
     async function retryDeletion() {
-        if (!deletionJob?.id) return;
+        if (!deletionJob?.id) {
+return;
+}
+
         const data = await apiFetch(
             `/api/admin/tenant-deletions/${deletionJob.id}/retry`,
             {
@@ -410,6 +463,7 @@
                 },
             },
         );
+
         if (data?.success) {
             deletionJob = data.job;
             pollDeletion(data.job.id);
@@ -433,7 +487,9 @@
                 status: newStatus,
             }),
         }).then((d) => {
-            if (d?.success) loadTenants(tenantPagination?.page ?? 1);
+            if (d?.success) {
+loadTenants(tenantPagination?.page ?? 1);
+}
         });
     }
 
@@ -444,9 +500,17 @@
             page: String(pageNum),
             per_page: '15',
         });
-        if (statusFilter) params.set('status', statusFilter);
-        if (searchQuery) params.set('q', searchQuery);
+
+        if (statusFilter) {
+params.set('status', statusFilter);
+}
+
+        if (searchQuery) {
+params.set('q', searchQuery);
+}
+
         const data = await apiFetch(`/api/admin/subscriptions?${params}`);
+
         if (data) {
             subscriptions = data.subscriptions ?? [];
             subPlans = data.plans ?? [];
@@ -515,8 +579,13 @@
     async function saveSubscription() {
         const parseOptionalNumber = (value: unknown) => {
             const text = String(value ?? '').trim();
-            if (!text) return null;
+
+            if (!text) {
+return null;
+}
+
             const parsed = Number(text);
+
             return Number.isFinite(parsed) ? parsed : null;
         };
         const body: any = {
@@ -546,11 +615,13 @@
                   }))
                 : [],
         };
+
         if (editingSub) {
             body.id = editingSub.id;
         } else {
             body.tenant_id = subForm.tenant_id;
         }
+
         const data = await apiFetch('/api/admin/subscriptions', {
             method: 'POST',
             headers: {
@@ -559,6 +630,7 @@
             },
             body: JSON.stringify(body),
         });
+
         if (data?.success) {
             message = data.message;
             showSubForm = false;
@@ -575,6 +647,7 @@
             },
             body: JSON.stringify({ id, ...updates }),
         });
+
         if (data?.success) {
             message = data.message;
             loadSubscriptions(subPagination?.page ?? 1);
@@ -584,6 +657,7 @@
     // â”€â”€â”€ Plans â”€â”€â”€
     async function loadPlans() {
         const data = await apiFetch('/api/admin/plans');
+
         if (data) {
             plans = data.plans ?? [];
         }
@@ -597,7 +671,10 @@
     }
 
     async function savePlan() {
-        if (!editingPlan) return;
+        if (!editingPlan) {
+return;
+}
+
         const body: any = {
             id: editingPlan.id,
             price_monthly: editingPlan.price_monthly,
@@ -625,6 +702,7 @@
             },
             body: JSON.stringify(body),
         });
+
         if (data?.success) {
             message = data.message;
             editingPlan = null;
@@ -639,9 +717,17 @@
             page: String(pageNum),
             per_page: '15',
         });
-        if (statusFilter) params.set('status', statusFilter);
-        if (searchQuery) params.set('q', searchQuery);
+
+        if (statusFilter) {
+params.set('status', statusFilter);
+}
+
+        if (searchQuery) {
+params.set('q', searchQuery);
+}
+
         const data = await apiFetch(`/api/admin/invoices?${params}`);
+
         if (data) {
             invoices = data.invoices ?? [];
             invoicePagination = data.pagination ?? null;
@@ -655,8 +741,10 @@
     }
 
     async function markInvoicePaid(invoice: any) {
-        if (!confirm(`Tandai invoice ${invoice.invoice_number} sebagai lunas?`))
-            return;
+        if (!confirm(`Tandai invoice ${invoice.invoice_number} sebagai lunas?`)) {
+return;
+}
+
         const data = await apiFetch(
             `/api/admin/invoices/${invoice.id}/mark-paid`,
             {
@@ -671,6 +759,7 @@
                 }),
             },
         );
+
         if (data?.success) {
             message = data.message;
             loadInvoices(invoicePagination?.page ?? 1);
@@ -692,11 +781,14 @@
             deleting: { variant: 'destructive', label: 'Menghapus' },
             deleted: { variant: 'outline', label: 'Dihapus' },
         };
+
         return map[status] ?? { variant: 'outline', label: status };
     }
 
     function hasPrivateSubscriptionOverride(sub: any): boolean {
-        if (Boolean(sub.is_private_pricing)) return true;
+        if (sub.is_private_pricing) {
+return true;
+}
 
         return [
             sub.custom_price_monthly,
@@ -715,14 +807,22 @@
         variant: 'default' | 'destructive' | 'outline' | 'secondary';
         label: string;
     } {
-        if (invoice.status === 'paid')
-            return { variant: 'default', label: 'Lunas' };
-        if (invoice.status === 'overdue')
-            return { variant: 'destructive', label: 'Overdue' };
-        if (invoice.status === 'pending')
-            return { variant: 'outline', label: 'Pending' };
-        if (invoice.status === 'canceled')
-            return { variant: 'outline', label: 'Dibatalkan' };
+        if (invoice.status === 'paid') {
+return { variant: 'default', label: 'Lunas' };
+}
+
+        if (invoice.status === 'overdue') {
+return { variant: 'destructive', label: 'Overdue' };
+}
+
+        if (invoice.status === 'pending') {
+return { variant: 'outline', label: 'Pending' };
+}
+
+        if (invoice.status === 'canceled') {
+return { variant: 'outline', label: 'Dibatalkan' };
+}
+
         return { variant: 'outline', label: invoice.status || '-' };
     }
 
@@ -743,15 +843,23 @@
 
     function formatRupiah(v: number): string {
         const amount = Number(v || 0);
-        if (Math.abs(amount) >= 1_000_000)
-            return `Rp ${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
-        if (Math.abs(amount) >= 1_000)
-            return `Rp ${(amount / 1_000).toFixed(0)} rb`;
+
+        if (Math.abs(amount) >= 1_000_000) {
+return `Rp ${(amount / 1_000_000).toFixed(1).replace('.0', '')}M`;
+}
+
+        if (Math.abs(amount) >= 1_000) {
+return `Rp ${(amount / 1_000).toFixed(0)} rb`;
+}
+
         return `Rp ${amount.toLocaleString('id-ID')}`;
     }
 
     function formatDate(d: string | null): string {
-        if (!d) return '-';
+        if (!d) {
+return '-';
+}
+
         return new Date(d).toLocaleDateString('id-ID', {
             day: 'numeric',
             month: 'short',
@@ -857,7 +965,7 @@
                         <div
                             class="grid grid-cols-1 gap-3 min-[380px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3"
                         >
-                            {#each [{ label: 'Tenant', value: summary?.tenant_count ?? 0, note: 'Terdaftar', icon: Building2, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Langganan aktif', value: summary?.active_subscription_count ?? 0, note: 'Berjalan', icon: CreditCard, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Paket', value: summary?.plan_count ?? 0, note: 'Tersedia', icon: Package, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Tagihan tertunda', value: summary?.invoice_pending_count ?? 0, note: 'Menunggu pembayaran', icon: FileText, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Lewat jatuh tempo', value: summary?.invoice_overdue_count ?? 0, note: 'Perlu ditindaklanjuti', icon: AlertTriangle, tone: 'border-[#d9b7a5] bg-[#f7eee8] text-[#873d24] dark:border-red-900 dark:bg-red-950/40 dark:text-red-200' }, { label: 'Lunas bulan ini', value: summary?.invoice_paid_month_count ?? 0, note: 'Pembayaran tercatat', icon: TrendingUp, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }] as item}
+                            {#each [{ label: 'Tenant', value: summary?.tenant_count ?? 0, note: 'Terdaftar', icon: Building2, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Langganan aktif', value: summary?.active_subscription_count ?? 0, note: 'Berjalan', icon: CreditCard, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Paket', value: summary?.plan_count ?? 0, note: 'Tersedia', icon: Package, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Tagihan tertunda', value: summary?.invoice_pending_count ?? 0, note: 'Menunggu pembayaran', icon: FileText, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }, { label: 'Lewat jatuh tempo', value: summary?.invoice_overdue_count ?? 0, note: 'Perlu ditindaklanjuti', icon: AlertTriangle, tone: 'border-[#d9b7a5] bg-[#f7eee8] text-[#873d24] dark:border-red-900 dark:bg-red-950/40 dark:text-red-200' }, { label: 'Lunas bulan ini', value: summary?.invoice_paid_month_count ?? 0, note: 'Pembayaran tercatat', icon: TrendingUp, tone: 'border-[#DCE9E6] bg-[#E7FAF3] text-[#163A39] dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200' }] as item, eachIndex (eachIndex)}
                                 <div
                                     class="border-t border-[#DCE9E6] bg-[#FFFFFF] p-3 dark:border-slate-700 dark:bg-slate-950 sm:p-4"
                                 >
@@ -901,7 +1009,7 @@
                     <div
                         class="flex gap-2 overflow-x-auto overscroll-x-contain pb-1"
                     >
-                        {#each [{ key: 'tenants', label: 'Tenant', icon: Building2, meta: summary?.tenant_count ?? 0 }, { key: 'subscriptions', label: 'Langganan', icon: CreditCard, meta: summary?.active_subscription_count ?? 0 }, { key: 'plans', label: 'Paket', icon: Package, meta: summary?.plan_count ?? 0 }, { key: 'billing', label: 'Tagihan', icon: FileText, meta: summary?.invoice_pending_count ?? 0 }, { key: 'payment', label: 'Pembayaran', icon: CreditCard, meta: 'Mayar' }] as tab}
+                        {#each [{ key: 'tenants', label: 'Tenant', icon: Building2, meta: summary?.tenant_count ?? 0 }, { key: 'subscriptions', label: 'Langganan', icon: CreditCard, meta: summary?.active_subscription_count ?? 0 }, { key: 'plans', label: 'Paket', icon: Package, meta: summary?.plan_count ?? 0 }, { key: 'billing', label: 'Tagihan', icon: FileText, meta: summary?.invoice_pending_count ?? 0 }, { key: 'payment', label: 'Pembayaran', icon: CreditCard, meta: 'Mayar' }] as tab (tab.key)}
                             <button
                                 onclick={() => switchTab(tab.key as TabName)}
                                 aria-current={activeTab === tab.key
@@ -1063,7 +1171,7 @@
                                                     }
                                                     class="w-full rounded-md border px-3 py-2 text-sm"
                                                 >
-                                                    {#each tenantPlans as plan}
+                                                    {#each tenantPlans as plan (plan.id)}
                                                         <option value={plan.id}
                                                             >{plan.name} ({formatRupiah(
                                                                 plan.price_monthly,
@@ -1140,7 +1248,7 @@
                                     <div
                                         class="grid grid-cols-2 gap-2 sm:grid-cols-4"
                                     >
-                                        {#each [{ key: 'users', label: 'User' }, { key: 'pools', label: 'Pool' }, { key: 'bookings', label: 'Booking' }, { key: 'luggages', label: 'Bagasi' }, { key: 'charters', label: 'Carter' }, { key: 'drivers', label: 'Driver' }, { key: 'armadas', label: 'Armada' }, { key: 'schedules', label: 'Jadwal' }, { key: 'routes', label: 'Rute' }, { key: 'customers', label: 'Pelanggan' }, { key: 'invoice_subscriptions', label: 'Invoice' }, { key: 'activity_logs', label: 'Log' }] as item}
+                                        {#each [{ key: 'users', label: 'User' }, { key: 'pools', label: 'Pool' }, { key: 'bookings', label: 'Booking' }, { key: 'luggages', label: 'Bagasi' }, { key: 'charters', label: 'Carter' }, { key: 'drivers', label: 'Driver' }, { key: 'armadas', label: 'Armada' }, { key: 'schedules', label: 'Jadwal' }, { key: 'routes', label: 'Rute' }, { key: 'customers', label: 'Pelanggan' }, { key: 'invoice_subscriptions', label: 'Invoice' }, { key: 'activity_logs', label: 'Log' }] as item, eachIndex (eachIndex)}
                                             <div
                                                 class="rounded-lg border bg-muted/30 p-3"
                                             >
@@ -1271,7 +1379,7 @@
                         <CardContent class="p-0">
                             <ViewportOnly minWidth={0} maxWidth={767}
                                 ><div class="grid gap-3 p-3 md:hidden">
-                                    {#each tenants as t}
+                                    {#each tenants as t (t.id)}
                                         <article
                                             class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                                         >
@@ -1470,7 +1578,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {#each tenants as t}
+                                            {#each tenants as t (t.id)}
                                                 <tr
                                                     class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
                                                 >
@@ -1735,7 +1843,7 @@
                                                     <option value={0}
                                                         >Pilih tenant...</option
                                                     >
-                                                    {#each subTenants as t}
+                                                    {#each subTenants as t (t.id)}
                                                         <option value={t.id}
                                                             >{t.name}</option
                                                         >
@@ -1752,7 +1860,7 @@
                                                 bind:value={subForm.plan_id}
                                                 class="w-full rounded-md border px-3 py-2 text-sm"
                                             >
-                                                {#each subPlans as plan}
+                                                {#each subPlans as plan (plan.id)}
                                                     <option value={plan.id}
                                                         >{plan.name} ({formatRupiah(
                                                             plan.price_monthly,
@@ -1903,7 +2011,7 @@
                                                 <div
                                                     class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
                                                 >
-                                                    {#each [['custom_max_pools', 'Pool'], ['custom_max_users', 'User'], ['custom_max_armadas', 'Armada'], ['custom_max_drivers', 'Driver'], ['custom_max_routes', 'Rute']] as [field, label]}
+                                                    {#each [['custom_max_pools', 'Pool'], ['custom_max_users', 'User'], ['custom_max_armadas', 'Armada'], ['custom_max_drivers', 'Driver'], ['custom_max_routes', 'Rute']] as [field, label] (field)}
                                                         <div class="grid gap-2">
                                                             <Label for={field}
                                                                 >{label}</Label
@@ -1948,7 +2056,7 @@
                                                     <div
                                                         class="grid gap-2 sm:grid-cols-2 lg:grid-cols-3"
                                                     >
-                                                        {#each featureGates as gate}
+                                                        {#each featureGates as gate (gate.key)}
                                                             <label
                                                                 class="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm dark:border-slate-800 dark:bg-slate-950/70"
                                                             >
@@ -2004,7 +2112,7 @@
                         <CardContent class="p-0">
                             <ViewportOnly minWidth={0} maxWidth={767}
                                 ><div class="grid gap-3 p-3 md:hidden">
-                                    {#each subscriptions as s}
+                                    {#each subscriptions as s (s.id)}
                                         <article
                                             class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                                         >
@@ -2220,7 +2328,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {#each subscriptions as s}
+                                            {#each subscriptions as s (s.id)}
                                                 <tr
                                                     class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
                                                 >
@@ -2419,7 +2527,7 @@
                     </div>
 
                     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                        {#each plans as plan}
+                        {#each plans as plan (plan.id)}
                             {@const isEditing = editingPlan?.id === plan.id}
                             <Card
                                 class={`${panelClass} ${plan.is_active ? '' : 'opacity-70'}`}
@@ -2553,7 +2661,7 @@
                                                 </div>
                                             </div>
                                             <div class="space-y-1 pt-2">
-                                                {#each ['has_seat_map', 'has_pdf_export', 'has_csv_export', 'has_online_booking', 'has_analytics', 'has_custom_roles'] as key}
+                                                {#each ['has_seat_map', 'has_pdf_export', 'has_csv_export', 'has_online_booking', 'has_analytics', 'has_custom_roles'] as key (key)}
                                                     <label
                                                         class="flex items-center gap-2 text-sm"
                                                     >
@@ -2660,7 +2768,7 @@
                                         </div>
                                         <hr class="my-2" />
                                         <div class="space-y-1 text-xs">
-                                            {#each plan.features as f}
+                                            {#each plan.features as f (f.name)}
                                                 <div
                                                     class="flex items-center gap-2"
                                                 >
@@ -2721,7 +2829,7 @@
                     </div>
 
                     <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-                        {#each [{ label: 'Pending', value: invoiceSummary.pending ?? 0, meta: 'Menunggu checkout' }, { label: 'Lunas Bulan Ini', value: invoiceSummary.paid_month ?? 0, meta: 'Invoice paid' }, { label: 'Overdue', value: invoiceSummary.overdue ?? 0, meta: 'Lewat jatuh tempo' }, { label: 'Nominal Pending', value: formatRupiah(invoiceSummary.total_amount_pending ?? 0), meta: 'Outstanding' }] as item}
+                        {#each [{ label: 'Pending', value: invoiceSummary.pending ?? 0, meta: 'Menunggu checkout' }, { label: 'Lunas Bulan Ini', value: invoiceSummary.paid_month ?? 0, meta: 'Invoice paid' }, { label: 'Overdue', value: invoiceSummary.overdue ?? 0, meta: 'Lewat jatuh tempo' }, { label: 'Nominal Pending', value: formatRupiah(invoiceSummary.total_amount_pending ?? 0), meta: 'Outstanding' }] as item, eachIndex (eachIndex)}
                             <div
                                 class="rounded-lg border border-slate-200/70 bg-white/85 p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                             >
@@ -2791,7 +2899,7 @@
                         <CardContent class="p-0">
                             <ViewportOnly minWidth={0} maxWidth={767}
                                 ><div class="grid gap-3 p-3 md:hidden">
-                                    {#each invoices as inv}
+                                    {#each invoices as inv (inv.id)}
                                         <article
                                             class="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950/70"
                                         >
@@ -2980,7 +3088,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {#each invoices as inv}
+                                            {#each invoices as inv (inv.id)}
                                                 <tr
                                                     class="border-b border-slate-100 last:border-0 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-900/40"
                                                 >
@@ -3356,3 +3464,4 @@
         {/if}
     </div>
 </div>
+}

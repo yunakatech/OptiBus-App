@@ -1,5 +1,4 @@
 <script lang="ts">
-    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
 
     import {
         ArrowLeft,
@@ -19,6 +18,7 @@
     } from 'lucide-svelte';
     import { onMount, tick } from 'svelte';
     import ExternalLinkFallback from '@/components/ExternalLinkFallback.svelte';
+    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
     import { loadFlatpickr } from '@/lib/flatpickr';
     import type { FlatpickrInstance } from '@/lib/flatpickr';
     import { overlay } from '@/lib/mobile-overlay';
@@ -639,6 +639,7 @@
 
     function continueToReview() {
         error = '';
+
         if (!isScheduleBookingOpen(selectedSchedule)) {
             error =
                 'Pemesanan untuk jadwal ini sudah ditutup 2 jam sebelum keberangkatan.';
@@ -646,6 +647,7 @@
 
             return;
         }
+
         contactName = normalizeNameForBooking(contactName);
         phone = normalizePhoneForBooking(phone);
         passengerNames = Object.fromEntries(

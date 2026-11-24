@@ -1,8 +1,8 @@
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { Copy, Printer } from 'lucide-svelte';
     import { Button } from '@/components/ui/button';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     type Charter = {
         id: number;

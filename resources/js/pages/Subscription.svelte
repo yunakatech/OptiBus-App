@@ -5,7 +5,6 @@
 </script>
 
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { Link, page, router } from '@inertiajs/svelte';
     import {
@@ -29,6 +28,7 @@
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     type TenantSub = {
         subscription_id?: number;
@@ -865,7 +865,7 @@
                                   : 'Anda dapat mengganti paket kapan saja. Perubahan aktif setelah pembayaran berhasil.'}
                         </div>
                         <div class="grid gap-3 md:grid-cols-3">
-                            {#each plans as plan}
+                            {#each plans as plan (plan.id)}
                                 <div
                                     class={`relative overflow-hidden rounded-lg border p-2.5 transition-all duration-200 lg:p-3 ${planCardClass(plan)}`}
                                 >
@@ -1068,7 +1068,7 @@
                                         <tbody
                                             class="divide-y divide-border/70 text-[13px]"
                                         >
-                                            {#each invoices as invoice}
+                                            {#each invoices as invoice (invoice.id)}
                                                 <tr
                                                     class="transition-colors hover:bg-muted/30"
                                                 >
@@ -1160,7 +1160,7 @@
 
                             <ViewportOnly minWidth={0} maxWidth={767}
                                 ><div class="space-y-3 p-4 md:hidden">
-                                    {#each invoices as invoice}
+                                    {#each invoices as invoice (invoice.id)}
                                         <div
                                             class="rounded-xl border border-border/70 bg-background/80 p-3 shadow-sm"
                                         >
@@ -1377,7 +1377,7 @@
                                     Peran pengguna
                                 </p>
                                 <div class="mt-2 flex flex-wrap gap-1.5">
-                                    {#each accountAccess.role_names as role}
+                                    {#each accountAccess.role_names as role (role)}
                                         <Badge variant="outline">{role}</Badge>
                                     {:else}
                                         <span

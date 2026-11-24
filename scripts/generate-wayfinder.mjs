@@ -8,6 +8,7 @@ const repoRoot = path.resolve(scriptDir, '..');
 
 const resolvePhpBinary = () => {
     const phpBinary = process.env.PHP_BINARY?.trim();
+
     if (phpBinary) {
         return phpBinary;
     }
@@ -17,6 +18,7 @@ const resolvePhpBinary = () => {
     }
 
     const laragonPhpRoot = 'D:/laragon/bin/php';
+
     if (!existsSync(laragonPhpRoot)) {
         return 'php';
     }
@@ -32,6 +34,7 @@ const resolvePhpBinary = () => {
 
 const patchBookingControllerActions = () => {
     const target = path.join(repoRoot, 'resources/js/actions/App/Http/Controllers/BookingController.ts');
+
     if (!existsSync(target)) {
         return;
     }
@@ -49,6 +52,7 @@ const patchBookingControllerActions = () => {
     }
 
     const next = source.replace('const BookingController = {', replacement);
+
     if (next !== source) {
         writeFileSync(target, next, 'utf8');
     }

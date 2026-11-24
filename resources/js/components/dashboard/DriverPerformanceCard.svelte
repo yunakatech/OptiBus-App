@@ -67,7 +67,7 @@
     <div
         class="mb-3 grid grid-cols-3 gap-1 rounded-lg bg-muted/70 p-1 dark:bg-muted"
     >
-        {#each Object.keys(categories) as cat}
+        {#each Object.keys(categories) as cat (cat)}
             <button
                 class={`min-w-0 rounded-md px-1 py-2 text-xs font-semibold transition sm:px-3 ${selectedCategory === cat ? 'bg-background text-foreground shadow-sm dark:bg-card' : 'text-muted-foreground hover:text-foreground dark:text-muted-foreground dark:hover:bg-slate-900/60 dark:hover:text-slate-100'}`}
                 onclick={() => (selectedCategory = cat)}

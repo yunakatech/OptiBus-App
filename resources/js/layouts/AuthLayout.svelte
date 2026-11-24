@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { Snippet } from 'svelte';
-    import AuthLayout from '@/layouts/auth/AuthSimpleLayout.svelte';
     import NavigationMetrics from '@/components/NavigationMetrics.svelte';
+    import AuthLayout from '@/layouts/auth/AuthSimpleLayout.svelte';
 
     let {
         title = '',

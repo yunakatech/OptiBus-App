@@ -10,7 +10,6 @@
 </script>
 
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page, router } from '@inertiajs/svelte';
     import { MoreHorizontal } from 'lucide-svelte';
@@ -28,6 +27,8 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
+    import { hasPermission } from '@/lib/access';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
     import {
         formatCurrencyDisplay,
@@ -39,8 +40,8 @@
         consumeDataStale,
         markDataStale,
     } from '@/lib/data-invalidation';
-    import { hasPermission } from '@/lib/access';
-    import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
+    import { loadFlatpickr  } from '@/lib/flatpickr';
+import type {FlatpickrInstance} from '@/lib/flatpickr';
 
     type TabName = 'charters' | 'luggages' | 'assignments' | 'export';
     type ViewMode = 'data' | 'form' | 'view';
@@ -344,7 +345,7 @@
     );
     let activeTab = $state<TabName>('charters');
     let activeMode = $state<ViewMode>('data');
-    const authPoolScope = $derived(
+    const _authPoolScope = $derived(
         (page.props.auth?.pool_scope ?? null) as AuthPoolScope,
     );
     let lockedMenuView = $state(false);
@@ -367,7 +368,7 @@
     let luggageIncidentType = $state<'damaged' | 'lost'>('damaged');
     let luggageIncidentQuantity = $state(1);
     let luggageIncidentDescription = $state('');
-    let luggageIncidentStatus = $state('investigating');
+    let _luggageIncidentStatus = $state('investigating');
     let luggageIncidentClaimStatus = $state('submitted');
     let luggageIncidentClaimAmount = $state(0);
     let luggageIncidentApprovedAmount = $state(0);
@@ -770,6 +771,7 @@
         }
 
         const flatpickr = await loadFlatpickr();
+
         if (!charterFilterDateInput || charterFilterDatePicker) {
             return;
         }
@@ -802,6 +804,7 @@
         }
 
         const flatpickr = await loadFlatpickr();
+
         if (!luggageFilterDateInput || luggageFilterDatePicker) {
             return;
         }
@@ -834,6 +837,7 @@
         }
 
         const flatpickr = await loadFlatpickr();
+
         if (!luggageDateInput || luggageDatePicker) {
             return;
         }
@@ -849,7 +853,10 @@
     };
 
     const initAssignmentPickers = async () => {
-        if (!assignmentDateInput && !assignmentTimeInput) return;
+        if (!assignmentDateInput && !assignmentTimeInput) {
+return;
+}
+
         if (typeof window === 'undefined') {
             return;
         }
@@ -883,7 +890,10 @@
     };
 
     const initExportPickers = async () => {
-        if (!exportFromDateInput && !exportToDateInput) return;
+        if (!exportFromDateInput && !exportToDateInput) {
+return;
+}
+
         if (typeof window === 'undefined') {
             return;
         }
@@ -918,8 +928,10 @@
             !charterStartDateInput &&
             !charterEndDateInput &&
             !charterDepartureTimeInput
-        )
-            return;
+        ) {
+return;
+}
+
         if (typeof window === 'undefined') {
             return;
         }
@@ -1416,10 +1428,12 @@
     ) => {
         if (routeId <= 0) {
             luggageSegments = [];
+
             return;
         }
 
         loadingLuggageOptions = true;
+
         try {
             const response = await api(
                 'GET',
@@ -2269,12 +2283,13 @@
         };
         luggagePriceOverrideEnabled = row.pricing_source === 'override';
         setFormMode('form');
+
         if (Number(row.rute_id || 0) > 0) {
             await loadLuggageOptions(Number(row.rute_id), true);
         }
     };
 
-    const bagasiCustomerLabel = (customer: BagasiCustomer) =>
+    const _bagasiCustomerLabel = (customer: BagasiCustomer) =>
         `${String(customer.nama ?? '').trim()} · ${String(customer.no_hp ?? '').trim()}`;
 
     const applyLuggageCustomer = (
@@ -2505,6 +2520,7 @@
         }
 
         const name = String(route.name ?? '').trim();
+
         if (name !== '') {
             return name;
         }
@@ -2658,6 +2674,7 @@
 
     $effect(() => {
         const payload = flowData;
+
         if (!payload) {
             return;
         }
@@ -2685,6 +2702,7 @@
 
     $effect(() => {
         const payload = flowMasters;
+
         if (!payload) {
             return;
         }
@@ -2926,6 +2944,7 @@
         filterFrom = flowFilterDraft.from;
         filterTo = flowFilterDraft.to;
         filterQuery = flowFilterDraft.query;
+
         if (activeTab === 'luggages') {
             luggageStatusFilter = flowFilterDraft.status;
             luggageConditionFilter = flowFilterDraft.condition;
@@ -2938,6 +2957,7 @@
             charterFilterArmadaSearch = '';
             syncCharterFilterLookups();
         }
+
         await applyFilters();
     };
 
@@ -2981,6 +3001,7 @@
         if (luggageStatusFilter) {
             details.push(luggageStatusLabel(luggageStatusFilter));
         }
+
         if (luggageConditionFilter) {
             details.push(luggageConditionLabel(luggageConditionFilter));
         }
@@ -3095,6 +3116,7 @@
 
             return;
         }
+
         if (parseCurrencyInput(charterForm.bop_price) <= 0) {
             error = 'Nominal BOP harus lebih dari Rp 0.';
             (event.currentTarget as HTMLFormElement)
@@ -3103,6 +3125,7 @@
 
             return;
         }
+
         savingCharter = true;
 
         try {
@@ -3656,6 +3679,7 @@
 
     const submitLuggageIncident = async (event: SubmitEvent) => {
         event.preventDefault();
+
         if (!luggageIncidentLuggage || !canLuggageIncident) {
             return;
         }
@@ -3709,9 +3733,11 @@
                 },
             );
             message = 'Status insiden berhasil diperbarui.';
+
             if (response.incident?.luggage_status === 'canceled') {
                 markLuggageCanceledInView(luggageIncidentLuggage?.id ?? 0);
             }
+
             if (luggageIncidentLuggage) {
                 await reloadActiveFlowList(luggageMeta.page, false);
                 await loadLuggageIncidents(luggageIncidentLuggage, 'history');
@@ -3740,6 +3766,7 @@
 
     const submitLuggageClaim = async (event: SubmitEvent) => {
         event.preventDefault();
+
         if (!luggageIncidentSelected || !canLuggageClaim) {
             return;
         }
@@ -3760,9 +3787,11 @@
                 },
             );
             message = 'Klaim bagasi berhasil diperbarui.';
+
             if (response.claim?.luggage_status === 'canceled') {
                 markLuggageCanceledInView(luggageIncidentLuggage?.id ?? 0);
             }
+
             if (luggageIncidentLuggage) {
                 await reloadActiveFlowList(luggageMeta.page, false);
                 await loadLuggageIncidents(luggageIncidentLuggage, 'history');
@@ -4233,6 +4262,7 @@
                             onApply={() => void applyFlowFilterDraft()}
                             onReset={() => {
                                 resetFlowFilterDraft();
+
                                 if (activeTab === 'luggages') {
                                     void resetLuggageFilters();
                                 } else {

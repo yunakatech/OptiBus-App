@@ -1,10 +1,7 @@
 <script lang="ts">
-    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
 
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page } from '@inertiajs/svelte';
-    import { onMount } from 'svelte';
     import {
         ArrowRight,
         BusFront,
@@ -17,7 +14,10 @@
         UsersRound,
         WalletCards,
     } from 'lucide-svelte';
+    import { onMount } from 'svelte';
     import AppLogo from '@/components/AppLogo.svelte';
+    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     type PlanFeature = {
         name: string;
@@ -108,7 +108,10 @@
         const preference = window.matchMedia(
             '(prefers-reduced-motion: reduce)',
         );
-        if (preference.matches || !('IntersectionObserver' in window)) return;
+
+        if (preference.matches || !('IntersectionObserver' in window)) {
+return;
+}
 
         const targets = Array.from(
             root.querySelectorAll<HTMLElement>('[data-reveal]'),
@@ -116,7 +119,10 @@
         const observer = new IntersectionObserver(
             (entries) => {
                 for (const entry of entries) {
-                    if (!entry.isIntersecting) continue;
+                    if (!entry.isIntersecting) {
+continue;
+}
+
                     entry.target.classList.remove('motion-pending');
                     observer.unobserve(entry.target);
                 }
@@ -126,23 +132,30 @@
 
         // Enhance only offscreen content; the first screen is always readable.
         for (const target of targets) {
-            if (target.getBoundingClientRect().top < window.innerHeight - 24)
-                continue;
+            if (target.getBoundingClientRect().top < window.innerHeight - 24) {
+continue;
+}
+
             target.classList.add('motion-pending');
             observer.observe(target);
         }
+
         const revealFocused = (event: FocusEvent) => {
             const target =
                 event.target instanceof Element
                     ? event.target.closest('[data-reveal]')
                     : null;
+
             if (target) {
                 target.classList.remove('motion-pending');
                 observer.unobserve(target);
             }
         };
         const revealAll = () => {
-            if (!preference.matches) return;
+            if (!preference.matches) {
+return;
+}
+
             observer.disconnect();
             targets.forEach((target) =>
                 target.classList.remove('motion-pending'),
@@ -150,6 +163,7 @@
         };
         root.addEventListener('focusin', revealFocused);
         preference.addEventListener('change', revealAll);
+
         return () => {
             observer.disconnect();
             root.removeEventListener('focusin', revealFocused);
@@ -207,8 +221,10 @@
     ];
 
     function formatRupiah(value: number): string {
-        if (value >= 1_000_000)
-            return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
+        if (value >= 1_000_000) {
+return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
+}
+
         return `Rp ${(value / 1_000).toFixed(0)} rb`;
     }
 
@@ -429,7 +445,7 @@
                     </p>
                 </div>
                 <ol class="divide-y divide-[#DCE9E6] border-y border-[#DCE9E6]">
-                    {#each workflow as item, index}
+                    {#each workflow as item, index (item.label)}
                         {@const Icon = item.icon}
                         <li
                             data-reveal
@@ -491,7 +507,7 @@
                 <div
                     class="grid border-y border-[#DCE9E6] sm:grid-cols-2 lg:grid-cols-4"
                 >
-                    {#each capabilities as item, index}
+                    {#each capabilities as item, index (item.title)}
                         {@const Icon = item.icon}
                         <article
                             data-reveal
@@ -554,7 +570,7 @@
             <div
                 class="grid gap-0 border-y border-[#DCE9E6] md:grid-cols-3 md:divide-x md:divide-[#DCE9E6]"
             >
-                {#each featuredPlans as plan, index}
+                {#each featuredPlans as plan, index (plan.slug)}
                     <article
                         data-reveal
                         style:--reveal-delay={`${index * 65}ms`}

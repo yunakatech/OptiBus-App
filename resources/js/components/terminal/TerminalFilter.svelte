@@ -1,8 +1,8 @@
 <script lang="ts">
     import { createEventDispatcher } from 'svelte';
     import type { Snippet } from 'svelte';
-    import { Input } from '@/components/ui/input';
     import { Button } from '@/components/ui/button';
+    import { Input } from '@/components/ui/input';
     import { cn } from '@/lib/utils';
 
     let {
@@ -33,7 +33,9 @@
             bind:value={query}
             {placeholder}
             on:keydown={(e) => {
-                if (e.key === 'Enter') doSearch();
+                if (e.key === 'Enter') {
+doSearch();
+}
             }}
         />
     </div>

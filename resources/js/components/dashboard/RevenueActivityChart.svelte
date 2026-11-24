@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { Chart  } from 'chart.js/auto';
+import type {ChartConfiguration} from 'chart.js/auto';
     import { X } from 'lucide-svelte';
     import { onDestroy } from 'svelte';
-    import { Chart, type ChartConfiguration } from 'chart.js/auto';
     import { themeState } from '@/lib/theme.svelte';
 
     type TrendItem = {
@@ -95,7 +96,10 @@
               };
 
     $effect(() => {
-        if (!chartCanvas) return;
+        if (!chartCanvas) {
+return;
+}
+
         if (chartInstance) {
             chartInstance.destroy();
             chartInstance = null;
@@ -228,22 +232,27 @@
                         enabled: false,
                         external: (context) => {
                             const { chart, tooltip } = context;
+
                             if (tooltip.opacity === 0) {
                                 tooltipData.visible = false;
                                 dismissedTooltipKey = '';
                                 activeTooltipSignature = '';
+
                                 return;
                             }
 
                             if (!tooltip.dataPoints?.length) {
                                 tooltipData.visible = false;
+
                                 return;
                             }
 
                             const dataIndex = tooltip.dataPoints[0].dataIndex;
                             const item = monthlyTrend[dataIndex];
+
                             if (!item) {
                                 tooltipData.visible = false;
+
                                 return;
                             }
 
@@ -251,6 +260,7 @@
 
                             if (dismissedTooltipKey === key) {
                                 tooltipData.visible = false;
+
                                 return;
                             }
 
@@ -258,8 +268,11 @@
                             const width = chart.width;
                             let align: 'left' | 'right' | 'center' = 'center';
 
-                            if (left < width * 0.2) align = 'left';
-                            else if (left > width * 0.8) align = 'right';
+                            if (left < width * 0.2) {
+align = 'left';
+} else if (left > width * 0.8) {
+align = 'right';
+}
 
                             const nextSignature = [
                                 key,

@@ -1,7 +1,7 @@
 <script lang="ts">
+    import { Button } from '@/components/ui/button';
     import ViewportOnly from '@/components/ViewportOnly.svelte';
 
-    import { Button } from '@/components/ui/button';
 
     type ReportKind = 'booking' | 'charter' | 'bagasi';
     type ReportSummary = {

@@ -60,13 +60,19 @@
         label: string;
     } {
         const s = status.toLowerCase();
-        if (s.includes('lunas') || s.includes('paid'))
-            return { variant: 'default', label: 'Lunas' };
-        if (s.includes('dp')) return { variant: 'secondary', label: 'DP' };
+
+        if (s.includes('lunas') || s.includes('paid')) {
+return { variant: 'default', label: 'Lunas' };
+}
+
+        if (s.includes('dp')) {
+return { variant: 'secondary', label: 'DP' };
+}
+
         return { variant: 'destructive', label: 'Belum' };
     }
 
-    function waLink(phone: string, name: string): string {
+    function waLink(phone: string, _name: string): string {
         return `https://wa.me/${phone.replace(/[^0-9]/g, '')}`;
     }
 </script>
@@ -185,7 +191,7 @@
         <CardContent>
             {#if todayBookings.length > 0}
                 <div class="space-y-2">
-                    {#each todayBookings as b}
+                    {#each todayBookings as b (`${b.phone}-${b.rute}-${b.jam}-${b.seat}`)}
                         <div
                             class="flex items-start justify-between text-sm border-b pb-2 last:border-0"
                         >
@@ -240,7 +246,7 @@
             >
             <CardContent>
                 <div class="space-y-2">
-                    {#each upcomingCharters as c}
+                    {#each upcomingCharters as c (`${c.phone}-${c.start_date}-${c.departure_time}`)}
                         <div class="text-sm border-b pb-2 last:border-0">
                             <div class="font-medium">{c.name}</div>
                             <div class="text-xs text-muted-foreground">

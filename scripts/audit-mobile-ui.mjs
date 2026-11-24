@@ -20,6 +20,7 @@ export const attribute = (node, name) =>
     );
 export const staticValue = (node, name) => {
     const value = attribute(node, name)?.value;
+
     return Array.isArray(value) && value.every((item) => item.type === 'Text')
         ? value.map((item) => item.data).join('')
         : undefined;
@@ -33,13 +34,20 @@ export function inspectFile(file) {
     const labels = new Set();
     const fields = [];
     function walk(node, ancestors = [], siblings = []) {
-        if (!node || typeof node !== 'object') return;
+        if (!node || typeof node !== 'object') {
+return;
+}
+
         if (Array.isArray(node)) {
             node.forEach((item) => walk(item, ancestors, node));
+
             return;
         }
-        if (['label', 'Label'].includes(node.name) && staticValue(node, 'for'))
-            labels.add(staticValue(node, 'for'));
+
+        if (['label', 'Label'].includes(node.name) && staticValue(node, 'for')) {
+labels.add(staticValue(node, 'for'));
+}
+
         if (
             ['Input', 'input', 'select', 'textarea'].includes(node.name) &&
             !['hidden', 'radio', 'checkbox', 'file', 'submit'].includes(
@@ -51,6 +59,7 @@ export function inspectFile(file) {
         ) {
             fields.push({ node, ancestors, siblings });
         }
+
         for (const [key, value] of Object.entries(node)) {
             if (
                 ![
@@ -60,11 +69,13 @@ export function inspectFile(file) {
                     'module',
                     'css',
                 ].includes(key)
-            )
-                walk(value, [...ancestors, node], siblings);
+            ) {
+walk(value, [...ancestors, node], siblings);
+}
         }
     }
     walk(ast.html);
+
     return {
         file,
         source,
@@ -84,12 +95,14 @@ export function mobileSourceFiles() {
         ...svelteFiles('resources/js/components/bookings'),
     ];
 }
+
 if (
     process.argv[1] &&
     import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href
 ) {
     const findings = mobileSourceFiles().flatMap((file) => {
         const { source, fields } = inspectFile(file);
+
         return fields.map(({ node }) => ({
             file,
             line: source.slice(0, node.start).split('\n').length,
@@ -105,5 +118,8 @@ if (
             2,
         ),
     );
-    if (findings.length) process.exitCode = 1;
+
+    if (findings.length) {
+process.exitCode = 1;
+}
 }

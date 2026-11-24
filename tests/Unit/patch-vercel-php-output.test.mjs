@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import { createRequire } from 'node:module';
 import os from 'node:os';
 import path from 'node:path';
-import { createRequire } from 'node:module';
 import test from 'node:test';
 
 import { patchOutput } from '../../scripts/patch-vercel-php-output.mjs';
@@ -10,6 +10,7 @@ import { patchOutput } from '../../scripts/patch-vercel-php-output.mjs';
 for (const mapped of [false, true]) {
     test(`patches ${mapped ? 'mapped' : 'physical'} launcher`, async () => {
         const root = fs.mkdtempSync(path.join(os.tmpdir(), 'optibus-vercel-'));
+
         try {
             const directory = path.join(root, 'functions', 'api', 'index.func');
             fs.mkdirSync(directory, { recursive: true });
@@ -18,6 +19,7 @@ for (const mapped of [false, true]) {
                 handler: 'launcher.launcher',
                 runtime: 'nodejs22.x',
             };
+
             if (mapped) {
                 const source = path.join(root, 'original-launcher.js');
                 fs.writeFileSync(source, original);
@@ -25,6 +27,7 @@ for (const mapped of [false, true]) {
             } else {
                 fs.writeFileSync(path.join(directory, 'launcher.js'), original);
             }
+
             fs.writeFileSync(
                 path.join(directory, '.vc-config.json'),
                 JSON.stringify(config),
@@ -37,6 +40,7 @@ for (const mapped of [false, true]) {
             assert.equal(updated.handler, 'launcher.js');
             assert.equal(updated.launcherType, 'Nodejs');
             assert.equal(updated.awsLambdaHandler, 'launcher.launcher');
+
             if (mapped) {
                 assert.equal(
                     updated.filePathMap['launcher-orig.js'],
@@ -52,10 +56,12 @@ for (const mapped of [false, true]) {
                     original,
                 );
             }
+
             assert.match(
                 fs.readFileSync(path.join(directory, 'launcher.js'), 'utf8'),
                 /LAMBDA_TASK_ROOT/,
             );
+
             if (!mapped) {
                 const require = createRequire(import.meta.url);
                 const bridge = require(path.join(directory, 'launcher.js'));

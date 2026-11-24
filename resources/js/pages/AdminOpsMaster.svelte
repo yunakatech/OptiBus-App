@@ -10,7 +10,6 @@
 </script>
 
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page, router } from '@inertiajs/svelte';
     import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-svelte';
@@ -27,6 +26,7 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
     import {
         formatCurrencyDisplay,
@@ -358,6 +358,7 @@
 
     $effect(() => {
         const payload = masterData;
+
         if (!payload) {
             return;
         }
@@ -747,6 +748,7 @@
             }
 
             const query = params.get('q') ?? '';
+
             if (activeTab === 'customer-bagasi') {
                 bagasiQ = query;
             } else if (activeTab === 'customer-charter') {

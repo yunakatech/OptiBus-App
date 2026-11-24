@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import {
         ChevronLeft,
@@ -10,6 +9,8 @@
         Pencil,
         Trash2,
     } from 'lucide-svelte';
+    import DataTable from '@/components/terminal/DataTable.svelte';
+    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -18,8 +19,7 @@
         DropdownMenuItem,
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
-    import DataTable from '@/components/terminal/DataTable.svelte';
-    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
     import RevenueChartTable from './RevenueChartTable.svelte';
 
     type Pagination = {
@@ -206,9 +206,16 @@
 
     const formatDateLabel = (value: string) => {
         const raw = String(value ?? '').trim();
-        if (raw === '') return '-';
+
+        if (raw === '') {
+return '-';
+}
+
         const date = new Date(`${raw}T00:00:00`);
-        if (Number.isNaN(date.getTime())) return raw;
+
+        if (Number.isNaN(date.getTime())) {
+return raw;
+}
 
         return new Intl.DateTimeFormat('id-ID', {
             day: '2-digit',
@@ -445,8 +452,8 @@
 {#if activeMode === 'view'}
     {#if driverDetail}
         {@const driver = driverDetail}
-        {@const gross = driverGrossMargin(driver)}
-        {@const net = driverNetMargin(driver)}
+        {@const _gross = driverGrossMargin(driver)}
+        {@const _net = driverNetMargin(driver)}
         {@const achievement = driverAchievement(driver)}
         {@const status = driverStatus(driver)}
         {@const detailCards = driverDetailCards(driver)}

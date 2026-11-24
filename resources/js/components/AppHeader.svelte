@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
-    import Plus from 'lucide-svelte/icons/plus';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
+    import Plus from 'lucide-svelte/icons/plus';
     import AppLogo from '@/components/AppLogo.svelte';
     import Breadcrumbs from '@/components/Breadcrumbs.svelte';
     import GlobalCommandSearch from '@/components/GlobalCommandSearch.svelte';

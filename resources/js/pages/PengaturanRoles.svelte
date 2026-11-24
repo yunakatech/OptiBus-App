@@ -534,6 +534,7 @@
 
     $effect(() => {
         const payload = roleData;
+
         if (!payload) {
             return;
         }
@@ -546,6 +547,7 @@
 
     $effect(() => {
         const payload = rolePermissions;
+
         if (!payload) {
             return;
         }

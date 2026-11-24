@@ -12,6 +12,7 @@ function firstValidationMessage(errors: Record<string, unknown> | undefined): st
     for (const value of Object.values(errors)) {
         if (Array.isArray(value)) {
             const first = value.find((item) => typeof item === 'string' && item.trim() !== '');
+
             if (typeof first === 'string') {
                 return first;
             }
@@ -39,6 +40,7 @@ export async function extractApiErrorMessage(
     if (text.trim() !== '') {
         try {
             const parsed = JSON.parse(text);
+
             if (parsed && typeof parsed === 'object') {
                 payload = parsed as ErrorPayload;
             }

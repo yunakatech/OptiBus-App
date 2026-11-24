@@ -1,4 +1,4 @@
-export const resolveAvatarUrl = (avatar?: string | null, name?: string): string => {
+export const resolveAvatarUrl = (avatar?: string | null, _name?: string): string => {
     if (typeof avatar === 'string' && avatar.trim() !== '') {
         return avatar;
     }

@@ -53,6 +53,7 @@
     onMount(() => {
         const urlParams = new URLSearchParams(window.location.search);
         const intentParam = urlParams.get('intent');
+
         if (
             intentParam === 'trial' ||
             intentParam === 'paid' ||
@@ -63,13 +64,16 @@
         }
 
         const planParam = urlParams.get('plan');
+
         if (registrationIntent === 'trial' && !planParam) {
             selectedPlan = 'starter';
+
             return;
         }
 
         if (planParam && plans.some((p) => p.slug === planParam)) {
             selectedPlan = planParam;
+
             if (planParam !== 'starter') {
                 registrationIntent = 'paid';
             }
@@ -108,7 +112,10 @@
     };
 
     function formatRupiah(v: number): string {
-        if (v >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(1)} jt`;
+        if (v >= 1_000_000) {
+return `Rp ${(v / 1_000_000).toFixed(1)} jt`;
+}
+
         return `Rp ${(v / 1_000).toFixed(0)} rb`;
     }
 </script>
@@ -219,7 +226,7 @@
                             >Pilih paket langganan</Label
                         >
                         <div class="grid gap-2 sm:grid-cols-3">
-                            {#each plans as plan}
+                            {#each plans as plan (plan.slug)}
                                 <button
                                     type="button"
                                     onclick={() => choosePlan(plan.slug)}

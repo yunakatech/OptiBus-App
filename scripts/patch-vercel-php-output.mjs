@@ -10,13 +10,23 @@ export function patchOutput(outputDirectory) {
         for (const entry of fs.readdirSync(directory, {
             withFileTypes: true,
         })) {
-            if (!entry.isDirectory()) continue;
+            if (!entry.isDirectory()) {
+continue;
+}
+
             const child = path.join(directory, entry.name);
-            if (entry.name.endsWith('.func')) candidates.push(child);
-            else findFunctions(child);
+
+            if (entry.name.endsWith('.func')) {
+candidates.push(child);
+} else {
+findFunctions(child);
+}
         }
     }
-    if (fs.existsSync(functions)) findFunctions(functions);
+
+    if (fs.existsSync(functions)) {
+findFunctions(functions);
+}
 
     if (candidates.length !== 1) {
         throw new Error(
@@ -27,12 +37,14 @@ export function patchOutput(outputDirectory) {
     const directory = candidates[0];
     const configPath = path.join(directory, '.vc-config.json');
     const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+
     if (config.handler !== 'launcher.launcher') {
         throw new Error(`Unexpected function handler: ${config.handler}`);
     }
 
     const launcher = path.join(directory, 'launcher.js');
     const original = path.join(directory, 'launcher-orig.js');
+
     if (fs.existsSync(launcher)) {
         fs.renameSync(launcher, original);
     } else if (config.filePathMap?.['launcher.js']) {

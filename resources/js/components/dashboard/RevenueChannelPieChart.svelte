@@ -1,6 +1,4 @@
 <script lang="ts">
-    import { X } from 'lucide-svelte';
-    import { onDestroy } from 'svelte';
     import {
         Chart,
         PieController,
@@ -8,6 +6,8 @@
         Tooltip,
         Legend,
     } from 'chart.js';
+    import { X } from 'lucide-svelte';
+    import { onDestroy } from 'svelte';
     import { themeState } from '@/lib/theme.svelte';
 
     Chart.register(PieController, ArcElement, Tooltip, Legend);
@@ -115,7 +115,9 @@
               };
 
     $effect(() => {
-        if (!chartCanvas) return;
+        if (!chartCanvas) {
+return;
+}
 
         if (chartInstance) {
             chartInstance.destroy();
@@ -130,6 +132,7 @@
 
         // Validate data presence so the chart draws something gracefully if missing
         const hasData = dataValues.some((v) => v > 0);
+
         if (!hasData) {
             dataValues = [1, 1, 1]; // Provide dummy ratio so a grey circle can be rendered
         }
@@ -177,11 +180,13 @@
                                 tooltipData.visible = false;
                                 dismissedTooltipKey = '';
                                 activeTooltipSignature = '';
+
                                 return;
                             }
 
                             if (!tooltip.dataPoints?.length) {
                                 tooltipData.visible = false;
+
                                 return;
                             }
 
@@ -191,6 +196,7 @@
 
                             if (dismissedTooltipKey === key) {
                                 tooltipData.visible = false;
+
                                 return;
                             }
 
@@ -198,8 +204,11 @@
                             const width = chart.width;
                             let align: 'left' | 'right' | 'center' = 'center';
 
-                            if (left < width * 0.2) align = 'left';
-                            else if (left > width * 0.8) align = 'right';
+                            if (left < width * 0.2) {
+align = 'left';
+} else if (left > width * 0.8) {
+align = 'right';
+}
 
                             const nextSignature = [
                                 key,

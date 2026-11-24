@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { onMount, type Component } from 'svelte';
+    import { onMount  } from 'svelte';
+import type {Component} from 'svelte';
     import { Button } from '@/components/ui/button';
 
     let {
@@ -17,20 +18,32 @@
     let busy = false;
     let disposed = false;
     async function load() {
-        if (busy || disposed) return;
+        if (busy || disposed) {
+return;
+}
+
         busy = true;
         failed = false;
+
         try {
             const module = await loader();
-            if (!disposed) Panel = module.default;
+
+            if (!disposed) {
+Panel = module.default;
+}
         } catch {
-            if (!disposed) failed = true;
+            if (!disposed) {
+failed = true;
+}
         } finally {
             busy = false;
         }
     }
     onMount(() => {
-        if (!('IntersectionObserver' in window)) void load();
+        if (!('IntersectionObserver' in window)) {
+void load();
+}
+
         const observer =
             'IntersectionObserver' in window
                 ? new IntersectionObserver(
@@ -44,6 +57,7 @@
                   )
                 : null;
         observer?.observe(target);
+
         return () => {
             disposed = true;
             observer?.disconnect();

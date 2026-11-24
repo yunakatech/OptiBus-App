@@ -146,9 +146,11 @@
 
         if (open) {
             await tick();
+
             if (showSearch && searchInput) {
                 searchInput.focus();
                 searchInput.select();
+
                 return;
             }
 
@@ -159,6 +161,7 @@
     const switchContext = async (id: number) => {
         if (pendingId !== null || id === activeId) {
             close();
+
             return;
         }
 
@@ -217,6 +220,7 @@
 
     const moveFocus = (currentIndex: number, delta: number) => {
         const total = filteredOptions.length + 1;
+
         if (total <= 0) {
             return;
         }
@@ -233,24 +237,28 @@
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             moveFocus(index, 1);
+
             return;
         }
 
         if (event.key === 'ArrowUp') {
             event.preventDefault();
             moveFocus(index, -1);
+
             return;
         }
 
         if (event.key === 'Home') {
             event.preventDefault();
             focusOption(0);
+
             return;
         }
 
         if (event.key === 'End') {
             event.preventDefault();
             focusOption(filteredOptions.length);
+
             return;
         }
 
@@ -264,6 +272,7 @@
         if (event.key === 'ArrowDown') {
             event.preventDefault();
             focusOption(0);
+
             return;
         }
 
@@ -286,6 +295,7 @@
         }
 
         const target = event.target as Node | null;
+
         if (rootElement && target && !rootElement.contains(target)) {
             close();
         }
@@ -333,6 +343,7 @@
         void tick().then(() => {
             if (showSearch && searchInput) {
                 searchInput.focus();
+
                 return;
             }
 

@@ -21,11 +21,16 @@
             page.component === 'CustomerReguler'
                 ? 'settingsData'
                 : null);
+
         if (
             ['AdminOpsFlows', 'Luggages'].includes(page.component) &&
             ['form', 'view'].includes(String(props.initialMode))
-        )
-            key = 'flowMasters';
-        if (!key || props[key]) markNavigationDataReady();
+        ) {
+key = 'flowMasters';
+}
+
+        if (!key || props[key]) {
+markNavigationDataReady();
+}
     });
 </script>

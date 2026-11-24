@@ -12,11 +12,11 @@
 </script>
 
 <script lang="ts">
-    import { router } from '@inertiajs/svelte';
     import { ArrowRight, CheckCircle2, Circle, Copy } from 'lucide-svelte';
+    import { SvelteSet } from 'svelte/reactivity';
+    import AppHead from '@/components/AppHead.svelte';
     import DashboardSection from '@/components/dashboard/DashboardSection.svelte';
     import LazyDashboardPanel from '@/components/dashboard/LazyDashboardPanel.svelte';
-    import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -227,10 +227,10 @@
     });
 
     let {
-        stats = createDashboardStats(),
-        pools = [] as PoolOption[],
+        stats: _stats = createDashboardStats(),
+        pools: _pools = [] as PoolOption[],
         selectedPoolId = 0,
-        selectedPoolName = 'Semua Pool',
+        selectedPoolName: _selectedPoolName = 'Semua Pool',
         setupProgress = null as SetupProgress | null,
         dailyTrend = [],
         monthlyTrend = [],
@@ -242,7 +242,7 @@
         topDrivers = createDriverCategories(),
         topArmadas = createArmadaCategories(),
         summaryStatsByScope = createSummaryScopes(),
-        summaryComparisonByScope = createSummaryScopes(),
+        summaryComparisonByScope: _summaryComparisonByScope = createSummaryScopes(),
         summaryPeriodByScope = {
             day: {
                 current_label: 'Hari Ini',
@@ -349,7 +349,7 @@
             0,
         ),
     );
-    const nextCharter = $derived(safeUpcomingCharterReminder.items[0] ?? null);
+    const _nextCharter = $derived(safeUpcomingCharterReminder.items[0] ?? null);
     const hasTrendTransactionCounts = $derived(
         operationalTrendSourceRows.some(
             (item) => Number(item.transaction_count || 0) > 0,
@@ -370,7 +370,7 @@
                   : 0,
         })),
     );
-    const maxOperationalActivity = $derived(
+    const _maxOperationalActivity = $derived(
         Math.max(1, ...operationalTrendRows.map((item) => item.value)),
     );
 
@@ -380,7 +380,7 @@
     let hoveredTrendKey = $state<string>('');
     let pinnedTrendKey = $state<string>('');
 
-    const activeTrendTooltipKey = $derived(hoveredTrendKey || pinnedTrendKey);
+    const _activeTrendTooltipKey = $derived(hoveredTrendKey || pinnedTrendKey);
     const activeTrendDataSignature = $derived(
         `${selectedPoolId}|daily|${activeTrendRows
             .map(
@@ -392,19 +392,19 @@
     const activeSummaryStats = $derived(
         safeSummaryStatsByScope.month ?? createSummaryScope(),
     );
-    const activeSummaryPeriod = $derived(
+    const _activeSummaryPeriod = $derived(
         safeSummaryPeriodByScope.month ?? {
             current_label: 'Bulan Ini',
             previous_label: 'Bulan Lalu',
             subtitle_label: 'bulan ini',
         },
     );
-    const activeTotalRevenue = $derived(
+    const _activeTotalRevenue = $derived(
         Number(activeSummaryStats.revenue_booking || 0) +
             Number(activeSummaryStats.revenue_charter || 0) +
             Number(activeSummaryStats.revenue_luggage || 0),
     );
-    const activeAchievementWidth = $derived(
+    const _activeAchievementWidth = $derived(
         Math.min(
             Math.max(Number(activeSummaryStats.achievement_percent || 0), 0),
             100,
@@ -435,7 +435,7 @@
             };
         }),
     );
-    const linePath = $derived.by(() =>
+    const _linePath = $derived.by(() =>
         lineChartPoints.length
             ? lineChartPoints
                   .map(
@@ -445,7 +445,7 @@
                   .join(' ')
             : '',
     );
-    const lineAreaPath = $derived.by(() =>
+    const _lineAreaPath = $derived.by(() =>
         lineChartPoints.length
             ? `M ${lineChartPoints[0].x} 100 ${lineChartPoints
                   .map((point) => `L ${point.x} ${point.y}`)
@@ -454,7 +454,7 @@
                   )} L ${lineChartPoints[lineChartPoints.length - 1].x} 100 Z`
             : '',
     );
-    const lineChartTicks = $derived.by(() =>
+    const _lineChartTicks = $derived.by(() =>
         [1, 0.5, 0].map((factor) => ({
             y: (1 - factor) * 100,
             value: maxTrendRevenue * factor,
@@ -464,11 +464,11 @@
         const totalPoints = lineChartPoints.length;
 
         if (totalPoints === 0) {
-            return new Set<number>();
+            return new SvelteSet<number>();
         }
 
         if (totalPoints <= 12) {
-            const indexes = new Set<number>();
+            const indexes = new SvelteSet<number>();
 
             for (let index = 0; index < totalPoints; index += 2) {
                 indexes.add(index);
@@ -479,7 +479,7 @@
             return indexes;
         }
 
-        const indexes = new Set<number>([0, totalPoints - 1]);
+        const indexes = new SvelteSet<number>([0, totalPoints - 1]);
         const targetCount = Math.min(5, totalPoints);
 
         for (let step = 1; step < targetCount - 1; step += 1) {
@@ -536,41 +536,42 @@
 
         return 'center';
     };
-    const tooltipTranslateClass = (align: ChartTooltipAlign) =>
+    const _tooltipTranslateClass = (align: ChartTooltipAlign) =>
         align === 'start'
             ? 'translate-x-0'
             : align === 'end'
               ? '-translate-x-full'
               : '-translate-x-1/2';
-    const tooltipArrowClass = (align: ChartTooltipAlign) =>
+    const _tooltipArrowClass = (align: ChartTooltipAlign) =>
         align === 'start'
             ? 'left-5'
             : align === 'end'
               ? 'right-5'
               : 'left-1/2 -translate-x-1/2';
-    const trendLabel = (row: TrendItem) => row.name ?? row.date ?? row.label;
-    const hoverTrendPoint = (row: TrendItem | null) => {
+    const _trendLabel = (row: TrendItem) => row.name ?? row.date ?? row.label;
+    const _hoverTrendPoint = (row: TrendItem | null) => {
         hoveredTrendKey = row ? trendKey(row) : '';
     };
-    const togglePinnedTrendPoint = (row: TrendItem) => {
+    const _togglePinnedTrendPoint = (row: TrendItem) => {
         const key = trendKey(row);
 
         pinnedTrendKey = pinnedTrendKey === key ? '' : key;
         hoveredTrendKey = key;
     };
     $effect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions -- Track changes to reset the active tooltip.
         activeTrendDataSignature;
         hoveredTrendKey = '';
         pinnedTrendKey = '';
     });
 
-    const activeTrendTooltip = $derived.by(() => {
-        if (!activeTrendTooltipKey) {
+    const _activeTrendTooltip = $derived.by(() => {
+        if (!_activeTrendTooltipKey) {
             return null;
         }
 
         const point = lineChartPoints.find(
-            (item) => item.key === activeTrendTooltipKey,
+            (item) => item.key === _activeTrendTooltipKey,
         );
 
         if (!point) {
@@ -585,11 +586,11 @@
             align: tooltipAlignFor(left),
         };
     });
-    const trendSelectedClass = (row: TrendItem) =>
-        activeTrendTooltipKey === trendKey(row) ? 'ring-4 ring-sky-500/20' : '';
-    const showLineAxisLabel = (index: number) => lineAxisIndexes.has(index);
+    const _trendSelectedClass = (row: TrendItem) =>
+        _activeTrendTooltipKey === trendKey(row) ? 'ring-4 ring-sky-500/20' : '';
+    const _showLineAxisLabel = (index: number) => lineAxisIndexes.has(index);
 
-    const revenueChannels = () => [
+    const _revenueChannels = () => [
         {
             key: 'booking',
             label: 'Booking',
@@ -731,7 +732,7 @@
                         ></div>
                     </div>
                     <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                        {#each setupProgress.items as item}
+                        {#each setupProgress.items as item (item.key)}
                             <div
                                 class="flex min-w-0 items-center gap-2 text-xs"
                             >

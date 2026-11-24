@@ -1,5 +1,5 @@
-import { fileURLToPath } from 'node:url';
 import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
@@ -28,6 +28,7 @@ export default defineConfig({
                     const fonts = readdirSync(
                         `${root}public/build/assets`,
                     ).find((file) => /^fonts-.*\.css$/.test(file));
+
                     if (fonts) {
                         return html.replace(
                             '</head>',
@@ -37,6 +38,7 @@ export default defineConfig({
                 } catch {
                     /* Fonts are optional before the first build. */
                 }
+
                 return html;
             },
         },

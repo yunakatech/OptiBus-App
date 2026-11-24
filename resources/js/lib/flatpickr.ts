@@ -1,7 +1,8 @@
-import type { Instance as FlatpickrInstance } from 'flatpickr/dist/types/instance';
+import type flatpickr from 'flatpickr';
 import { Indonesian } from 'flatpickr/dist/l10n/id.js';
+import type { Instance as FlatpickrInstance } from 'flatpickr/dist/types/instance';
 
-type FlatpickrFactory = (typeof import('flatpickr'))['default'];
+type FlatpickrFactory = typeof flatpickr;
 
 let flatpickrLoader: Promise<FlatpickrFactory> | null = null;
 
@@ -16,10 +17,12 @@ export const loadFlatpickr = async (): Promise<FlatpickrFactory> => {
             .then(([module]) => {
                 const fp = module.default;
                 fp.localize(Indonesian);
+
                 return fp;
             })
             .catch((error) => {
                 flatpickrLoader = null;
+
                 throw error;
             });
     }

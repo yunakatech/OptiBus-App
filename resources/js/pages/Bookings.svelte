@@ -10,7 +10,6 @@
 </script>
 
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page, router } from '@inertiajs/svelte';
     import {
@@ -40,6 +39,7 @@
         X,
     } from 'lucide-svelte';
     import { onMount, untrack } from 'svelte';
+    import { SvelteMap, SvelteSet } from 'svelte/reactivity';
     import AppHead from '@/components/AppHead.svelte';
     import FilterDateInput from '@/components/FilterDateInput.svelte';
     import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
@@ -61,8 +61,9 @@
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { Skeleton } from '@/components/ui/skeleton';
-    import { runWithFeedback } from '@/lib/action-feedback';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
     import { hasPermission } from '@/lib/access';
+    import { runWithFeedback } from '@/lib/action-feedback';
     import { extractApiErrorMessage } from '@/lib/api-errors';
     import {
         formatCurrencyDisplay,
@@ -74,7 +75,8 @@
         consumeDataStale,
         markDataStale,
     } from '@/lib/data-invalidation';
-    import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
+    import { loadFlatpickr  } from '@/lib/flatpickr';
+import type {FlatpickrInstance} from '@/lib/flatpickr';
     import { readUiPreferences, saveUiPreferences } from '@/lib/ui-preferences';
     import { openExternal } from '@/lib/webview';
 
@@ -644,6 +646,7 @@
         ) {
             lastBookingListPageMode = listOnly;
             lastBookingListDetailMode = groupDetailPage;
+
             return;
         }
 
@@ -662,7 +665,7 @@
     let groupEditSeatOptions = $state<string[]>([]);
     let groupEditBookedSeatTokens = $state<string[]>([]);
     let groupEditLayoutSeatTokens = $state<string[]>([]);
-    let groupEditLayoutRows = $state<LayoutCell[][]>([]);
+    let _groupEditLayoutRows = $state<LayoutCell[][]>([]);
     let groupEditSeatWarning = $state('');
     let loadingGroupEditSeats = $state(false);
     let groupRescheduleModalOpen = $state(false);
@@ -685,7 +688,7 @@
     let groupRescheduleSeatOptions = $state<string[]>([]);
     let groupRescheduleBookedSeatTokens = $state<string[]>([]);
     let groupRescheduleLayoutSeatTokens = $state<string[]>([]);
-    let groupRescheduleLayoutRows = $state<LayoutCell[][]>([]);
+    let _groupRescheduleLayoutRows = $state<LayoutCell[][]>([]);
     let groupRescheduleSeatWarning = $state('');
     let customerLookupQuery = $state('');
     let customerSuggestions = $state<CustomerLookupItem[]>([]);
@@ -771,6 +774,7 @@
 
         return () => {
             cancelled = true;
+
             if (bookingListDatePicker?.input === input) {
                 bookingListDatePicker.destroy();
                 bookingListDatePicker = null;
@@ -797,11 +801,15 @@
     const bookingDateLabel = $derived(formatDateHuman(bookingDate));
     const bookingListLoading = $derived(listOnly && !bookingListHydrated);
     $effect(() => {
-        if (!bookingListLoading) return;
+        if (!bookingListLoading) {
+return;
+}
+
         const timer = setTimeout(() => {
             bookingListRequestError =
                 'Data belum berhasil dimuat. Periksa koneksi lalu coba lagi.';
         }, 15000);
+
         return () => clearTimeout(timer);
     });
 
@@ -1015,9 +1023,10 @@
             activeScheduleUnitOption()?.seats ?? activeSchedule()?.seats ?? 0,
         );
     const bookedCount = () => bookedSeats().length;
-    const activeSegment = () => {
+    const _activeSegment = () => {
         const options = scheduleSegmentOptions();
         const found = options.find((item) => item.id === Number(formSegmentId));
+
         return (
             found ??
             segments.find((item) => item.id === Number(formSegmentId)) ??
@@ -1102,11 +1111,11 @@
         String(value || '').toUpperCase();
 
     const bookedSeatSet = () =>
-        new Set(
+        new SvelteSet(
             Object.keys(seatDetailsMap).map((seat) => normalizeSeatToken(seat)),
         );
     const selectedSeatSet = () =>
-        new Set(
+        new SvelteSet(
             selectedSeats
                 .map((seat) => normalizeSeatToken(seat))
                 .filter((seat) => seat !== ''),
@@ -1171,7 +1180,7 @@
 
     const ensurePassengerDrafts = (seats: string[]) => {
         const normalizedSeats = Array.from(
-            new Set(
+            new SvelteSet(
                 seats
                     .map((seat) => normalizeSeatToken(seat))
                     .filter((seat) => seat !== ''),
@@ -1308,7 +1317,7 @@
 
     const parseSeatInput = (value: string) =>
         Array.from(
-            new Set(
+            new SvelteSet(
                 value
                     .split(/[\s,;|]+/)
                     .map((item) => normalizeSeatToken(item))
@@ -1570,7 +1579,7 @@
             .map((cell) => normalizeSeatToken(cell.seat || ''))
             .filter((seat) => seat !== '');
 
-        return Array.from(new Set(seatTokens)).sort(compareSeatTokens);
+        return Array.from(new SvelteSet(seatTokens)).sort(compareSeatTokens);
     };
     const groupEditSeatLabel = (seat: string) => {
         const normalized = normalizeSeatToken(seat);
@@ -1620,7 +1629,7 @@
             ? 'taken'
             : 'open';
     };
-    const groupEditSeatButtonClass = (seat: string) => {
+    const _groupEditSeatButtonClass = (seat: string) => {
         const status = groupEditSeatStatus(seat);
         const isSelected =
             normalizeSeatToken(groupEditSeat) === normalizeSeatToken(seat);
@@ -1639,7 +1648,7 @@
 
         return 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200';
     };
-    const selectGroupEditSeat = (seat: string) => {
+    const _selectGroupEditSeat = (seat: string) => {
         if (
             groupEditSeatStatus(seat) === 'taken' ||
             savingGroupRowEdit ||
@@ -1696,7 +1705,7 @@
             ? 'taken'
             : 'open';
     };
-    const groupRescheduleSeatButtonClass = (seat: string) => {
+    const _groupRescheduleSeatButtonClass = (seat: string) => {
         const status = groupRescheduleSeatStatus(seat);
         const isSelected =
             normalizeSeatToken(groupRescheduleSeat) ===
@@ -1716,7 +1725,7 @@
 
         return 'border-emerald-300 bg-emerald-50 text-emerald-700 hover:border-emerald-400 hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-950/30 dark:text-emerald-200';
     };
-    const selectGroupRescheduleSeat = (seat: string) => {
+    const _selectGroupRescheduleSeat = (seat: string) => {
         if (
             groupRescheduleSeatStatus(seat) === 'taken' ||
             savingGroupReschedule ||
@@ -1825,7 +1834,7 @@
                 toSeatTokenList(seatOptionsJson.available_seats),
             );
             const options = Array.from(
-                new Set(
+                new SvelteSet(
                     fallbackSeat !== ''
                         ? [fallbackSeat, ...availableSeats]
                         : availableSeats,
@@ -2431,7 +2440,7 @@
     const bookingSuccessWhatsappOptions = (
         snapshot: BookingSuccessSnapshot,
     ): BookingSuccessWhatsappChoice[] => {
-        const choices = new Map<string, BookingSuccessWhatsappChoice>();
+        const choices = new SvelteMap<string, BookingSuccessWhatsappChoice>();
 
         for (const item of snapshot.items) {
             const phone = normalizeWhatsappPhone(item.phone);
@@ -2475,6 +2484,7 @@
 
         if (text === '') {
             bookingSuccessFeedback = 'Detail booking belum tersedia.';
+
             return;
         }
 
@@ -2486,6 +2496,7 @@
         const opened = openExternal(url);
 
         bookingSuccessWhatsappPickerOpen = false;
+
         if (opened) {
             bookingSuccessFeedback = 'WhatsApp dibuka dengan detail booking.';
 
@@ -2504,6 +2515,7 @@
 
         if (choices.length === 0) {
             openBookingSuccessWhatsapp(bookingSuccessSnapshot);
+
             return;
         }
 
@@ -2512,6 +2524,7 @@
                 bookingSuccessSnapshot,
                 choices[0].phone,
             );
+
             return;
         }
 
@@ -2557,7 +2570,7 @@
     };
 
     const uniqueSortedSeatTokens = (tokens: string[]): string[] =>
-        Array.from(new Set(tokens)).sort(compareSeatTokens);
+        Array.from(new SvelteSet(tokens)).sort(compareSeatTokens);
 
     const clearSeatSelection = () => {
         selectedSeats = [];
@@ -3133,7 +3146,7 @@
         localBookingRouteOptions.length > 0
             ? localBookingRouteOptions
             : Array.from(
-                  new Set(
+                  new SvelteSet(
                       localBookingGroups
                           .map((group) => String(group.rute || '').trim())
                           .filter((route) => route !== ''),
@@ -3144,8 +3157,12 @@
     const filteredBookingGroupsMemo = $derived.by(() => {
         const filtered = localBookingGroups.filter((group) => {
             // Date, normalized route and payment filters are applied before server paging.
-            if (listOnly && !groupDetailPage) return true;
+            if (listOnly && !groupDetailPage) {
+return true;
+}
+
             const groupDate = String(group.tanggal || '').slice(0, 10);
+
             if (!groupDate) {
                 return false;
             }
@@ -3213,7 +3230,7 @@
             : summary;
     });
     const bookingDateSectionsMemo = $derived.by<BookingDateSection[]>(() => {
-        const sections = new Map<string, BookingDateSection>();
+        const sections = new SvelteMap<string, BookingDateSection>();
 
         for (const group of visibleBookingGroupsMemo) {
             const key = String(group.tanggal || '');
@@ -3274,15 +3291,21 @@
 
     $effect(() => {
         const signature = bookingListFilterSignature;
+
         if (
             !listOnly ||
             groupDetailPage ||
             lastBookingListFilterSignature === signature
-        )
-            return;
+        ) {
+return;
+}
+
         const previous = lastBookingListFilterSignature;
         lastBookingListFilterSignature = signature;
-        if (previous) untrack(() => requestBookingPage(1));
+
+        if (previous) {
+untrack(() => requestBookingPage(1));
+}
     });
     const persistUiPreferences = (
         preferences: Parameters<typeof saveUiPreferences>[0],
@@ -3328,12 +3351,17 @@
         per_page: bookingPagination.per_page || 24,
     });
     const requestBookingPage = (nextPage = 1) => {
-        if (!listOnly) return;
+        if (!listOnly) {
+return;
+}
+
         const requestId = ++bookingListRequestId;
         const failed = () => {
-            if (requestId === bookingListRequestId)
-                bookingListRequestError =
+            if (requestId === bookingListRequestId) {
+bookingListRequestError =
                     'Gagal memuat keberangkatan. Coba lagi.';
+}
+
             return false;
         };
         bookingListRequestError = '';
@@ -3346,16 +3374,24 @@
             onNetworkError: failed,
             onHttpException: failed,
             onFinish: () => {
-                if (requestId === bookingListRequestId)
-                    bookingListHydrated = true;
+                if (requestId === bookingListRequestId) {
+bookingListHydrated = true;
+}
             },
         });
     };
     const reloadBookingListData = () => {
-        if (!listOnly) return;
-        if (bookingListReloadTimer) clearTimeout(bookingListReloadTimer);
+        if (!listOnly) {
+return;
+}
+
+        if (bookingListReloadTimer) {
+clearTimeout(bookingListReloadTimer);
+}
+
         bookingListReloadTimer = null;
         consumeDataStale(['bookings']);
+
         if (groupDetailPage) {
             router.reload({ only: [...BOOKING_LIST_DATA_PROPS] });
         } else {
@@ -4141,8 +4177,10 @@
             group = await ensureGroupDetails(group);
         } catch {
             formError = 'Detail pembayaran gagal dimuat. Coba lagi.';
+
             return;
         }
+
         const payableRows = payableBookingRows(group);
 
         if (payableRows.length === 0) {
@@ -4176,7 +4214,7 @@
                 Number(response?.updated_count ?? bookingIds.length) ||
                 bookingIds.length;
 
-            const paidIds = new Set(bookingIds);
+            const paidIds = new SvelteSet(bookingIds);
 
             localBookingGroups = localBookingGroups.map((item) => {
                 if (item.key !== group.key) {
@@ -4301,7 +4339,7 @@
 
         const currentSeat = normalizeSeatToken(row.seat || '');
         const targetUnit = Number(group.unit) || 1;
-        const fallbackBookedSeats = new Set(
+        const fallbackBookedSeats = new SvelteSet(
             group.bookings
                 .filter(
                     (item) =>
@@ -4327,7 +4365,7 @@
         groupEditUnit = targetUnit;
         groupEditSeatOptions = currentSeat !== '' ? [currentSeat] : [];
         groupEditLayoutSeatTokens = [];
-        groupEditLayoutRows = [];
+        _groupEditLayoutRows = [];
         groupEditSeatWarning = '';
         loadingGroupEditSeats = true;
         groupEditModalOpen = true;
@@ -4370,7 +4408,7 @@
                 uniqueSortedSeatTokens(backendBookedSeats);
             groupEditLayoutSeatTokens =
                 uniqueSortedSeatTokens(backendSeatTokens);
-            groupEditLayoutRows = resolveLayoutRows(backendLayout, totalSeats);
+            _groupEditLayoutRows = resolveLayoutRows(backendLayout, totalSeats);
 
             let availableSeats = uniqueSortedSeatTokens(backendAvailableSeats);
 
@@ -4446,7 +4484,7 @@
                 groupEditBookedSeatTokens =
                     Array.from(fallbackBookedSeats).sort(compareSeatTokens);
                 groupEditLayoutSeatTokens = seatTokens;
-                groupEditLayoutRows = layoutRows;
+                _groupEditLayoutRows = layoutRows;
                 groupEditSeatWarning =
                     seatTokens.length === 0
                         ? 'Layout keberangkatan belum ditemukan pada Jadwal untuk jam ini.'
@@ -4461,7 +4499,7 @@
                     availableSeats = [currentSeat];
                 }
 
-                groupEditSeatOptions = Array.from(new Set(availableSeats)).sort(
+                groupEditSeatOptions = Array.from(new SvelteSet(availableSeats)).sort(
                     compareSeatTokens,
                 );
 
@@ -4477,7 +4515,7 @@
                 groupEditSeatOptions = currentSeat !== '' ? [currentSeat] : [];
                 groupEditLayoutSeatTokens =
                     currentSeat !== '' ? [currentSeat] : [];
-                groupEditLayoutRows =
+                _groupEditLayoutRows =
                     currentSeat !== ''
                         ? [[{ kind: 'seat', seat: currentSeat }]]
                         : [];
@@ -4500,7 +4538,7 @@
         groupEditSeatOptions = [];
         groupEditBookedSeatTokens = [];
         groupEditLayoutSeatTokens = [];
-        groupEditLayoutRows = [];
+        _groupEditLayoutRows = [];
         groupEditSeatWarning = '';
         loadingGroupEditSeats = false;
     };
@@ -4526,7 +4564,7 @@
         groupRescheduleSeatOptions = [];
         groupRescheduleBookedSeatTokens = [];
         groupRescheduleLayoutSeatTokens = [];
-        groupRescheduleLayoutRows = [];
+        _groupRescheduleLayoutRows = [];
         groupRescheduleSeatWarning = '';
         loadingGroupRescheduleSchedules = false;
         loadingGroupRescheduleSeats = false;
@@ -4542,7 +4580,7 @@
             groupRescheduleSeatOptions = [];
             groupRescheduleBookedSeatTokens = [];
             groupRescheduleLayoutSeatTokens = [];
-            groupRescheduleLayoutRows = [];
+            _groupRescheduleLayoutRows = [];
             groupRescheduleSeatWarning = '';
 
             return;
@@ -4594,7 +4632,7 @@
                 uniqueSortedSeatTokens(backendBookedSeats);
             groupRescheduleLayoutSeatTokens =
                 uniqueSortedSeatTokens(backendSeatTokens);
-            groupRescheduleLayoutRows = resolveLayoutRows(
+            _groupRescheduleLayoutRows = resolveLayoutRows(
                 backendLayout,
                 totalSeats,
             );
@@ -4612,7 +4650,7 @@
             groupRescheduleSeatOptions = [];
             groupRescheduleBookedSeatTokens = [];
             groupRescheduleLayoutSeatTokens = [];
-            groupRescheduleLayoutRows = [];
+            _groupRescheduleLayoutRows = [];
             groupRescheduleSeatWarning =
                 error instanceof Error
                     ? error.message
@@ -4650,7 +4688,7 @@
                 groupRescheduleSeatOptions = [];
                 groupRescheduleBookedSeatTokens = [];
                 groupRescheduleLayoutSeatTokens = [];
-                groupRescheduleLayoutRows = [];
+                _groupRescheduleLayoutRows = [];
                 groupRescheduleSeatWarning =
                     'Belum ada jadwal keberangkatan pada tanggal yang dipilih.';
 
@@ -4755,7 +4793,7 @@
         groupRescheduleSeatOptions = [];
         groupRescheduleBookedSeatTokens = [];
         groupRescheduleLayoutSeatTokens = [];
-        groupRescheduleLayoutRows = [];
+        _groupRescheduleLayoutRows = [];
         groupRescheduleSeatWarning = '';
         groupRescheduleModalOpen = true;
         void ensureGroupRescheduleModalLoaded();
@@ -4793,7 +4831,7 @@
         groupRescheduleSeatOptions = [];
         groupRescheduleBookedSeatTokens = [];
         groupRescheduleLayoutSeatTokens = [];
-        groupRescheduleLayoutRows = [];
+        _groupRescheduleLayoutRows = [];
         groupRescheduleSeatWarning = '';
         groupRescheduleModalOpen = true;
         formError = '';
@@ -5712,13 +5750,19 @@
     const ensureGroupDetails = async (
         group: BookingGroup,
     ): Promise<BookingGroup> => {
-        if (group.detail_loaded !== false) return group;
+        if (group.detail_loaded !== false) {
+return group;
+}
+
         const payload = await apiGet(
             `/api/bookings/groups/${encodeURIComponent(group.key)}`,
             {},
         );
-        if (!payload?.group)
-            throw new Error('Detail keberangkatan gagal dimuat.');
+
+        if (!payload?.group) {
+throw new Error('Detail keberangkatan gagal dimuat.');
+}
+
         return payload.group as BookingGroup;
     };
     const copyBookingGroup = async (group: BookingGroup) => {
@@ -6331,7 +6375,7 @@
                       };
                   })
                 : [];
-            const recordBySeat = new Map<string, CreatedBookingRecord>(
+            const recordBySeat = new SvelteMap<string, CreatedBookingRecord>(
                 createdRecords.map((item) => [item.seat, item]),
             );
             const successItems = passengerCandidates.map((draft) => {
@@ -6474,8 +6518,12 @@
         let disposed = false;
 
         const initPickers = async () => {
-            if (!bookingDateInput) return;
+            if (!bookingDateInput) {
+return;
+}
+
             const flatpickr = await loadFlatpickr();
+
             if (disposed) {
                 return;
             }

@@ -14,6 +14,7 @@
         const timer = setTimeout(() => {
             timedOut = true;
         }, 15000);
+
         return () => clearTimeout(timer);
     });
     function retry() {

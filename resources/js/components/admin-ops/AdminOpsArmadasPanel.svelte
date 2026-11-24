@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import {
         Download,
@@ -8,6 +7,8 @@
         Pencil,
         Trash2,
     } from 'lucide-svelte';
+    import DataTable from '@/components/terminal/DataTable.svelte';
+    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -16,13 +17,7 @@
         DropdownMenuItem,
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
-    import DataTable from '@/components/terminal/DataTable.svelte';
-    import {
-        Tooltip,
-        TooltipContent,
-        TooltipTrigger,
-    } from '@/components/ui/tooltip';
-    import TerminalFilter from '@/components/terminal/TerminalFilter.svelte';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
     import RevenueChartTable from './RevenueChartTable.svelte';
 
     type ViewMode = 'data' | 'form' | 'view' | 'layout';
@@ -154,8 +149,8 @@
         armadaNetMargin,
         armadaAchievement,
         armadaStatus,
-        categoryTone,
-        normalizeUnitCategory,
+        categoryTone: _categoryTone,
+        normalizeUnitCategory: _normalizeUnitCategory,
         loadArmadas,
         openArmadaView,
         openArmadaEditor,
@@ -199,6 +194,7 @@
         }
 
         const date = new Date(`${raw}T00:00:00`);
+
         if (Number.isNaN(date.getTime())) {
             return raw;
         }
@@ -499,7 +495,7 @@
         return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300';
     };
 
-    const summaryCards = $derived([
+    const _summaryCards = $derived([
         {
             key: 'revenue',
             label: 'Total Revenue',
@@ -561,7 +557,7 @@
         },
     ]);
 
-    const armadaSummaryCards = $derived([
+    const _armadaSummaryCards = $derived([
         {
             key: 'revenue',
             label: 'Total Revenue',
@@ -617,7 +613,7 @@
         },
     ]);
 
-    const armadaChartBars = $derived.by(() =>
+    const _armadaChartBars = $derived.by(() =>
         [...armadas]
             .sort(
                 (left, right) =>
@@ -1359,7 +1355,7 @@
                     {/if}
 
                     {#each armadas as row (row.id)}
-                        {@const gross = armadaGrossMargin(row)}
+                        {@const _gross = armadaGrossMargin(row)}
                         {@const net = armadaNetMargin(row)}
                         {@const achievement = armadaAchievement(row)}
                         {@const activeGps = gpsActive(row)}
@@ -1491,10 +1487,10 @@
                         {#snippet row({ row })}
                             {@const armada = row as ArmadaRow}
                             {@const gross = armadaGrossMargin(armada)}
-                            {@const net = armadaNetMargin(armada)}
+                            {@const _net = armadaNetMargin(armada)}
                             {@const achievement = armadaAchievement(armada)}
                             {@const activeGps = gpsActive(armada)}
-                            {@const achievementStyle =
+                            {@const _achievementStyle =
                                 achievementTone(achievement)}
 
                             <td class="px-2.5 py-1.5 align-top">

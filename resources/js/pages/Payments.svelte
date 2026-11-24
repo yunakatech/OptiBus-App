@@ -10,7 +10,6 @@
 </script>
 
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { router } from '@inertiajs/svelte';
     import {
@@ -22,6 +21,7 @@
         Search,
     } from 'lucide-svelte';
     import { onMount } from 'svelte';
+    import { SvelteDate } from 'svelte/reactivity';
     import AppHead from '@/components/AppHead.svelte';
     import FilterDateInput from '@/components/FilterDateInput.svelte';
     import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
@@ -35,6 +35,7 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
     import { runWithFeedback } from '@/lib/action-feedback';
     import {
         formatCurrencyDisplay,
@@ -46,7 +47,8 @@
         consumeDataStale,
         markDataStale,
     } from '@/lib/data-invalidation';
-    import { loadFlatpickr, type FlatpickrInstance } from '@/lib/flatpickr';
+    import { loadFlatpickr  } from '@/lib/flatpickr';
+import type {FlatpickrInstance} from '@/lib/flatpickr';
 
     type StatusKey = 'unpaid' | 'dp' | 'paid';
     type SourceKey = 'all' | 'booking' | 'charter' | 'luggage';
@@ -266,11 +268,12 @@
 
     const parseDateValue = (value: string) => {
         const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
         if (!match) {
             return null;
         }
 
-        const date = new Date(
+        const date = new SvelteDate(
             Number(match[1]),
             Number(match[2]) - 1,
             Number(match[3]),
@@ -280,13 +283,13 @@
     };
 
     const addMonthsClamped = (date: Date, months: number) => {
-        const next = new Date(date);
+        const next = new SvelteDate(date);
         const targetMonth = next.getMonth() + months;
         const originalDay = next.getDate();
 
         next.setDate(1);
         next.setMonth(targetMonth);
-        const lastDay = new Date(
+        const lastDay = new SvelteDate(
             next.getFullYear(),
             next.getMonth() + 1,
             0,
@@ -297,13 +300,13 @@
     };
 
     const monthRange = (offset = 0) => {
-        const today = new Date();
-        const first = new Date(
+        const today = new SvelteDate();
+        const first = new SvelteDate(
             today.getFullYear(),
             today.getMonth() + offset,
             1,
         );
-        const last = new Date(
+        const last = new SvelteDate(
             today.getFullYear(),
             today.getMonth() + offset + 1,
             0,
@@ -316,7 +319,7 @@
     };
 
     const todayRange = () => {
-        const today = formatDateValue(new Date());
+        const today = formatDateValue(new SvelteDate());
 
         return { from: today, to: today };
     };
@@ -405,18 +408,21 @@
             } else {
                 dateFrom = dateTo;
             }
+
             syncDatePickerValues();
 
             return;
         }
 
         const maxTo = addMonthsClamped(from, 3);
+
         if (to.getTime() > maxTo.getTime()) {
             if (changed === 'from') {
                 dateTo = formatDateValue(maxTo);
             } else {
                 dateFrom = formatDateValue(addMonthsClamped(to, -3));
             }
+
             dateRangeMessage = 'Periode dibatasi maksimal 3 bulan.';
             syncDatePickerValues();
 
@@ -732,7 +738,7 @@
         reloadData(1);
     };
 
-    const setSource = (source: SourceKey) => {
+    const _setSource = (source: SourceKey) => {
         activeSource = source;
         reloadData(1);
     };
@@ -786,6 +792,7 @@
 
     const applyBulkPayment = async () => {
         const warning = bulkStatusWarning;
+
         if (warning !== '') {
             bulkErrorMessage = warning;
 

@@ -1,9 +1,9 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
+    import { onMount, onDestroy } from 'svelte';
     import { SidebarProvider } from '@/components/ui/sidebar';
     import type { AppVariant } from '@/types';
-    import { onMount, onDestroy } from 'svelte';
 
     let {
         variant = 'sidebar',

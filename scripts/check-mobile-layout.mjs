@@ -1,9 +1,9 @@
 // Uses synthetic payloads exported by MobilePagesTest, never a production login.
-import fs from 'node:fs';
-import path from 'node:path';
-import os from 'node:os';
-import http from 'node:http';
 import { spawn } from 'node:child_process';
+import fs from 'node:fs';
+import http from 'node:http';
+import os from 'node:os';
+import path from 'node:path';
 
 const root = process.cwd();
 const output = path.join(root, 'storage/framework/testing/mobile-preview');
@@ -18,8 +18,15 @@ let failingRoute = null;
 let latency = 0;
 function collectCss(key) {
     const entry = manifest[key];
-    if (!entry) return;
-    if (entry.file.endsWith('.css')) css.add(entry.file);
+
+    if (!entry) {
+return;
+}
+
+    if (entry.file.endsWith('.css')) {
+css.add(entry.file);
+}
+
     entry.css?.forEach((file) => css.add(file));
     entry.imports?.forEach(collectCss);
 }
@@ -27,6 +34,7 @@ collectCss('resources/js/app.ts');
 collectCss('resources/css/app.css');
 const server = http.createServer((req, res) => {
     const url = new URL(req.url, 'http://localhost');
+
     if (url.pathname.startsWith('/api/')) {
         res.setHeader('Content-Type', 'application/json');
         res.end(
@@ -43,19 +51,25 @@ const server = http.createServer((req, res) => {
                 available: [],
             }),
         );
+
         return;
     }
+
     const fixture = fixtures[url.pathname];
+
     if (fixture) {
         const page = { ...fixture, url: url.pathname + url.search };
+
         if (req.headers['x-inertia']) {
             if (failingRoute === url.pathname) {
                 res.writeHead(503, { 'Content-Type': 'application/json' });
                 res.end(
                     JSON.stringify({ message: 'Synthetic retry scenario' }),
                 );
+
                 return;
             }
+
             res.setHeader('Content-Type', 'application/json');
             res.setHeader('X-Inertia', 'true');
             setTimeout(() => res.end(JSON.stringify(page)), latency);
@@ -66,10 +80,13 @@ const server = http.createServer((req, res) => {
                 `<!doctype html><html lang="id"><head><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="csrf-token" content="preview">${[...css].map((file) => `<link rel="stylesheet" href="/build/${file}">`).join('')}<script type="module" src="/build/${manifest['resources/js/app.ts'].file}"></script></head><body><script data-page="app" type="application/json">${data}</script><div id="app"></div></body></html>`,
             );
         }
+
         return;
     }
+
     const file = path.resolve(root, 'public', '.' + url.pathname);
     const publicRoot = path.resolve(root, 'public') + path.sep;
+
     if (
         !file.startsWith(publicRoot) ||
         !fs.existsSync(file) ||
@@ -77,8 +94,10 @@ const server = http.createServer((req, res) => {
     ) {
         res.writeHead(404);
         res.end();
+
         return;
     }
+
     const mime = {
         '.js': 'text/javascript',
         '.css': 'text/css',
@@ -115,6 +134,7 @@ const child = spawn(
     { windowsHide: true, stdio: ['ignore', 'ignore', 'pipe'] },
 );
 let socket;
+
 try {
     const endpoint = await new Promise((resolve, reject) => {
         let log = '';
@@ -126,6 +146,7 @@ try {
         child.stderr.on('data', (chunk) => {
             log += chunk;
             const match = log.match(/DevTools listening on (ws:\/\/\S+)/);
+
             if (match) {
                 clearTimeout(timer);
                 resolve(match[1]);
@@ -143,11 +164,16 @@ try {
     let current = '';
     socket.onmessage = (event) => {
         const message = JSON.parse(event.data);
+
         if (message.id) {
             const task = pending.get(message.id);
             pending.delete(message.id);
-            if (message.error) task?.reject(new Error(message.error.message));
-            else task?.resolve(message.result);
+
+            if (message.error) {
+task?.reject(new Error(message.error.message));
+} else {
+task?.resolve(message.result);
+}
         } else if (message.method === 'Runtime.exceptionThrown') {
             errors.push({
                 route: current,
@@ -159,6 +185,7 @@ try {
     };
     function call(method, params = {}, sessionId) {
         const id = ++nextId;
+
         return new Promise((resolve, reject) => {
             const timer = setTimeout(() => {
                 pending.delete(id);
@@ -199,25 +226,32 @@ try {
             returnByValue: true,
             awaitPromise: true,
         });
-        if (result.exceptionDetails)
-            throw new Error(result.exceptionDetails.text);
+
+        if (result.exceptionDetails) {
+throw new Error(result.exceptionDetails.text);
+}
+
         return result.result.value;
     };
     const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
     async function navigate(route) {
         current = route;
         await cdp('Page.navigate', { url: origin + route });
+
         for (let attempt = 0; attempt < 70; attempt++) {
             await pause(100);
+
             if (
                 await evaluate(
                     "document.readyState === 'complete' && document.querySelector('#app')?.children.length > 0",
                 )
             ) {
                 await pause(200);
+
                 return;
             }
         }
+
         console.error(
             JSON.stringify({
                 route,
@@ -227,6 +261,7 @@ try {
                 ),
             }),
         );
+
         throw new Error(`Page did not mount: ${route}`);
     }
     const measurements = [];
@@ -241,6 +276,7 @@ try {
         '/settings/customer-bagasi',
         '/platform/saas',
     ];
+
     for (const width of [320, 360, 390, 430, 1440]) {
         await cdp('Emulation.setDeviceMetricsOverride', {
             width,
@@ -251,6 +287,7 @@ try {
         await cdp('Emulation.setTouchEmulationEnabled', {
             enabled: width < 768,
         });
+
         for (const route of Object.keys(fixtures)) {
             await navigate(route);
             const result =
@@ -263,6 +300,7 @@ try {
                 ...result,
                 pass: result.scrollWidth <= width + 1 && result.width === width,
             });
+
             if (width === 360 && screenshots.includes(route)) {
                 const shot = await cdp('Page.captureScreenshot', {
                     format: 'png',
@@ -277,10 +315,12 @@ try {
                 );
             }
         }
+
         console.log(
             `Checked ${Object.keys(fixtures).length} pages at ${width}px`,
         );
     }
+
     // Check the actual filter dialog footer against a shrunken visual viewport.
     await cdp('Emulation.setDeviceMetricsOverride', {
         width: 430,
@@ -314,9 +354,13 @@ try {
     });
     async function waitFor(expression) {
         for (let i = 0; i < 80; i++) {
-            if (await evaluate(expression)) return true;
+            if (await evaluate(expression)) {
+return true;
+}
+
             await pause(100);
         }
+
         return false;
     }
     await navigate('/bookings');
@@ -408,13 +452,15 @@ try {
             interactions,
         }),
     );
+
     if (
         report.failures.length ||
         errors.length ||
         !filter.applyVisible ||
         Object.values(interactions).some((passed) => !passed)
-    )
-        process.exitCode = 1;
+    ) {
+process.exitCode = 1;
+}
 } finally {
     socket?.close();
     child.kill();

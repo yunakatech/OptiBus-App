@@ -10,7 +10,6 @@
 </script>
 
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page } from '@inertiajs/svelte';
     import {
@@ -26,6 +25,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     type TenantItem = {
         id: number;
@@ -120,6 +120,7 @@
 
     function formatRupiah(value: number): string {
         const amount = Math.round(Number(value || 0));
+
         return `Rp ${amount.toLocaleString('id-ID')}`;
     }
 
@@ -154,10 +155,15 @@
     }
 
     function formatDate(value: string | null | undefined): string {
-        if (!value) return '-';
+        if (!value) {
+return '-';
+}
 
         const date = new Date(`${value}`.slice(0, 10) + 'T00:00:00');
-        if (Number.isNaN(date.getTime())) return value;
+
+        if (Number.isNaN(date.getTime())) {
+return value;
+}
 
         return new Intl.DateTimeFormat('id-ID', {
             day: '2-digit',
@@ -169,14 +175,22 @@
     function statusVariant(
         status: string,
     ): 'default' | 'destructive' | 'outline' | 'secondary' {
-        if (status === 'active') return 'default';
-        if (status === 'trial' || status === 'pending') return 'secondary';
+        if (status === 'active') {
+return 'default';
+}
+
+        if (status === 'trial' || status === 'pending') {
+return 'secondary';
+}
+
         if (
             status === 'past_due' ||
             status === 'overdue' ||
             status === 'suspended'
-        )
-            return 'destructive';
+        ) {
+return 'destructive';
+}
+
         return 'outline';
     }
 
@@ -186,8 +200,15 @@
         const diffDays = Math.floor(
             (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
         );
-        if (Number.isNaN(diffDays) || diffDays <= 0) return 'Hari ini';
-        if (diffDays === 1) return '1 hari lalu';
+
+        if (Number.isNaN(diffDays) || diffDays <= 0) {
+return 'Hari ini';
+}
+
+        if (diffDays === 1) {
+return '1 hari lalu';
+}
+
         return `${diffDays} hari lalu`;
     }
 

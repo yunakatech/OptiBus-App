@@ -1,5 +1,5 @@
-import { dashboard } from '@/routes';
 import { toUrl } from '@/lib/utils';
+import { dashboard } from '@/routes';
 
 const PRIMARY_BOTTOM_NAV_HREFS = [
     toUrl(dashboard()),

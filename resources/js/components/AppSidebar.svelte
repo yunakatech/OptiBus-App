@@ -1,7 +1,7 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
-    import type { Snippet } from 'svelte';
     import MessageCircle from 'lucide-svelte/icons/message-circle';
+    import type { Snippet } from 'svelte';
     import AppLogo from '@/components/AppLogo.svelte';
     import NavMain from '@/components/NavMain.svelte';
     import {

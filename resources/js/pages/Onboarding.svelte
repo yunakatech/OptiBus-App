@@ -7,7 +7,6 @@
 
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
-    import { untrack } from 'svelte';
     import {
         ArrowLeft,
         ArrowRight,
@@ -16,9 +15,10 @@
         CheckCircle2,
         Circle,
         CircleDollarSign,
-        Clock3,
+
         UserRound,
     } from 'lucide-svelte';
+    import { untrack } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import InputError from '@/components/InputError.svelte';
     import { Button } from '@/components/ui/button';
@@ -124,10 +124,13 @@
 
     function nextStep(): void {
         localError = '';
+
         if (currentStep === 0 && !canLeaveTravelStep()) {
             localError = 'Lengkapi data travel dan rute utama dulu.';
+
             return;
         }
+
         currentStep = Math.min(currentStep + 1, steps.length - 1);
     }
 
@@ -157,6 +160,7 @@
 
     function removePickupTime(index: number): void {
         pickupTimes = pickupTimes.filter((_, itemIndex) => itemIndex !== index);
+
         if (pickupTimes.length === 0) {
             pickupTimes = [''];
         }
@@ -219,10 +223,10 @@
         <input type="hidden" name="armada_merk" value={armadaMerk} />
         <input type="hidden" name="driver_name" value={driverName} />
         <input type="hidden" name="driver_phone" value={driverPhone} />
-        {#each filledPickupTimes() as time}
+        {#each filledPickupTimes() as time (time)}
             <input type="hidden" name="pickup_times[]" value={time} />
         {/each}
-        {#each scheduleDays as day}
+        {#each scheduleDays as day (day)}
             <input type="hidden" name="schedule_days[]" value={day} />
         {/each}
 
@@ -257,7 +261,7 @@
                         ></div>
                     </div>
                     <div class="mt-2 grid gap-1.5 sm:grid-cols-2">
-                        {#each progressItems as item}
+                        {#each progressItems as item (item.key)}
                             <div class="flex items-center gap-2 text-xs">
                                 {#if item.done}
                                     <CheckCircle2
@@ -283,7 +287,7 @@
                 aria-label="Langkah pengaturan"
                 class="flex flex-wrap gap-1 border-y border-border py-2 sm:grid sm:grid-cols-5"
             >
-                {#each steps as step, index}
+                {#each steps as step, index (index)}
                     {@const Icon = step.icon}
                     <button
                         type="button"
@@ -425,7 +429,7 @@
                             <div
                                 class="grid grid-cols-4 gap-1.5 sm:grid-cols-7"
                             >
-                                {#each dayOptions as day}
+                                {#each dayOptions as day (day.value)}
                                     <label
                                         title={day.label}
                                         class={`cursor-pointer border px-2 py-2 text-center text-xs font-semibold transition-colors ${
@@ -471,7 +475,7 @@
                                 class="flex flex-wrap gap-1.5"
                                 aria-label="Pilihan cepat jam berangkat"
                             >
-                                {#each timeSuggestions as time}
+                                {#each timeSuggestions as time (time)}
                                     <button
                                         type="button"
                                         class={`min-h-10 border px-3 py-2 text-xs font-semibold transition-colors ${
@@ -587,7 +591,7 @@
                                 class="flex flex-wrap gap-1.5"
                                 aria-label="Pilihan cepat jam pickup"
                             >
-                                {#each timeSuggestions as time}
+                                {#each timeSuggestions as time (time)}
                                     <button
                                         type="button"
                                         class={`min-h-10 border px-3 py-2 text-xs font-semibold transition-colors ${
@@ -605,7 +609,7 @@
                                 {/each}
                             </div>
                             <div class="grid gap-1.5">
-                                {#each pickupTimes as time, index}
+                                {#each pickupTimes as _time, index (index)}
                                     <div class="flex items-center gap-2">
                                         <span
                                             class="w-16 shrink-0 text-xs md:text-[11px] font-semibold text-muted-foreground"

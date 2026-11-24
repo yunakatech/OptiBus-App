@@ -11,6 +11,7 @@ export function refreshBookingInboxNudge(force = false): Promise<boolean> {
     }
 
     const now = Date.now();
+
     if (!force && now - lastRefreshAt < 5_000) {
         return Promise.resolve(bookingInboxNudge.hasPending);
     }
@@ -28,6 +29,7 @@ export function refreshBookingInboxNudge(force = false): Promise<boolean> {
     })
         .then(async (response) => {
             const payload = await response.json();
+
             if (!response.ok || payload.success !== true) {
                 return false;
             }

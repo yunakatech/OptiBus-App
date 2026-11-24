@@ -1,9 +1,9 @@
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     type LayoutCellType = 'seat' | 'empty' | 'driver';
     type LayoutPattern =

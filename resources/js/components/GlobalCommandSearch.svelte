@@ -6,9 +6,10 @@
     import { Button } from '@/components/ui/button';
     import {
         flattenNavSections,
-        getVisibleNavSections,
-        type FlatNavItem,
+        getVisibleNavSections
+
     } from '@/lib/navigation';
+import type {FlatNavItem} from '@/lib/navigation';
     import { toUrl } from '@/lib/utils';
 
     let open = $state(false);

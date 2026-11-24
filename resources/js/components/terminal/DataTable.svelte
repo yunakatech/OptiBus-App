@@ -106,7 +106,7 @@
     >
         <thead>
             <tr class={compactHeaderRowClass}>
-                {#each columns as col}
+                {#each columns as col (col.key)}
                     {#if col}
                         <th
                             class={cn(
@@ -154,7 +154,7 @@
                     {#if row}
                         {@render row(snippetProps)}
                     {:else}
-                        {#each computedColumns as col}
+                        {#each computedColumns as col (col.key)}
                             <td
                                 class={cn(
                                     'whitespace-nowrap align-middle',

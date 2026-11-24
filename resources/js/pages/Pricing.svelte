@@ -7,9 +7,7 @@
 </script>
 
 <script lang="ts">
-    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
 
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page } from '@inertiajs/svelte';
     import {
@@ -25,6 +23,8 @@
         X,
     } from 'lucide-svelte';
     import AppLogo from '@/components/AppLogo.svelte';
+    import NavigationMetrics from '@/components/NavigationMetrics.svelte';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     type PlanFeature = {
         name: string;
@@ -252,8 +252,10 @@
     ];
 
     function formatRupiah(value: number): string {
-        if (value >= 1_000_000)
-            return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
+        if (value >= 1_000_000) {
+return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
+}
+
         return `Rp ${(value / 1_000).toFixed(0)} rb`;
     }
 
@@ -388,7 +390,7 @@
             <div
                 class="grid border-y border-[#DCE9E6] lg:grid-cols-3 lg:divide-x lg:divide-[#DCE9E6]"
             >
-                {#each plans as plan}
+                {#each plans as plan (plan.slug)}
                     <article
                         class={`relative flex flex-col border-b border-[#DCE9E6] px-1 py-6 sm:px-5 sm:py-7 lg:border-b-0 ${plan.slug === 'pro' ? 'bg-[#E7FAF3] lg:-my-px lg:border-y-2 lg:border-y-[#087F79]' : ''}`}
                     >
@@ -466,7 +468,7 @@
                         <div class="mt-5 grow space-y-3 py-1">
                             {#each (plan.features ?? [])
                                 .filter((feature) => feature.included)
-                                .slice(0, 5) as feature}
+                                .slice(0, 5) as feature (feature.name)}
                                 <div
                                     class="flex items-center gap-2 text-sm text-[#163A39]"
                                 >
@@ -537,7 +539,7 @@
                     ><div
                         class="divide-y divide-[#DCE9E6] border-y border-[#DCE9E6] md:hidden"
                     >
-                        {#each comparisonRows as row}
+                        {#each comparisonRows as row (row.label)}
                             <div class="py-4">
                                 <p class="text-sm font-semibold text-[#163A39]">
                                     {row.label}
@@ -545,7 +547,7 @@
                                 <div
                                     class="mt-3 grid gap-x-3 gap-y-2 sm:grid-cols-2"
                                 >
-                                    {#each plans as plan, index}
+                                    {#each plans as plan, index (plan.slug)}
                                         <div
                                             class="flex items-center justify-between gap-3 border-b border-[#DCE9E6] py-2 text-sm"
                                         >
@@ -582,7 +584,7 @@
                                             class="px-3 py-2.5 text-left font-semibold"
                                             >Item</th
                                         >
-                                        {#each plans as plan}
+                                        {#each plans as plan (plan.slug)}
                                             <th
                                                 class="px-3 py-2.5 text-center font-semibold"
                                                 >{plan.name}</th
@@ -595,7 +597,7 @@
                                         <td class="px-3 py-2.5 font-medium"
                                             >Armada</td
                                         >
-                                        {#each plans as plan}<td
+                                        {#each plans as plan (plan.slug)}<td
                                                 class="px-3 py-2.5 text-center"
                                                 >{capacityLabel(
                                                     plan.max_armadas,
@@ -606,7 +608,7 @@
                                         <td class="px-3 py-2.5 font-medium"
                                             >Rute</td
                                         >
-                                        {#each plans as plan}<td
+                                        {#each plans as plan (plan.slug)}<td
                                                 class="px-3 py-2.5 text-center"
                                                 >{capacityLabel(
                                                     plan.max_routes,
@@ -617,21 +619,21 @@
                                         <td class="px-3 py-2.5 font-medium"
                                             >Pengguna</td
                                         >
-                                        {#each plans as plan}<td
+                                        {#each plans as plan (plan.slug)}<td
                                                 class="px-3 py-2.5 text-center"
                                                 >{capacityLabel(
                                                     plan.max_users,
                                                 )}</td
                                             >{/each}
                                     </tr>
-                                    {#each allFeatureNames as featureName}
+                                    {#each allFeatureNames as featureName (featureName)}
                                         <tr
                                             class="border-b border-[#DCE9E6] last:border-0"
                                         >
                                             <td class="px-3 py-2.5 font-medium"
                                                 >{featureName}</td
                                             >
-                                            {#each plans as plan}
+                                            {#each plans as plan (plan.slug)}
                                                 {@const feature =
                                                     plan.features?.find(
                                                         (item) =>
@@ -682,7 +684,7 @@
                     </h2>
                 </div>
                 <ol class="divide-y divide-[#DCE9E6] border-y border-[#DCE9E6]">
-                    {#each buyingGuides as guide, index}
+                    {#each buyingGuides as guide, index (guide.title)}
                         <li
                             class="grid grid-cols-[2.5rem_1fr] gap-3 py-4 sm:grid-cols-[3rem_1fr] sm:py-5"
                         >

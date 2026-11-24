@@ -30,7 +30,10 @@ export const router = {
         activity.visits++;
         window.setTimeout(
             () => {
-                if (!activity.fail) page.url = href;
+                if (!activity.fail) {
+page.url = href;
+}
+
                 options.onFinish();
             },
             activity.slow ? 3000 : 100,

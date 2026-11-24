@@ -10,7 +10,6 @@
 </script>
 
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import { page, router } from '@inertiajs/svelte';
     import {
@@ -29,8 +28,12 @@
         Trash2,
     } from 'lucide-svelte';
     import { onDestroy, onMount, tick, untrack } from 'svelte';
+    import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+    import AdminOpsPoolsPanel from '@/components/admin-ops/AdminOpsPoolsPanel.svelte';
     import AdminOpsSection from '@/components/admin-ops/AdminOpsSection.svelte';
+    import AdminOpsUnitsLayoutPanel from '@/components/admin-ops/AdminOpsUnitsLayoutPanel.svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import DataTable from '@/components/terminal/DataTable.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import {
@@ -40,6 +43,12 @@
         CardTitle,
     } from '@/components/ui/card';
     import {
+        Dialog,
+        DialogContent,
+        DialogDescription,
+        DialogTitle,
+    } from '@/components/ui/dialog';
+    import {
         DropdownMenu,
         DropdownMenuContent,
         DropdownMenuItem,
@@ -47,15 +56,7 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import DataTable from '@/components/terminal/DataTable.svelte';
-    import AdminOpsPoolsPanel from '@/components/admin-ops/AdminOpsPoolsPanel.svelte';
-    import AdminOpsUnitsLayoutPanel from '@/components/admin-ops/AdminOpsUnitsLayoutPanel.svelte';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
     import { hasPermission } from '@/lib/access';
     import { confirmAndRun, runWithFeedback } from '@/lib/action-feedback';
     import {
@@ -1019,6 +1020,7 @@
     let customerSuggestionsRequest = 0;
     const handleCustomerSuggestionOutsideClick = (event: MouseEvent) => {
         const target = event.target as HTMLElement | null;
+
         if (!target?.closest('[data-customer-search]')) {
             customerSuggestionsOpen = false;
         }
@@ -1149,7 +1151,7 @@
         routeRows: RouteRow[],
         scheduleRows: ScheduleRow[],
     ): string[] => {
-        const names = new Set<string>();
+        const names = new SvelteSet<string>();
         routeRows.forEach((row) => {
             const name = String(row.name ?? '').trim();
 
@@ -1210,7 +1212,7 @@
         scheduleRows: ScheduleRow[],
     ): ScheduleRouteSelectOption[] => {
         const options: ScheduleRouteSelectOption[] = [];
-        const seen = new Set<string>();
+        const seen = new SvelteSet<string>();
         const pushOption = (routeId: number, routeName: string) => {
             const name = String(routeName ?? '').trim();
 
@@ -1247,7 +1249,7 @@
             .replace(/=>|->|\u2192|\u2013|\u2014/g, '-')
             .replace(/\s+/g, '');
     const scheduleRouteNameLookup = $derived.by(() => {
-        const lookup = new Map<number, string>();
+        const lookup = new SvelteMap<number, string>();
 
         routes.forEach((row) => {
             const id = Number(row.id || 0);
@@ -1270,7 +1272,7 @@
         return lookup;
     });
     const scheduleRouteIdLookup = $derived.by(() => {
-        const lookup = new Map<string, number>();
+        const lookup = new SvelteMap<string, number>();
         const remember = (routeName: string, routeId: number) => {
             const key = scheduleRouteKey(routeName);
             const id = Number(routeId || 0);
@@ -1293,7 +1295,7 @@
         return lookup;
     });
     const scheduleRouteCanonicalNameLookup = $derived.by(() => {
-        const lookup = new Map<string, string>();
+        const lookup = new SvelteMap<string, string>();
         const remember = (routeName: string) => {
             const name = String(routeName ?? '').trim();
             const key = scheduleRouteKey(name);
@@ -1392,7 +1394,7 @@
             : '',
     );
     const scheduleRouteGroups = $derived.by<ScheduleRouteGroup[]>(() => {
-        const groups = new Map<string, ScheduleRouteGroup>();
+        const groups = new SvelteMap<string, ScheduleRouteGroup>();
 
         for (const row of schedules) {
             const routeId = Number(
@@ -1521,7 +1523,7 @@
 
         return summary;
     });
-    const scheduleSummary = $derived.by<ScheduleRouteGroup | ScheduleOverview>(
+    const _scheduleSummary = $derived.by<ScheduleRouteGroup | ScheduleOverview>(
         () => activeScheduleGroup ?? scheduleOverview,
     );
     const selectedSegmentRoute = $derived(
@@ -1569,7 +1571,7 @@
         poolRegions.length > 0
             ? poolRegions
             : Array.from(
-                  new Set(
+                  new SvelteSet(
                       pools
                           .map((pool) => String(pool.region ?? '').trim())
                           .filter((region) => region !== ''),
@@ -1591,7 +1593,7 @@
     const canExportArmadas = $derived.by(() =>
         hasPermission(permissions, 'report.export'),
     );
-    const canExportPools = $derived.by(() =>
+    const _canExportPools = $derived.by(() =>
         hasPermission(permissions, 'report.export'),
     );
 
@@ -1705,7 +1707,7 @@
 
         return 'border-emerald-200 bg-emerald-50 text-emerald-700';
     };
-    const exportPools = () => {
+    const _exportPools = () => {
         const params = poolQueryParams();
         const search = params.toString();
         const url = `/api/admin/pools/export${search === '' ? '' : `?${search}`}`;
@@ -1718,7 +1720,7 @@
         link.click();
         link.remove();
     };
-    const routeNameById = (routeId: number) =>
+    const _routeNameById = (routeId: number) =>
         routes.find((route) => route.id === Number(routeId || 0))?.name ?? '';
     const segmentDisplayName = (
         origin: string,
@@ -1829,7 +1831,7 @@
         );
     const scheduleSegmentsForRoute = () => segmentsForRoute(scheduleRouteId());
     const scheduleRouteJamOptions = () => {
-        const jams = new Set<string>();
+        const jams = new SvelteSet<string>();
 
         for (const segment of scheduleSegmentsForRoute()) {
             const pickupJams = segmentJamList(segment.jam_pickups);
@@ -1847,7 +1849,7 @@
 
         return Array.from(jams).sort((a, b) => a.localeCompare(b, 'id'));
     };
-    const scheduleRouteJamHint = () => {
+    const _scheduleRouteJamHint = () => {
         const jams = scheduleRouteJamOptions();
 
         if (jams.length > 0) {
@@ -1860,7 +1862,7 @@
 
         return 'Belum ada segment pada rute ini.';
     };
-    const scheduleJamIsMapped = (jam: string) =>
+    const _scheduleJamIsMapped = (jam: string) =>
         scheduleRouteJamOptions().includes(segmentJamLabel(jam));
     const applyScheduleJam = (jam: string) => {
         const nextJam = segmentJamLabel(jam) || '08:00';
@@ -1884,7 +1886,7 @@
         poolForm = {
             ...poolForm,
             route_ids: checked
-                ? Array.from(new Set([...current, id]))
+                ? Array.from(new SvelteSet([...current, id]))
                 : current.filter((item) => Number(item) !== id),
         };
     };
@@ -1902,7 +1904,7 @@
         userForm = {
             ...userForm,
             pool_ids: checked
-                ? Array.from(new Set([...current, id]))
+                ? Array.from(new SvelteSet([...current, id]))
                 : current.filter((item) => Number(item) !== id),
             default_pool_id:
                 !checked && Number(userForm.default_pool_id) === id
@@ -1924,7 +1926,7 @@
         invitationForm = {
             ...invitationForm,
             pool_ids: checked
-                ? Array.from(new Set([...current, id]))
+                ? Array.from(new SvelteSet([...current, id]))
                 : current.filter((item) => Number(item) !== id),
         };
     };
@@ -1942,7 +1944,7 @@
         userForm = {
             ...userForm,
             role_ids: checked
-                ? Array.from(new Set([...current, id]))
+                ? Array.from(new SvelteSet([...current, id]))
                 : current.filter((item) => Number(item) !== id),
         };
     };
@@ -1960,7 +1962,7 @@
         invitationForm = {
             ...invitationForm,
             role_ids: checked
-                ? Array.from(new Set([...current, id]))
+                ? Array.from(new SvelteSet([...current, id]))
                 : current.filter((item) => Number(item) !== id),
         };
     };
@@ -2110,29 +2112,29 @@
     );
     let expandedDriverRowIds = $state<number[]>([]);
 
-    const visibleDriverColumns = $derived(
+    const _visibleDriverColumns = $derived(
         driversColumns.filter(
             (column) =>
                 column.key === 'nama' ||
                 driverVisibleColumnKeys.includes(column.key as DriverColumnKey),
         ),
     );
-    const hiddenDriverColumnCount = $derived(
+    const _hiddenDriverColumnCount = $derived(
         driverColumnOptions.length - driverVisibleColumnKeys.length,
     );
-    const toggleDriverColumn = (key: DriverColumnKey) => {
+    const _toggleDriverColumn = (key: DriverColumnKey) => {
         driverVisibleColumnKeys = driverVisibleColumnKeys.includes(key)
             ? driverVisibleColumnKeys.filter((item) => item !== key)
             : [...driverVisibleColumnKeys, key];
     };
-    const resetDriverColumns = () => {
+    const _resetDriverColumns = () => {
         driverVisibleColumnKeys = driverColumnOptions.map(
             (column) => column.key,
         );
     };
-    const isDriverExpanded = (rowId: number) =>
+    const _isDriverExpanded = (rowId: number) =>
         expandedDriverRowIds.includes(Number(rowId || 0));
-    const toggleDriverDetail = (rowId: number) => {
+    const _toggleDriverDetail = (rowId: number) => {
         const id = Number(rowId || 0);
 
         if (id <= 0) {
@@ -2334,11 +2336,13 @@
     };
     const normalizePoolTargetMonth = (value: string) => {
         const normalized = String(value ?? '').trim();
+
         if (normalized === '') {
             return '';
         }
 
         const match = normalized.match(/^(\d{4})-(\d{2})/);
+
         return match ? `${match[1]}-${match[2]}-01` : normalized;
     };
     const poolMonthlyTargetRowsForYear = (
@@ -2346,12 +2350,13 @@
         targets: PoolMonthlyTargetRow[] = [],
     ): PoolMonthlyTargetFormRow[] => {
         const normalizedYear = normalizePoolTargetYear(year);
-        const targetsByMonth = new Map<string, PoolMonthlyTargetRow>();
+        const targetsByMonth = new SvelteMap<string, PoolMonthlyTargetRow>();
 
         for (const target of targets) {
             const normalizedMonth = normalizePoolTargetMonth(
                 target.target_month,
             );
+
             if (normalizedMonth === '') {
                 continue;
             }
@@ -2380,12 +2385,13 @@
     const poolMonthlyTargetRowsByYear = (
         targets: PoolMonthlyTargetRow[] = [],
     ): Record<string, PoolMonthlyTargetFormRow[]> => {
-        const grouped = new Map<string, PoolMonthlyTargetRow[]>();
+        const grouped = new SvelteMap<string, PoolMonthlyTargetRow[]>();
 
         for (const target of targets) {
             const normalizedMonth = normalizePoolTargetMonth(
                 target.target_month,
             );
+
             if (normalizedMonth === '') {
                 continue;
             }
@@ -2505,6 +2511,7 @@
         value: string,
     ) => {
         const normalizedMonth = normalizePoolTargetMonth(month);
+
         if (normalizedMonth === '') {
             return;
         }
@@ -2682,6 +2689,7 @@
 
                 return;
             }
+
             resetScheduleForm();
         }
 
@@ -2729,6 +2737,7 @@
         for (const picker of segmentTimePickers) {
             picker.destroy();
         }
+
         segmentTimePickers = [];
     };
 
@@ -3680,6 +3689,7 @@
         if (!fallbackOption) {
             selectedScheduleRoute = '';
             selectedScheduleRouteId = 0;
+
             return;
         }
 
@@ -4010,6 +4020,7 @@
 
         if (Number(segmentForm.route_id || 0) > 0) {
             const routeId = Number(segmentForm.route_id || 0);
+
             if (!routes.some((row) => row.id === routeId)) {
                 resetSegmentForm(0);
             }
@@ -4053,6 +4064,7 @@
         params.set('per_page', String(driverMeta.per_page || 20));
 
         const query = driverSearch.trim();
+
         if (query !== '') {
             params.set('q', query);
         }
@@ -4122,6 +4134,7 @@
             customerSuggestionsOpen = false;
             customerSuggestionsLoading = false;
             customerSuggestionsError = '';
+
             return;
         }
 
@@ -4139,6 +4152,7 @@
                 'GET',
                 `/api/admin/customers?${params.toString()}`,
             );
+
             if (requestId === customerSuggestionsRequest) {
                 customerSuggestions = result.customers ?? [];
             }
@@ -4161,6 +4175,7 @@
         if (customerSuggestionsTimer) {
             clearTimeout(customerSuggestionsTimer);
         }
+
         customerSuggestionsTimer = setTimeout(
             () => void loadCustomerSuggestions(value),
             280,
@@ -4176,6 +4191,7 @@
         if (customerSuggestionsTimer) {
             clearTimeout(customerSuggestionsTimer);
         }
+
         customerSearch = '';
         customerSuggestionsRequest += 1;
         customerSuggestions = [];
@@ -4199,9 +4215,11 @@
         clearCurrent = false,
     ) => {
         const requestId = ++customerHistoryRequest;
+
         if (clearCurrent) {
             customerHistory = null;
         }
+
         customerHistoryError = '';
         customerHistoryLoading = true;
 
@@ -4215,6 +4233,7 @@
                 'GET',
                 `/api/admin/customers/${customerId}/history?${params.toString()}`,
             );
+
             if (requestId === customerHistoryRequest) {
                 customerHistory = result as CustomerHistory;
             }
@@ -4372,13 +4391,17 @@
 
         const params = new URLSearchParams();
         const query = armadaSearch.trim();
+
         if (query !== '') {
             params.set('q', query);
         }
+
         params.set('pool_id', String(Number(armadaPoolId || 0)));
+
         if (armadaPeriod.trim() !== '') {
             params.set('period', armadaPeriod.trim());
         }
+
         const searchSuffix =
             params.toString() === '' ? '' : `?${params.toString()}`;
         const [armadasResponse, categoriesResponse, unitsResponse] =
@@ -4412,6 +4435,7 @@
 
         const params = new URLSearchParams();
         params.set('pool_id', String(Number(armadaPoolId || 0)));
+
         if (armadaPeriod.trim() !== '') {
             params.set('period', armadaPeriod.trim());
         }
@@ -4433,11 +4457,14 @@
 
     const loadDriverDetail = async (id: number) => {
         driverDetailLoading = true;
+
         try {
             const params = new URLSearchParams();
+
             if (driverPeriod.trim() !== '') {
                 params.set('period', driverPeriod.trim());
             }
+
             const response = await api(
                 'GET',
                 `/api/admin/drivers/${id}${params.size > 0 ? `?${params.toString()}` : ''}`,
@@ -4486,9 +4513,11 @@
                 page: String(page),
             });
             const search = activityLogsSearch.trim();
+
             if (search !== '') {
                 params.set('q', search);
             }
+
             const r = await api('GET', `/api/admin/activity-logs?${params}`);
             activityLogs = Array.isArray(r.logs) ? r.logs : [];
             activityLogsMeta = r.pagination ?? {
@@ -4801,11 +4830,19 @@
         const seg = scheduleSegmentsForRoute().find(
             (s) => Number(s.id) === segmentId,
         );
-        if (!seg) return;
+
+        if (!seg) {
+return;
+}
+
         const existing = scheduleForm.segment_configs.find(
             (c) => c.segment_id === segmentId,
         );
-        if (existing) return;
+
+        if (existing) {
+return;
+}
+
         const jamPickups = segmentJamList(seg.jam_pickups);
         const defaultJam = jamPickups[0] || segmentJamLabel(seg.jam) || '08:00';
         scheduleForm = {
@@ -4968,6 +5005,7 @@
     const openArmadaView = (id: number) => {
         const params = new URLSearchParams();
         params.set('pool_id', String(Number(armadaPoolId || 0)));
+
         if (armadaPeriod.trim() !== '') {
             params.set('period', armadaPeriod.trim());
         }
@@ -5994,11 +6032,13 @@
             'click',
             handleCustomerSuggestionOutsideClick,
         );
+
         if (lockedFromServer) {
             lockedMenuView = true;
         }
 
         const normalizedInitialTab = normalizeTabName(initialTab);
+
         if (normalizedInitialTab) {
             activeTab = normalizedInitialTab;
             lockedMenuView = true;
@@ -6024,6 +6064,7 @@
             ).get('tab');
 
             const normalizedQueryTab = normalizeTabName(initialQueryTab);
+
             if (normalizedQueryTab) {
                 activeTab = normalizedQueryTab;
                 lockedMenuView = true;
@@ -6058,12 +6099,15 @@
             'click',
             handleCustomerSuggestionOutsideClick,
         );
+
         if (customerSuggestionsTimer) {
             clearTimeout(customerSuggestionsTimer);
         }
+
         if (armadaTemplateBlurTimer) {
             clearTimeout(armadaTemplateBlurTimer);
         }
+
         destroyScheduleTimePicker();
         destroySegmentTimePicker();
         destroyReportPickers();
@@ -11462,7 +11506,7 @@
                                 <div
                                     class="mt-4 flex gap-2 overflow-x-auto pb-1"
                                 >
-                                    {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
+                                    {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex (monthIndex)}
                                         {@const row =
                                             poolForm.monthly_targets?.[
                                                 monthIndex
@@ -11494,7 +11538,7 @@
                                 </div>
                                 <ViewportOnly minWidth={0} maxWidth={767}
                                     ><div class="mt-4 space-y-3 md:hidden">
-                                        {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
+                                        {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex (monthIndex)}
                                             {@const row =
                                                 poolForm.monthly_targets?.[
                                                     monthIndex
@@ -11660,7 +11704,7 @@
                                     ><div
                                         class="mt-4 hidden gap-2 md:grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-6"
                                     >
-                                        {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex}
+                                        {#each poolMonthlyTargetMonthOptions as monthOption, monthIndex (monthIndex)}
                                             {@const row =
                                                 poolForm.monthly_targets?.[
                                                     monthIndex

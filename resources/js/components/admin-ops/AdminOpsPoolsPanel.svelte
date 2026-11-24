@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ViewportOnly from '@/components/ViewportOnly.svelte';
 
     import {
         Building2,
@@ -10,16 +9,17 @@
         Trash2,
         Users,
     } from 'lucide-svelte';
+    import DataTable from '@/components/terminal/DataTable.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
-    import { Input } from '@/components/ui/input';
     import {
         DropdownMenu,
         DropdownMenuContent,
         DropdownMenuItem,
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
-    import DataTable from '@/components/terminal/DataTable.svelte';
+    import { Input } from '@/components/ui/input';
+    import ViewportOnly from '@/components/ViewportOnly.svelte';
     import RevenueChartTable from './RevenueChartTable.svelte';
 
     type PoolMonthlyTargetRow = {

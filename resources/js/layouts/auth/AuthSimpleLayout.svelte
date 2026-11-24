@@ -1,8 +1,8 @@
 <script lang="ts">
     import { Link, page } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
-    import GlobalConfirmDialog from '@/components/GlobalConfirmDialog.svelte';
     import AppLogo from '@/components/AppLogo.svelte';
+    import GlobalConfirmDialog from '@/components/GlobalConfirmDialog.svelte';
     import GlobalLoadingOverlay from '@/components/GlobalLoadingOverlay.svelte';
     import SupportButton from '@/components/SupportButton.svelte';
     import ToastContainer from '@/components/ToastContainer.svelte';

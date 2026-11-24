@@ -1,11 +1,11 @@
 <script lang="ts">
+    import UserRound from 'lucide-svelte/icons/user-round';
     import {
         Avatar,
         AvatarFallback,
         AvatarImage,
     } from '@/components/ui/avatar';
     import { Button } from '@/components/ui/button';
-    import UserRound from 'lucide-svelte/icons/user-round';
     import {
         DropdownMenu,
         DropdownMenuContent,

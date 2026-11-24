@@ -106,10 +106,12 @@
             body: method === 'GET' ? undefined : JSON.stringify(body ?? {}),
         });
         const json = await response.json().catch(() => ({}));
+
         if (!response.ok || json.success === false) {
             const validation = Object.values(json.errors ?? {})
                 .flat()
                 .find(Boolean);
+
             throw new Error(
                 String(
                     json.error ??
@@ -119,6 +121,7 @@
                 ),
             );
         }
+
         return json;
     };
 
@@ -135,14 +138,21 @@
             ask &&
             dirty &&
             !confirm('Perubahan tarif belum disimpan. Buang perubahan?')
-        )
-            return;
+        ) {
+return;
+}
+
         selectedSegmentId = segmentId;
         rates = [];
         dirty = false;
-        if (!segmentId || !selectedRouteId) return;
+
+        if (!segmentId || !selectedRouteId) {
+return;
+}
+
         loadingRates = true;
         error = '';
+
         try {
             const data = await api(
                 'GET',
@@ -167,33 +177,45 @@
             ask &&
             dirty &&
             !confirm('Perubahan tarif belum disimpan. Buang perubahan?')
-        )
-            return;
+        ) {
+return;
+}
+
         selectedRouteId = routeId;
         selectedSegmentId = 0;
         rates = [];
         dirty = false;
+
         if (!routeId) {
             segments = [];
+
             return;
         }
+
         const data = await api(
             'GET',
             `/api/admin/segments?route_id=${routeId}&per_page=100`,
         );
         segments = data.segments ?? [];
-        if (segments[0]) await chooseSegment(segments[0].id, false);
+
+        if (segments[0]) {
+await chooseSegment(segments[0].id, false);
+}
     };
 
     const loadInitialData = async () => {
         loading = true;
+
         try {
             const [routeData] = await Promise.all([
                 api('GET', '/api/admin/routes'),
                 loadCategories(),
             ]);
             routes = routeData.routes ?? [];
-            if (routes[0]) await chooseRoute(routes[0].id, false);
+
+            if (routes[0]) {
+await chooseRoute(routes[0].id, false);
+}
         } catch (reason) {
             error =
                 reason instanceof Error
@@ -214,10 +236,14 @@
     };
 
     const saveRates = async () => {
-        if (!selectedSegmentId || !canManageTariff) return;
+        if (!selectedSegmentId || !canManageTariff) {
+return;
+}
+
         savingRates = true;
         message = '';
         error = '';
+
         try {
             await api('PUT', `/api/admin/luggage-rates/${selectedSegmentId}`, {
                 route_id: selectedRouteId,
@@ -254,19 +280,26 @@
 
     const refreshCategoriesAndRates = async () => {
         await loadCategories();
-        if (selectedSegmentId) await chooseSegment(selectedSegmentId, false);
+
+        if (selectedSegmentId) {
+await chooseSegment(selectedSegmentId, false);
+}
     };
 
     const saveCategory = async (event: SubmitEvent) => {
         event.preventDefault();
         savingCategory = true;
+
         try {
             const payload: Record<string, unknown> = {
                 name: categoryForm.name,
                 description: categoryForm.description,
                 is_active: categoryForm.is_active,
             };
-            if (categoryForm.id > 0) payload.id = categoryForm.id;
+
+            if (categoryForm.id > 0) {
+payload.id = categoryForm.id;
+}
 
             await api('POST', '/api/admin/luggage-services', payload);
             showCategoryForm = false;
@@ -289,8 +322,10 @@
             !confirm(
                 `${item.name} akan disembunyikan dari transaksi baru. Lanjut?`,
             )
-        )
-            return;
+        ) {
+return;
+}
+
         try {
             await api('DELETE', `/api/admin/luggage-services/${item.id}`);
             message =

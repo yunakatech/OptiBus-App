@@ -1,6 +1,7 @@
 <script lang="ts">
-    import { Link, page } from '@inertiajs/svelte';
+    import { Link } from '@inertiajs/svelte';
     import ChevronDown from 'lucide-svelte/icons/chevron-down';
+    import { untrack } from 'svelte';
     import {
         SidebarGroup,
         SidebarGroupLabel,
@@ -10,11 +11,10 @@
         useSidebar,
     } from '@/components/ui/sidebar';
     import { bookingInboxNudge } from '@/lib/bookingInboxNudge.svelte';
+    import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
     import type { NavItem } from '@/types';
 
-    import { untrack } from 'svelte';
-    import { currentUrlState } from '@/lib/currentUrl.svelte';
 
     type NavSection = {
         id: string;
@@ -46,10 +46,12 @@
         const prev = untrack(() => openSections);
 
         const next: Record<string, boolean> = {};
+
         for (const section of _sections) {
             const active = section.items.some((item) =>
                 urlState.isCurrentOrParentUrl(item.href, _url),
             );
+
             if (active) {
                 next[section.id] = true;
             } else if (prev[section.id] !== undefined) {
@@ -71,6 +73,7 @@
         );
 
         let shouldUpdate = false;
+
         if (hasRemovedId || hasMissingId || activeChanged) {
             shouldUpdate = true;
         }

@@ -25,8 +25,10 @@
 
     onMount(() => {
         // Keep the platform date picker on phones; no calendar chunk is needed.
-        if (window.matchMedia('(max-width: 767px), (pointer: coarse)').matches)
-            return;
+        if (window.matchMedia('(max-width: 767px), (pointer: coarse)').matches) {
+return;
+}
+
         let disposed = false;
 
         void loadFlatpickr()
@@ -82,13 +84,17 @@
         const nextMinDate = minDate;
         const nextMaxDate = maxDate;
         const nextDisabled = disabled;
+
         if (!picker) {
             return;
         }
 
         picker.set('minDate', nextMinDate || null);
         picker.set('maxDate', nextMaxDate || null);
-        if (picker.altInput) picker.altInput.disabled = nextDisabled;
+
+        if (picker.altInput) {
+picker.altInput.disabled = nextDisabled;
+}
     });
 </script>
 

@@ -3,11 +3,11 @@
     import { SvelteSet } from 'svelte/reactivity';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { measureBar } from '@/lib/mobile-runtime';
-    import { preloadPageForHref } from '@/lib/page-preload';
     import {
         getVisibleMobileNavItems,
         shouldPrefetchNavigationHref,
     } from '@/lib/navigation';
+    import { preloadPageForHref } from '@/lib/page-preload';
     import { toUrl } from '@/lib/utils';
     import type { NavItem } from '@/types';
 
