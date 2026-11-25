@@ -221,11 +221,7 @@ return;
     ];
 
     function formatRupiah(value: number): string {
-        if (value >= 1_000_000) {
-return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
-}
-
-        return `Rp ${(value / 1_000).toFixed(0)} rb`;
+        return `Rp ${new Intl.NumberFormat('id-ID').format(value)}`;
     }
 
     function limitLabel(value: number, suffix: string): string {
@@ -320,18 +316,18 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                         class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#55E8B4] pl-3 text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:mb-6"
                     >
                         <Clock3 class="h-4 w-4 text-[#087F79]" />
-                        14 hari untuk mencoba alur kerja
+                        Software operasional travel & shuttle
                     </div>
                     <h1
                         class="max-w-3xl font-sans text-[2.45rem] font-medium leading-[0.98] tracking-[-0.04em] text-[#163A39] sm:text-5xl lg:text-[4.25rem]"
                     >
-                        Setiap perjalanan, dari loket sampai laporan.
+                        Operasional travel lebih rapi, dari booking hingga laporan.
                     </h1>
                     <p
                         class="mt-5 max-w-xl text-[15px] leading-7 text-muted-foreground sm:mt-6 sm:text-base sm:leading-8"
                     >
-                        Catat pesanan, atur keberangkatan, pantau pembayaran,
-                        dan tutup hari dengan laporan yang sama-sama dibaca tim.
+                        Kelola kursi, jadwal, penumpang, pembayaran, dan armada
+                        dalam satu platform yang mudah digunakan bersama tim.
                     </p>
                     <div class="mt-7 flex flex-col gap-3 sm:mt-8 sm:flex-row">
                         <a
@@ -352,6 +348,9 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                             Bandingkan paket
                         </a>
                     </div>
+                    <p class="mt-4 text-sm font-medium text-[#42635f]">
+                        Coba OptiBus · Pilih paket sesuai kebutuhan
+                    </p>
                     <dl
                         class="mt-8 grid max-w-xl grid-cols-3 gap-2 border-y border-[#DCE9E6] py-4 sm:mt-10 sm:gap-5 sm:py-5"
                     >
@@ -364,7 +363,7 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                             <dd
                                 class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
                             >
-                                3 jalur
+                                Kursi, carter, bagasi
                             </dd>
                         </div>
                         <div>
@@ -376,7 +375,7 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                             <dd
                                 class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
                             >
-                                Multi-pool
+                                Tim & pool
                             </dd>
                         </div>
                         <div>
@@ -388,14 +387,14 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                             <dd
                                 class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
                             >
-                                Per tenant
+                                Data terpisah
                             </dd>
                         </div>
                     </dl>
                 </div>
 
                 <div
-                    class="relative -mx-2 flex items-center justify-center bg-[#E7FAF3] px-4 py-3 sm:mx-0 sm:px-8 sm:py-6 lg:min-h-[550px]"
+                    class="relative flex items-center justify-center overflow-hidden rounded-3xl border border-[#c8e5da] bg-[#E7FAF3] px-4 py-3 sm:px-8 sm:py-6 lg:min-h-[550px]"
                 >
                     <div
                         class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#DCE9E6] px-4 py-2 text-xs md:text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:px-6"
@@ -505,14 +504,14 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                     </a>
                 </div>
                 <div
-                    class="grid border-y border-[#DCE9E6] sm:grid-cols-2 lg:grid-cols-4"
+                    class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4"
                 >
                     {#each capabilities as item, index (item.title)}
                         {@const Icon = item.icon}
                         <article
                             data-reveal
                             style:--reveal-delay={`${index * 55}ms`}
-                            class="border-b border-[#DCE9E6] py-5 sm:px-5 sm:py-6 lg:border-b-0 lg:border-r lg:px-5 lg:first:pl-0 lg:last:border-r-0"
+                            class="rounded-2xl border border-[#DCE9E6] bg-white p-5 sm:p-6"
                         >
                             <div
                                 class="flex items-center justify-between gap-4"
@@ -568,13 +567,13 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                 </a>
             </div>
             <div
-                class="grid gap-0 border-y border-[#DCE9E6] md:grid-cols-3 md:divide-x md:divide-[#DCE9E6]"
+                class="grid gap-4 md:grid-cols-3"
             >
                 {#each featuredPlans as plan, index (plan.slug)}
                     <article
                         data-reveal
                         style:--reveal-delay={`${index * 65}ms`}
-                        class={`plan-panel relative border-b border-[#DCE9E6] bg-transparent px-1 py-6 sm:px-5 sm:py-7 md:border-b-0 ${plan.slug === 'pro' ? 'bg-[#E7FAF3] md:-my-px md:border-y-2 md:border-y-[#087F79]' : ''}`}
+                        class={`plan-panel relative rounded-2xl border p-6 ${plan.slug === 'pro' ? 'border-[#087F79] bg-[#E7FAF3]' : 'border-[#DCE9E6] bg-white'}`}
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
@@ -592,7 +591,7 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                             {#if plan.slug === 'pro'}
                                 <span
                                     class="border border-[#AFC9C3] px-2 py-1 text-xs md:text-[10px] font-bold uppercase tracking-[0.12em] text-[#087F79]"
-                                    >Populer</span
+                                    >Untuk tim</span
                                 >
                             {/if}
                         </div>

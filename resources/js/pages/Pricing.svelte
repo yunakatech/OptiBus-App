@@ -252,11 +252,7 @@
     ];
 
     function formatRupiah(value: number): string {
-        if (value >= 1_000_000) {
-return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
-}
-
-        return `Rp ${(value / 1_000).toFixed(0)} rb`;
+        return `Rp ${new Intl.NumberFormat('id-ID').format(value)}`;
     }
 
     function limitLabel(value: number, suffix: string): string {
@@ -356,14 +352,13 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                     <h1
                         class="mt-3 max-w-3xl font-sans text-4xl font-medium leading-[1.02] tracking-[-0.04em] text-[#163A39] sm:text-5xl lg:text-6xl"
                     >
-                        Ruang untuk perjalanan yang terus bertambah.
+                        Pilih paket yang pas untuk operasional travel Anda.
                     </h1>
                     <p
                         class="mt-5 max-w-2xl text-[15px] leading-7 text-muted-foreground sm:text-base"
                     >
-                        Bandingkan kapasitas armada, rute, tim, dan fitur yang
-                        tersedia di setiap paket. Pilih paket yang sesuai dengan
-                        cara travel Anda beroperasi sekarang.
+                        Mulai dari kebutuhan hari ini, lalu bandingkan kapasitas
+                        armada, tim, dan fitur untuk setiap tahap perjalanan bisnis Anda.
                     </p>
                 </div>
                 <div
@@ -388,11 +383,11 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
 
         <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
             <div
-                class="grid border-y border-[#DCE9E6] lg:grid-cols-3 lg:divide-x lg:divide-[#DCE9E6]"
+                class="grid gap-4 lg:grid-cols-3"
             >
                 {#each plans as plan (plan.slug)}
                     <article
-                        class={`relative flex flex-col border-b border-[#DCE9E6] px-1 py-6 sm:px-5 sm:py-7 lg:border-b-0 ${plan.slug === 'pro' ? 'bg-[#E7FAF3] lg:-my-px lg:border-y-2 lg:border-y-[#087F79]' : ''}`}
+                        class={`relative flex flex-col rounded-2xl border p-6 sm:p-7 ${plan.slug === 'pro' ? 'border-[#087F79] bg-[#E7FAF3]' : 'border-[#DCE9E6] bg-white'}`}
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div>
@@ -410,7 +405,7 @@ return `Rp ${(value / 1_000_000).toFixed(1)} jt`;
                             {#if plan.slug === 'pro'}
                                 <span
                                     class="border border-[#AFC9C3] px-2 py-1 text-xs md:text-[10px] font-bold uppercase tracking-[0.12em] text-[#087F79]"
-                                    >Populer</span
+                                    >Untuk tim</span
                                 >
                             {/if}
                         </div>
