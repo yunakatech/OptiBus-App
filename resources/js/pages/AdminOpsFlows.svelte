@@ -4226,7 +4226,7 @@ return;
 <div
     class:mobile-page={true}
     data-content-density="compact"
-    class="space-y-4 bg-[#F7FAF9] p-3 pb-28 dark:bg-slate-950 md:p-4"
+    class="space-y-4 bg-background p-3 pb-28 sm:p-4 md:p-5"
 >
     {#if tenantWriteDisabled}
         <div
@@ -4236,12 +4236,22 @@ return;
         </div>
     {/if}
 
-    <Card
-        class="rounded-xl border-border bg-background shadow-none dark:border-slate-700 dark:bg-slate-950"
-    >
-        <CardContent class="space-y-4 pt-6">
+    <Card class="rounded-2xl border-border bg-card shadow-sm">
+        <CardContent class="space-y-5 pt-5 sm:pt-6">
+            {#if activeMode === 'data' && (activeTab === 'charters' || activeTab === 'luggages')}
+                <div class="space-y-1">
+                    <h1 class="text-xl font-semibold tracking-tight text-foreground">
+                        {activeTab === 'charters' ? 'Data Carter' : 'Data Bagasi'}
+                    </h1>
+                    <p class="text-sm text-muted-foreground">
+                        {activeTab === 'charters'
+                            ? 'Pantau jadwal, armada, dan pembayaran carter.'
+                            : 'Pantau pengiriman, penerima, dan status bagasi.'}
+                    </p>
+                </div>
+            {/if}
             <div
-                class="sticky top-0 z-10 space-y-3 border-b border-border bg-background pb-3 dark:border-slate-700 dark:bg-slate-950"
+                class="space-y-3 border-b border-border pb-4"
             >
                 {#if !((activeMode === 'form' && hasDedicatedFormPage(activeTab)) || (activeTab === 'charters' && activeMode === 'view'))}
                     {#if activeTab === 'charters' || activeTab === 'luggages'}
@@ -5030,24 +5040,24 @@ return;
                             >
                                 {#each charters as row (row.id)}
                                     <article
-                                        class="group relative overflow-hidden rounded-lg border border-border/70 bg-white p-3 transition-colors hover:border-border hover:bg-muted/20 dark:border-slate-700 dark:bg-slate-900 dark:hover:bg-slate-900/80"
+                                        class="group relative min-w-0 rounded-xl border border-border/70 bg-card p-4 transition-colors hover:border-primary/30"
                                     >
                                         <div
                                             class="mb-2 flex items-start justify-between gap-2"
                                         >
                                             <div class="min-w-0">
                                                 <p
-                                                    class="truncate text-sm font-semibold leading-tight text-foreground"
+                                                    class="break-words text-sm font-semibold leading-tight text-foreground"
                                                 >
                                                     {row.name}
                                                 </p>
                                                 <p
-                                                    class="truncate text-xs md:text-[11px] text-muted-foreground"
+                                                    class="break-words text-xs text-muted-foreground md:text-[11px]"
                                                 >
                                                     {row.company_name ?? '-'}
                                                 </p>
                                                 <p
-                                                    class="truncate text-xs md:text-[11px] text-muted-foreground"
+                                                    class="break-words text-xs text-muted-foreground md:text-[11px]"
                                                 >
                                                     {row.phone ?? '-'}
                                                 </p>
@@ -5074,6 +5084,7 @@ return;
                                                                 size="sm"
                                                                 variant="outline"
                                                                 class="h-8 rounded-full border-border/70 px-2.5"
+                                                                aria-label={`Aksi carter ${row.name}`}
                                                                 onclick={props.onclick}
                                                                 aria-expanded={props[
                                                                     'aria-expanded'
@@ -5175,7 +5186,7 @@ return;
                                                 Rute Charter
                                             </p>
                                             <p
-                                                class="mt-0.5 line-clamp-2 break-words text-xs font-semibold leading-snug text-foreground"
+                                                class="mt-0.5 break-words text-xs font-semibold leading-snug text-foreground"
                                             >
                                                 {row.pickup_point ?? '-'} - {row.drop_point ??
                                                     '-'}
