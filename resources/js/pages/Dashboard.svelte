@@ -693,8 +693,22 @@
 <div
     class:mobile-page={true}
     data-content-density="compact"
-    class="flex h-full flex-1 flex-col gap-2 overflow-x-clip rounded-xl px-2 py-2 md:gap-3 md:p-4"
+    class="flex h-full min-w-0 flex-1 flex-col gap-4 overflow-x-clip rounded-xl px-3 py-3 sm:px-4 md:gap-5 md:p-4"
 >
+    <header class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-5">
+        <div class="flex flex-wrap items-end justify-between gap-4">
+            <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wider text-primary">Ringkasan operasional</p>
+                <h1 class="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Dashboard</h1>
+                <p class="mt-1 text-sm text-muted-foreground">Pantau pendapatan dan aktivitas perjalanan Anda.</p>
+            </div>
+            <nav aria-label="Bagian dashboard" class="flex flex-wrap gap-2">
+                <a href="#dashboard-pendapatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Pendapatan</a>
+                <a href="#dashboard-keberangkatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Keberangkatan</a>
+                <a href="#dashboard-carter" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Carter</a>
+            </nav>
+        </div>
+    </header>
     {#if setupProgress && !setupProgress.completed}
         <section
             class="overflow-hidden rounded-2xl border border-amber-200/80 bg-[linear-gradient(135deg,#fff8e1,#f7fbef)] shadow-sm dark:border-amber-500/20 dark:bg-[linear-gradient(135deg,rgba(69,26,3,0.72),rgba(9,14,24,0.94))]"
@@ -764,7 +778,7 @@
         </section>
     {/if}
 
-    <div class="space-y-2">
+    <div id="dashboard-pendapatan" class="scroll-mt-24 space-y-2">
         <!-- Command Center & Prioritas Grid -->
         <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
             <!-- Revenue Activity Chart -->
@@ -827,7 +841,8 @@
             </DashboardSection>
         </div>
 
-        <div class="min-w-0 space-y-3 xl:col-span-1">
+        <div class="min-w-0 space-y-4 xl:col-span-1">
+            <div id="dashboard-carter" class="scroll-mt-24">
             <DashboardSection
                 data={['upcomingCharterReminder']}
                 label="Carter mendatang"
@@ -932,7 +947,9 @@
                     </CardContent>
                 </Card>
             </DashboardSection>
+            </div>
 
+            <div id="dashboard-keberangkatan" class="scroll-mt-24">
             <DashboardSection
                 data={['departuresToday']}
                 label="Keberangkatan hari ini"
@@ -1018,6 +1035,7 @@
                     </CardContent>
                 </Card>
             </DashboardSection>
+            </div>
 
             <DashboardSection
                 data={[
@@ -1037,7 +1055,7 @@
                                     >Aktivitas Terbaru</CardTitle
                                 >
                                 <CardDescription class="text-xs"
-                                    >Simpan terbaru dari sistem</CardDescription
+                                    >Aktivitas terbaru dari sistem</CardDescription
                                 >
                             </div>
                             {#if safeRecentActivityTotal > 0}

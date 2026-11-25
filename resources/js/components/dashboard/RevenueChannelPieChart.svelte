@@ -280,9 +280,9 @@ align = 'right';
 </script>
 
 <div
-    class={`flex flex-col rounded-lg border p-4 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm md:p-5 ${chartTheme().panelClass}`}
+    class={`flex min-w-0 flex-col rounded-2xl border p-4 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm md:p-5 ${chartTheme().panelClass}`}
 >
-    <div class="flex items-start justify-between">
+    <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
             <p class="text-[13px] font-semibold text-muted-foreground">
                 Sebaran <span class={`font-bold ${chartTheme().titleClass}`}
@@ -295,11 +295,15 @@ align = 'right';
         </div>
         <div class={`flex rounded-lg p-0.5 ${chartTheme().toggleClass}`}>
             <button
-                class={`rounded-md px-2 py-1 text-[10px] font-semibold ${selectedScope === 'month' ? chartTheme().toggleActiveClass : chartTheme().toggleInactiveClass}`}
+                type="button"
+                aria-pressed={selectedScope === 'month'}
+                class={`min-h-11 rounded-md px-3 text-xs font-semibold ${selectedScope === 'month' ? chartTheme().toggleActiveClass : chartTheme().toggleInactiveClass}`}
                 onclick={() => (selectedScope = 'month')}>Bulan Ini</button
             >
             <button
-                class={`rounded-md px-2 py-1 text-[10px] font-semibold ${selectedScope === 'year' ? chartTheme().toggleActiveClass : chartTheme().toggleInactiveClass}`}
+                type="button"
+                aria-pressed={selectedScope === 'year'}
+                class={`min-h-11 rounded-md px-3 text-xs font-semibold ${selectedScope === 'year' ? chartTheme().toggleActiveClass : chartTheme().toggleInactiveClass}`}
                 onclick={() => (selectedScope = 'year')}>Tahun Ini</button
             >
         </div>

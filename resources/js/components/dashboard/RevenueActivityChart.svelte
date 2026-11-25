@@ -357,7 +357,7 @@ align = 'right';
 </script>
 
 <div
-    class={`flex h-full flex-col overflow-hidden rounded-lg border text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm ${chartTheme().panelClass}`}
+    class={`flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm ${chartTheme().panelClass}`}
 >
     <div
         class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4"
