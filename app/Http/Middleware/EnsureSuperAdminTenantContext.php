@@ -87,6 +87,7 @@ class EnsureSuperAdminTenantContext
             'subscription.index',
             'subscription.checkout',
         ], true)
+            || str_starts_with($routeName, 'api.bookings.')
             || str_starts_with($routeName, 'settings.')
             || str_starts_with($routeName, 'api.admin.');
     }

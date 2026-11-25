@@ -22,5 +22,7 @@ return [
     'api_url' => $apiUrl,
     'payment_create_path' => $paymentCreatePath ?: '/invoices/create',
     'webhook_secret' => env('MAYAR_WEBHOOK_SECRET', ''),
+    'webhook_max_payload_bytes' => (int) env('MAYAR_WEBHOOK_MAX_PAYLOAD_BYTES', 32768),
+    'webhook_rate_limit' => (int) env('MAYAR_WEBHOOK_RATE_LIMIT', 60),
     'timeout' => (int) env('MAYAR_TIMEOUT', 15),
 ];

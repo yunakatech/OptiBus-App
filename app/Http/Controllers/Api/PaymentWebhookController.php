@@ -32,11 +32,32 @@ class PaymentWebhookController extends Controller
 
     /**
      * Handle Mayar payment webhook.
-     * POST /api/webhooks/mayar
+     * POST /api/webhooks/mayar/{token}
      */
-    public function mayar(Request $request, MayarGateway $mayar): JsonResponse
+    public function mayar(Request $request, MayarGateway $mayar, string $token): JsonResponse
     {
+        $secret = trim((string) config('mayar.webhook_secret'));
+        if (strlen($secret) < 32) {
+            Log::critical('Mayar webhook secret is missing or too short.');
+
+            return response()->json(['status' => 'unavailable'], 503);
+        }
+
+        if (! hash_equals($secret, $token)) {
+            return response()->json(['status' => 'not_found'], 404);
+        }
+
+        $maxPayloadBytes = max(1024, (int) config('mayar.webhook_max_payload_bytes', 32768));
+        $contentLength = (int) $request->server('CONTENT_LENGTH', 0);
+        if ($contentLength > $maxPayloadBytes || strlen($request->getContent()) > $maxPayloadBytes) {
+            return response()->json(['status' => 'payload_too_large'], 413);
+        }
+
         $payload = $request->all();
+        if ($payload === []) {
+            return response()->json(['status' => 'invalid_payload'], 422);
+        }
+
         $result = $mayar->handleWebhook($payload);
 
         Log::info('Mayar webhook handled', [

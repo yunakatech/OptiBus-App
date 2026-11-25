@@ -13004,7 +13004,7 @@ XML;
             'environment' => $environment,
             'api_url' => $apiUrl,
             'payment_create_path' => (string) config('mayar.payment_create_path', '/invoices/create'),
-            'webhook_url' => route('api.webhooks.mayar', absolute: true),
+            'webhook_url' => url('/api/webhooks/mayar/{MAYAR_WEBHOOK_SECRET}'),
             'webhook_secret_configured' => trim((string) config('mayar.webhook_secret')) !== '',
         ];
     }

@@ -193,6 +193,68 @@ class BookingApiTest extends TestCase
             ->assertJsonPath('error', 'conflict');
     }
 
+    public function test_legacy_booking_is_not_read_or_updated_across_tenants_with_the_same_route_name(): void
+    {
+        $tenantId = $this->defaultTenantId();
+        $otherTenantId = (int) DB::table('tenants')->insertGetId([
+            'name' => 'Other Tenant',
+            'slug' => 'other-booking-tenant',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        foreach ([$tenantId, $otherTenantId] as $routeTenantId) {
+            DB::table('routes')->insert([
+                'tenant_id' => $routeTenantId,
+                'name' => 'PINRANG - MAKASSAR',
+                'origin' => 'PINRANG',
+                'destination' => 'MAKASSAR',
+                'created_at' => now(),
+            ]);
+        }
+
+        $foreignBookingId = (int) DB::table('bookings')->insertGetId([
+            'tenant_id' => $otherTenantId,
+            'route_id' => null,
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00:00',
+            'unit' => 1,
+            'seat' => '9',
+            'name' => 'TENANT B PASSENGER',
+            'phone' => '089999999999',
+            'pickup_point' => 'Terminal',
+            'pembayaran' => 'Belum Lunas',
+            'status' => 'active',
+            'price' => 150000,
+            'discount' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->actingAsSuperAdminWithTenantContext($tenantId);
+
+        $this->getJson(route('api.bookings.seats-detail', [
+            'rute' => 'PINRANG - MAKASSAR',
+            'tanggal' => '2026-05-15',
+            'jam' => '09:00',
+            'unit' => 1,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('details', []);
+
+        $this->postJson(route('api.bookings.update'), [
+            'booking_id' => $foreignBookingId,
+            'pembayaran' => 'Lunas',
+        ])->assertStatus(404);
+
+        $this->assertDatabaseHas('bookings', [
+            'id' => $foreignBookingId,
+            'pembayaran' => 'Belum Lunas',
+        ]);
+    }
+
     public function test_submit_booking_accepts_distinct_passenger_data_per_seat(): void
     {
         $this->actingAsSuperAdmin();

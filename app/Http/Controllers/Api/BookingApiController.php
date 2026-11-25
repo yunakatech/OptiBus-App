@@ -13,6 +13,7 @@ use App\Support\SegmentName;
 use App\Support\TenantWriteContext;
 use Carbon\Carbon;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -420,6 +421,7 @@ class BookingApiController extends Controller
             ->where('b.jam', $jamSql)
             ->where('b.unit', $unit)
             ->where('b.status', '!=', 'canceled');
+        $this->applyBookingTenantScope($query, 'b.tenant_id');
         PoolScope::applyRouteIdentity($query, (string) $validated['rute'], $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
         PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
@@ -651,6 +653,7 @@ class BookingApiController extends Controller
         if ($bookingId > 0) {
             $bookingQuery = DB::table('bookings')
                 ->where('id', $bookingId);
+            $this->applyBookingTenantScope($bookingQuery);
             PoolScope::applyRouteIdentity($bookingQuery, $rute, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute');
             PoolScope::applyRouteScope($bookingQuery, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute');
             $bookingRow = $bookingQuery->first(['seat']);
@@ -744,6 +747,7 @@ class BookingApiController extends Controller
             ->when($bookingId > 0, static function ($query) use ($bookingId) {
                 $query->where('id', '!=', $bookingId);
             });
+        $this->applyBookingTenantScope($bookedSeatQuery);
         PoolScope::applyRouteIdentity($bookedSeatQuery, $rute, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute');
         PoolScope::applyRouteScope($bookedSeatQuery, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute');
 
@@ -1698,6 +1702,7 @@ class BookingApiController extends Controller
                     ->where('unit', $unit)
                     ->where('status', '!=', 'canceled')
                     ->whereIn('seat', $seats);
+                $this->applyBookingTenantScope($conflictQuery);
                 PoolScope::applyRouteIdentity($conflictQuery, $rute, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute', $routeId);
                 $conflict = $conflictQuery
                     ->lockForUpdate()
@@ -1747,7 +1752,9 @@ class BookingApiController extends Controller
 
                     $ticketCode = BookingCode::ticketCode($id, $tanggal);
                     if ($supportsTicketCode) {
-                        DB::table('bookings')->where('id', $id)->update([
+                        $ticketQuery = DB::table('bookings')->where('id', $id);
+                        $this->applyBookingTenantScope($ticketQuery);
+                        $ticketQuery->update([
                             'ticket_code' => $ticketCode,
                             'updated_at' => now(),
                         ]);
@@ -1900,12 +1907,12 @@ class BookingApiController extends Controller
                 'pembayaran' => $payment,
             ]);
 
-            DB::table('bookings')
-                ->where('id', $id)
-                ->update([
+            $paymentUpdate = DB::table('bookings')->where('id', $id);
+            $this->applyBookingTenantScope($paymentUpdate);
+            $paymentUpdate->update([
                     'pembayaran' => $payment,
                     'updated_at' => now(),
-                ]);
+            ]);
 
             $bookingIdentity = $this->bookingIdentityLabel($current);
 
@@ -1948,6 +1955,7 @@ class BookingApiController extends Controller
             ->where('seat', $seat)
             ->where('status', '!=', 'canceled')
             ->where('id', '!=', $id);
+        $this->applyBookingTenantScope($conflictQuery);
         PoolScope::applyRouteIdentity($conflictQuery, $targetRoute, $this->bookingsHasRouteId() ? 'route_id' : '', 'rute', $targetRouteId);
         $conflict = $conflictQuery
             ->exists();
@@ -1980,12 +1988,13 @@ class BookingApiController extends Controller
             $updatePayload['route_id'] = $targetRouteId > 0 ? $targetRouteId : null;
         }
 
-        DB::table('bookings')
+        $bookingUpdate = DB::table('bookings')
             ->where('id', $id)
-            ->where('status', '!=', 'canceled')
-            ->update(array_merge($updatePayload, $this->tenantPayload('bookings'), [
-                'updated_at' => now(),
-            ]));
+            ->where('status', '!=', 'canceled');
+        $this->applyBookingTenantScope($bookingUpdate);
+        $bookingUpdate->update(array_merge($updatePayload, $this->tenantPayload('bookings'), [
+            'updated_at' => now(),
+        ]));
 
         $this->upsertCustomer($name, $phone, $pickupPoint, $address, $targetRouteId);
 
@@ -2053,9 +2062,10 @@ class BookingApiController extends Controller
         }
 
         $payment = $this->normalizePayment((string) $payload['pembayaran']);
-        $rows = DB::table('bookings as b')
-            ->whereIn('b.id', $bookingIds)
-            ->get([
+        $rowsQuery = DB::table('bookings as b')
+            ->whereIn('b.id', $bookingIds);
+        $this->applyBookingTenantScope($rowsQuery, 'b.tenant_id');
+        $rows = $rowsQuery->get([
                 'b.id',
                 'b.rute',
                 'b.tanggal',
@@ -2112,13 +2122,14 @@ class BookingApiController extends Controller
             return $this->error('booking_not_found', 404);
         }
 
-        $updatedCount = DB::table('bookings')
+        $bulkPaymentUpdate = DB::table('bookings')
             ->whereIn('id', $updatableIds)
-            ->where('status', '!=', 'canceled')
-            ->update([
-                'pembayaran' => $payment,
-                'updated_at' => now(),
-            ]);
+            ->where('status', '!=', 'canceled');
+        $this->applyBookingTenantScope($bulkPaymentUpdate);
+        $updatedCount = $bulkPaymentUpdate->update([
+            'pembayaran' => $payment,
+            'updated_at' => now(),
+        ]);
 
         ActivityLog::write(
             'PAYMENT',
@@ -2174,13 +2185,14 @@ class BookingApiController extends Controller
             return $this->error('Manifest sudah ditutup. Booking tidak bisa dibatalkan lagi.', 409);
         }
 
-        DB::table('bookings')
+        $cancelUpdate = DB::table('bookings')
             ->where('id', (int) $current['id'])
-            ->where('status', '!=', 'canceled')
-            ->update([
-                'status' => 'canceled',
-                'updated_at' => now(),
-            ]);
+            ->where('status', '!=', 'canceled');
+        $this->applyBookingTenantScope($cancelUpdate);
+        $cancelUpdate->update([
+            'status' => 'canceled',
+            'updated_at' => now(),
+        ]);
 
         DB::table('cancellations')->insert([
             'booking_id' => (int) $current['id'],
@@ -2227,8 +2239,9 @@ class BookingApiController extends Controller
         $bookingId = (int) ($payload['booking_id'] ?? $payload['id'] ?? 0);
         if ($bookingId > 0) {
             $query = DB::table('bookings as b')
-                ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
                 ->where('b.id', $bookingId);
+            $this->joinBookingCustomers($query);
+            $this->applyBookingTenantScope($query, 'b.tenant_id');
             PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
             $row = $query->first([
@@ -2265,11 +2278,12 @@ class BookingApiController extends Controller
         }
 
         $query = DB::table('bookings as b')
-            ->leftJoin('customers as c', 'c.phone', '=', 'b.phone')
             ->where('b.tanggal', $tanggal)
             ->where('b.jam', $this->normalizeTime($jam))
             ->where('b.unit', $unit)
             ->where('b.seat', $lookupSeat);
+        $this->joinBookingCustomers($query);
+        $this->applyBookingTenantScope($query, 'b.tenant_id');
         PoolScope::applyRouteIdentity($query, $rute, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
         PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 
@@ -2494,6 +2508,27 @@ class BookingApiController extends Controller
         return TenantWriteContext::payloadForTable($table);
     }
 
+    private function applyBookingTenantScope(Builder $query, string $tenantColumn = 'tenant_id'): void
+    {
+        if (SchemaCache::hasColumn('bookings', 'tenant_id')) {
+            PoolScope::applyTenantScope($query, $tenantColumn);
+        }
+    }
+
+    private function joinBookingCustomers(Builder $query): void
+    {
+        $query->leftJoin('customers as c', function (JoinClause $join): void {
+            $join->on('c.phone', '=', 'b.phone');
+
+            if (
+                SchemaCache::hasColumn('bookings', 'tenant_id')
+                && SchemaCache::hasColumn('customers', 'tenant_id')
+            ) {
+                $join->on('c.tenant_id', '=', 'b.tenant_id');
+            }
+        });
+    }
+
     private function requireTenantWriteContext(): void
     {
         TenantWriteContext::requireTenant();
@@ -2715,6 +2750,7 @@ class BookingApiController extends Controller
             });
         }
 
+        $this->applyBookingTenantScope($query, 'b.tenant_id');
         PoolScope::applyRouteIdentity($query, $rute, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
         PoolScope::applyRouteScope($query, $this->bookingsHasRouteId() ? 'b.route_id' : '', 'b.rute');
 

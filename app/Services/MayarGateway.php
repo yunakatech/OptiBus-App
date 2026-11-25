@@ -163,22 +163,21 @@ class MayarGateway
         $event = $this->parseWebhookPayload($payload);
         $eventId = $event['event_id'] ?: hash('sha256', $this->json($payload).($event['event_type'] ?? ''));
 
-        $eventRowId = $this->recordWebhookEvent($eventId, $event, $payload);
-        if ($eventRowId === 0) {
-            return [
-                'status' => 'duplicate',
-                'message' => 'Webhook already processed.',
-            ];
-        }
-
+        $eventRowId = 0;
         try {
             $invoice = $this->findInvoiceForWebhook($event);
             if (! $invoice) {
-                $this->finishWebhookEvent($eventRowId, 'ignored', 'Invoice reference not found.');
-
                 return [
                     'status' => 'ignored',
                     'message' => 'Invoice reference not found.',
+                ];
+            }
+
+            $eventRowId = $this->recordWebhookEvent($eventId, $event, $payload);
+            if ($eventRowId === 0) {
+                return [
+                    'status' => 'duplicate',
+                    'message' => 'Webhook already processed.',
                 ];
             }
 
@@ -717,16 +716,28 @@ class MayarGateway
             'paymentUrl',
         ];
 
-        $redact = function (mixed $value) use (&$redact, $sensitiveKeys): mixed {
+        $redact = function (mixed $value, int $depth = 0) use (&$redact, $sensitiveKeys): mixed {
+            if ($depth >= 4) {
+                return '[truncated]';
+            }
+
             if (! is_array($value)) {
-                return $value;
+                return is_string($value) ? Str::limit($value, 1000, '') : $value;
             }
 
             $result = [];
+            $count = 0;
             foreach ($value as $key => $child) {
-                $result[$key] = in_array((string) $key, $sensitiveKeys, true)
+                if ($count++ >= 50) {
+                    $result['_truncated'] = true;
+
+                    break;
+                }
+
+                $safeKey = Str::limit((string) $key, 100, '');
+                $result[$safeKey] = in_array((string) $key, $sensitiveKeys, true)
                     ? '[redacted]'
-                    : $redact($child);
+                    : $redact($child, $depth + 1);
             }
 
             return $result;

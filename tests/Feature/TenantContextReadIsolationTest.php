@@ -26,6 +26,15 @@ class TenantContextReadIsolationTest extends TestCase
             ->assertJsonPath('action_required', 'select_tenant');
     }
 
+    public function test_superadmin_without_tenant_cannot_read_booking_api(): void
+    {
+        $this->actingAsSuperAdminWithTenantContext(null);
+
+        $this->getJson(route('api.bookings.routes-by-date', ['tanggal' => now()->toDateString()]))
+            ->assertStatus(409)
+            ->assertJsonPath('action_required', 'select_tenant');
+    }
+
     public function test_superadmin_without_tenant_can_still_open_platform_role_page(): void
     {
         $this->actingAsSuperAdminWithTenantContext(null);

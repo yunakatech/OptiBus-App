@@ -3381,7 +3381,7 @@ return '-';
                                         >
                                             {paymentSettings?.webhook_secret_configured
                                                 ? 'Configured'
-                                                : 'Opsional'}
+                                                : 'Belum dikonfigurasi'}
                                         </p>
                                     </div>
                                 </div>
@@ -3413,6 +3413,13 @@ return '-';
                                         class="mt-2 break-all font-mono text-xs text-foreground"
                                     >
                                         {paymentSettings?.webhook_url}
+                                    </p>
+                                    <p
+                                        class="mt-2 text-xs text-muted-foreground"
+                                    >
+                                        Ganti placeholder hanya di dashboard
+                                        Mayar; jangan simpan token di source
+                                        code.
                                     </p>
                                 </div>
                             </CardContent>

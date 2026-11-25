@@ -7,11 +7,14 @@ use App\Support\FeatureGate;
 use App\Support\PoolScope;
 use Carbon\CarbonImmutable;
 use Illuminate\Auth\Notifications\VerifyEmail;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Http\Request;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -36,8 +39,21 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureRateLimiters();
         $this->configurePerformanceTelemetry();
         $this->flushRequestScopedCachesOnTerminate();
+    }
+
+    /**
+     * Protect public callback endpoints before they reach application services.
+     */
+    protected function configureRateLimiters(): void
+    {
+        RateLimiter::for('mayar-webhook', static function (Request $request): Limit {
+            $maxAttempts = max(1, (int) config('mayar.webhook_rate_limit', 60));
+
+            return Limit::perMinute($maxAttempts)->by((string) ($request->ip() ?? 'unknown'));
+        });
     }
 
     /**

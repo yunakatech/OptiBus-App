@@ -16,6 +16,13 @@ class SubscriptionTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config(['mayar.webhook_secret' => $this->mayarWebhookSecret()]);
+    }
+
     public function test_trial_starter_shares_unlocked_billing_access(): void
     {
         [$user, $tenantId, $subscriptionId] = $this->tenantWithSubscription(
@@ -461,7 +468,7 @@ class SubscriptionTest extends TestCase
 
         [$user, $invoiceId, $tenantId, $subscriptionId] = $this->tenantWithPendingInvoice();
 
-        $this->postJson(route('api.webhooks.mayar'), [
+        $this->postJson($this->mayarWebhookRoute(), [
             'event_id' => 'evt_paid_1',
             'event' => 'payment.received',
             'status' => 'SUCCESS',
@@ -508,6 +515,20 @@ class SubscriptionTest extends TestCase
         $this->assertSame($tenantId, (int) DB::table('users')->where('id', $user->id)->value('tenant_id'));
     }
 
+    public function test_mayar_webhook_with_invalid_token_is_rejected_without_storing_an_event(): void
+    {
+        $this->postJson(route('api.webhooks.mayar', [
+            'token' => str_repeat('x', 64),
+        ]), [
+            'event_id' => 'evt_invalid_token',
+            'event' => 'payment.received',
+        ])->assertNotFound();
+
+        $this->assertDatabaseMissing('payment_webhook_events', [
+            'event_id' => 'evt_invalid_token',
+        ]);
+    }
+
     public function test_mayar_duplicate_webhook_does_not_extend_subscription_twice(): void
     {
         config([
@@ -541,10 +562,10 @@ class SubscriptionTest extends TestCase
             ],
         ];
 
-        $this->postJson(route('api.webhooks.mayar'), $payload)->assertOk();
+        $this->postJson($this->mayarWebhookRoute(), $payload)->assertOk();
         $endsAt = (string) DB::table('subscriptions')->where('id', $subscriptionId)->value('ends_at');
 
-        $this->postJson(route('api.webhooks.mayar'), $payload)
+        $this->postJson($this->mayarWebhookRoute(), $payload)
             ->assertOk()
             ->assertJsonPath('status', 'duplicate');
 
@@ -573,7 +594,7 @@ class SubscriptionTest extends TestCase
 
         [, $invoiceId, , $subscriptionId] = $this->tenantWithPendingInvoice();
 
-        $this->postJson(route('api.webhooks.mayar'), [
+        $this->postJson($this->mayarWebhookRoute(), [
             'event_id' => 'evt_unpaid_1',
             'event' => 'payment.received',
             'data' => [
@@ -624,7 +645,7 @@ class SubscriptionTest extends TestCase
             'gateway_reference' => 'txn_late',
         ]);
 
-        $this->postJson(route('api.webhooks.mayar'), [
+        $this->postJson($this->mayarWebhookRoute(), [
             'event_id' => 'evt_late_paid',
             'event' => 'payment.received',
             'status' => 'SUCCESS',
@@ -677,6 +698,16 @@ class SubscriptionTest extends TestCase
             'status' => 'active',
         ]);
         $this->assertFalse(Route::has('api.subscription.upload-proof'));
+    }
+
+    private function mayarWebhookSecret(): string
+    {
+        return str_repeat('w', 64);
+    }
+
+    private function mayarWebhookRoute(): string
+    {
+        return route('api.webhooks.mayar', ['token' => $this->mayarWebhookSecret()]);
     }
 
     /**

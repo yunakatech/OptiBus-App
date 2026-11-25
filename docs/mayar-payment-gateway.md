@@ -15,7 +15,9 @@ MAYAR_ENV=production
 MAYAR_API_KEY=your_mayar_api_key
 MAYAR_API_URL=
 MAYAR_PAYMENT_CREATE_PATH=/invoices/create
-MAYAR_WEBHOOK_SECRET=
+MAYAR_WEBHOOK_SECRET=generate_a_random_32_plus_character_token
+MAYAR_WEBHOOK_MAX_PAYLOAD_BYTES=32768
+MAYAR_WEBHOOK_RATE_LIMIT=60
 MAYAR_TIMEOUT=15
 ```
 
@@ -35,19 +37,21 @@ mengubah environment variable, lakukan redeploy agar konfigurasi baru terbaca.
 - `MAYAR_ENV=production` memakai API V2 `https://api.mayar.id/hl/v2`; gunakan
   `sandbox` untuk `https://api.mayar.io/hl/v2`.
 - `MAYAR_PAYMENT_CREATE_PATH` default memakai `/invoices/create`.
-- `MAYAR_WEBHOOK_SECRET` disiapkan sebagai konfigurasi opsional jika workspace Mayar Anda memakainya.
+- `MAYAR_WEBHOOK_SECRET` wajib diisi dengan token acak minimal 32 karakter. Token ini bukan API key Mayar dan tidak boleh dicatat di Git, log, atau URL dokumentasi publik.
 
 ## Webhook URL
 
 Daftarkan webhook Mayar ke endpoint berikut:
 
 ```text
-POST https://your-domain.example/api/webhooks/mayar
+POST https://your-domain.example/api/webhooks/mayar/{MAYAR_WEBHOOK_SECRET}
 ```
 
 Webhook ini dipakai untuk event pembayaran, terutama `payment.received`. Sistem
 memverifikasi `data.transactionId` ke endpoint detail transaksi Mayar sebelum
-menandai invoice lunas.
+menandai invoice lunas. Perbarui URL ini di dashboard Mayar setelah secret
+diatur sebagai environment variable. Endpoint lama tanpa token tidak lagi
+diterima.
 
 ## Cara Kerja
 
@@ -72,4 +76,5 @@ Halaman `Admin Ops -> SaaS -> Payment Gateway` menampilkan:
 - Checkout subscription mengarah ke link Mayar.
 - Invoice yang sukses dibayar berubah ke status `paid`.
 - Duplicate webhook tidak memperpanjang subscription dua kali.
+- Webhook dengan token salah tidak membuat baris `payment_webhook_events`.
 - Halaman SaaS admin menampilkan status gateway yang benar.

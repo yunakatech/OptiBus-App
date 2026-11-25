@@ -62,7 +62,10 @@ Route::post('api/public/booking/{tenantSlug}/requests', [PublicBookingApiControl
 
 // Public API — no auth required
 Route::get('api/plans', [PublicApiController::class, 'plans'])->name('api.plans');
-Route::post('api/webhooks/mayar', [PaymentWebhookController::class, 'mayar'])->name('api.webhooks.mayar');
+Route::post('api/webhooks/mayar/{token}', [PaymentWebhookController::class, 'mayar'])
+    ->where('token', '[A-Za-z0-9_-]{32,128}')
+    ->middleware('throttle:mayar-webhook')
+    ->name('api.webhooks.mayar');
 
 Route::get('api/build/{path}', static fn (string $path) => redirect()->to('/build/'.ltrim($path, '/'), 302))
     ->where('path', '.*')
@@ -249,7 +252,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::get('subscription', [SubscriptionPaymentController::class, 'index'])->middleware('subscription.active')->name('subscription.index');
     Route::post('subscription/checkout', [SubscriptionPaymentController::class, 'checkout'])->middleware('subscription.active')->name('subscription.checkout');
 
-    Route::prefix('api/bookings')->name('api.bookings.')->group(function () {
+    Route::prefix('api/bookings')->middleware('superadmin.tenant-context')->name('api.bookings.')->group(function () {
         Route::get('groups/{groupKey}', [BookingController::class, 'groupDetails'])->middleware('permission:booking.view')->where('groupKey', '[a-f0-9]{32}')->name('groups.show');
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');
         Route::get('schedules', [BookingApiController::class, 'schedules'])->middleware('permission:booking.view')->name('schedules');
