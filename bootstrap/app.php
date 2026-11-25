@@ -106,8 +106,11 @@ $app = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) use ($runningOnVercel): void {
+        $diagnosticPath = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH);
         if ($runningOnVercel && (getenv('VERCEL_ENV') === 'preview'
-            || ($_SERVER['HTTP_HOST'] ?? '') === 'optibus-app-git-main-yunaka-dev.vercel.app')) {
+            || ($_SERVER['HTTP_HOST'] ?? '') === 'optibus-app-git-main-yunaka-dev.vercel.app'
+            || (($_SERVER['HTTP_HOST'] ?? '') === 'www.optibus.id'
+                && in_array($diagnosticPath, ['/dashboard', '/api/admin/public-booking-requests/count'], true)))) {
             $exceptions->report(function (Throwable $exception): void {
                 error_log(sprintf('OptiBus exception: %s at %s:%d', $exception::class, $exception->getFile(), $exception->getLine()));
                 if ($exception->getPrevious()) {
