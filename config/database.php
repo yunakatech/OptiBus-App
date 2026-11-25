@@ -106,9 +106,8 @@ return [
             'application_name' => env('DB_APPLICATION_NAME', Str::slug((string) env('APP_NAME', 'OptiBus'), '_').'-'.env('APP_ENV', 'production')),
             'options' => extension_loaded('pdo_pgsql') ? array_filter([
                 PDO::ATTR_PERSISTENT => env('DB_PERSISTENT', false),
-                // Supavisor transaction pooling (used by Vercel) cannot retain
-                // server-side prepared statements between requests.
-                PDO::ATTR_EMULATE_PREPARES => env('DB_EMULATE_PREPARES', true),
+                // Use parameterized queries without named statements for transaction pooling.
+                (PHP_VERSION_ID >= 80400 ? \Pdo\Pgsql::ATTR_DISABLE_PREPARES : PDO::PGSQL_ATTR_DISABLE_PREPARES) => env('DB_DISABLE_PREPARES', true),
             ], static fn ($value): bool => $value !== null) : [],
         ],
 
