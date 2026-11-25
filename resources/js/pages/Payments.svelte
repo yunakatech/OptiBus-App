@@ -926,11 +926,11 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
         >
             <div class="space-y-3">
                 <div class="rounded-xl bg-muted/40 p-2">
-                    <p class="truncate text-xs font-semibold text-foreground">
+                    <p class="break-words text-xs font-semibold text-foreground">
                         {row.customer_name || row.code}
                     </p>
                     <p
-                        class="mt-0.5 truncate text-xs md:text-[11px] text-muted-foreground"
+                        class="mt-0.5 break-words text-xs text-muted-foreground md:text-[11px]"
                     >
                         {row.code} | {formatCurrencyDisplay(
                             row.remaining_amount,
@@ -995,12 +995,16 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
 <div
     class:mobile-page={true}
     data-content-density="compact"
-    class="min-h-full space-y-4 p-3 pb-4 md:p-4"
+    class="min-h-full space-y-4 p-3 pb-4 sm:p-4 md:p-5"
 >
     <Card
-        class="overflow-hidden border-sidebar-border/70 bg-linear-to-br from-background via-background to-cyan-50/30 dark:border-sidebar-border dark:to-cyan-950/15"
+        class="overflow-hidden rounded-2xl border-border bg-card shadow-sm"
     >
-        <CardHeader class="space-y-3 border-b bg-background/80 p-3 md:p-6">
+        <CardHeader class="space-y-4 border-b border-border bg-card p-4 md:p-6">
+            <div>
+                <h1 class="text-xl font-semibold tracking-tight text-foreground">Pembayaran</h1>
+                <p class="mt-1 text-sm text-muted-foreground">Pantau tagihan, sisa pembayaran, dan status transaksi.</p>
+            </div>
             <div class="grid grid-cols-3 gap-2">
                 {#each statusTabs as tab (tab.key)}
                     <button
@@ -1044,13 +1048,13 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
                 </div>
                 <div class="rounded-xl border border-border/70 bg-card p-3">
                     <p class="text-xs text-muted-foreground">Nilai tagihan</p>
-                    <p class="mt-1 text-lg font-semibold text-foreground">
+                    <p class="mt-1 break-words text-base font-semibold text-foreground tabular-nums sm:text-lg">
                         {formatCurrencyDisplay(activeAmount)}
                     </p>
                 </div>
                 <div class="rounded-xl border border-border/70 bg-card p-3">
                     <p class="text-xs text-muted-foreground">Sisa ditagih</p>
-                    <p class="mt-1 text-lg font-semibold text-foreground">
+                    <p class="mt-1 break-words text-base font-semibold text-foreground tabular-nums sm:text-lg">
                         {formatCurrencyDisplay(activeRemaining)}
                     </p>
                 </div>
@@ -1385,7 +1389,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
 
             {#if selectedRowsCount > 0}
                 <div
-                    class="sticky top-3 z-30 rounded-lg border border-cyan-200 bg-cyan-50/95 p-3 shadow-sm backdrop-blur dark:border-cyan-500/20 dark:bg-cyan-950/25"
+                    class="rounded-xl border border-cyan-200 bg-cyan-50 p-3 dark:border-cyan-500/20 dark:bg-cyan-950/25"
                 >
                     <div
                         class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between"
@@ -1524,6 +1528,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
                                         <input
                                             bind:this={selectAllInput}
                                             type="checkbox"
+                                            aria-label="Pilih semua transaksi yang dapat diperbarui"
                                             class="h-4 w-4 rounded border-cyan-300 text-cyan-600 focus:ring-cyan-500"
                                             checked={selectedRowsAllVisibleSelectable}
                                             disabled={selectableRows.length ===
@@ -1662,12 +1667,12 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
                                                 {row.source_label}
                                             </Badge>
                                             <p
-                                                class="mt-2 truncate font-semibold text-foreground"
+                                                class="mt-2 break-words font-semibold text-foreground"
                                             >
                                                 {row.customer_name || row.code}
                                             </p>
                                             <p
-                                                class="truncate text-xs text-muted-foreground"
+                                                class="break-words text-xs text-muted-foreground"
                                             >
                                                 {row.code} | {row.date || '-'}
                                             </p>
@@ -1706,6 +1711,12 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
                                         </p>
                                     </div>
                                     <div class="col-span-2">
+                                        <p class="text-muted-foreground">Sisa ditagih</p>
+                                        <p class="break-words font-semibold text-foreground tabular-nums">
+                                            {formatCurrencyDisplay(row.remaining_amount)}
+                                        </p>
+                                    </div>
+                                    <div class="col-span-2">
                                         <p class="text-muted-foreground">
                                             Rute
                                         </p>
@@ -1725,7 +1736,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
             <div
                 class="flex flex-wrap items-center justify-between gap-3 border-t pt-3"
             >
-                <p class="hidden text-sm text-muted-foreground sm:block">
+                <p class="text-sm text-muted-foreground">
                     Total {pagination.total} data, halaman {pagination.page} dari
                     {pagination.last_page}
                 </p>
