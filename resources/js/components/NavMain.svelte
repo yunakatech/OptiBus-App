@@ -141,7 +141,8 @@
                 <div class="relative">
                     <SidebarMenuButton
                         isActive={isSectionActive(section)}
-                        class="rounded-md border border-transparent hover:border-sidebar-border/70 hover:bg-sidebar-accent/70 data-[active=true]:border-sidebar-border/70 data-[active=true]:bg-sidebar-accent/85"
+                        aria-expanded={isCollapsedDesktop() ? undefined : isSectionOpen(section.id)}
+                        class="rounded-lg border border-transparent hover:border-sidebar-border/70 hover:bg-sidebar-accent/70 data-[active=true]:border-sidebar-border/70 data-[active=true]:bg-sidebar-accent/85"
                         onclick={() => toggleSection(section.id)}
                     >
                         {#if section.icon}
@@ -155,13 +156,13 @@
 
                     {#if isSectionOpen(section.id)}
                         <div
-                            class="mt-1 space-y-1 rounded-md border border-sidebar-border/70 bg-sidebar-accent/35 p-1 group-data-[collapsible=icon]:hidden"
+                            class="mt-1 space-y-1 border-s border-sidebar-border/70 ps-2 group-data-[collapsible=icon]:hidden"
                         >
                             {#each section.items as item (toUrl(item.href))}
                                 <SidebarMenuButton
                                     asChild
                                     isActive={isItemActive(item.href)}
-                                    class="h-7 rounded-md text-xs"
+                                    class="h-8 rounded-lg text-xs"
                                 >
                                     {#snippet children(props)}
                                         <Link

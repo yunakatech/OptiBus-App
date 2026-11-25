@@ -129,7 +129,9 @@
     }
 
     function mobileLabel(title: string): string {
-        return title === 'Keberangkatan' ? 'Berangkat' : title;
+        if (title === 'Keberangkatan') return 'Berangkat';
+        if (title === 'Dashboard') return 'Beranda';
+        return title;
     }
 </script>
 
@@ -368,7 +370,7 @@
         max-width: 100%;
         text-align: center;
         white-space: normal;
-        overflow-wrap: anywhere;
+        overflow-wrap: normal;
     }
 
     .mobile-nav-link[aria-busy='true'] .mobile-nav-label {
