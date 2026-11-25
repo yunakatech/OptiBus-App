@@ -116,6 +116,9 @@ $app = Application::configure(basePath: dirname(__DIR__))
                 if ($exception->getPrevious()) {
                     $previous = $exception->getPrevious();
                     error_log(sprintf('OptiBus cause: %s at %s:%d', $previous::class, $previous->getFile(), $previous->getLine()));
+                    if ($previous instanceof PDOException && preg_match('/^[A-Z0-9]{5}$/', (string) $previous->getCode())) {
+                        error_log('OptiBus SQLSTATE: '.$previous->getCode());
+                    }
                 }
             })->stop();
         }
