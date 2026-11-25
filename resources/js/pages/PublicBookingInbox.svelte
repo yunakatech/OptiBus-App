@@ -214,6 +214,18 @@
             year: 'numeric',
         });
     }
+    function formatExpiry(value: string): string {
+        const date = new Date(value);
+        if (!value || Number.isNaN(date.getTime())) return '-';
+
+        return new Intl.DateTimeFormat('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }).format(date);
+    }
     function seatSummary(item: RequestRow): string {
         return item.seats
             .map((seat) => `${seat.seat} (${seat.passenger_name})`)
@@ -234,8 +246,8 @@
 </script>
 
 <AppHead title="Inbox Booking" />
-<div class:mobile-page={true} class="mx-auto max-w-5xl space-y-5 p-4 sm:p-6">
-    <div class="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+<div class:mobile-page={true} class="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
+    <div class="flex flex-col justify-between gap-4 rounded-2xl border border-border bg-card p-4 shadow-sm sm:flex-row sm:items-end sm:p-6">
         <div>
             <p
                 class="text-xs font-bold uppercase tracking-[0.18em] text-emerald-600"
@@ -246,15 +258,14 @@
                 Inbox Booking Publik
             </h1>
             <p class="mt-1 text-sm text-muted-foreground">
-                Request booking ditahan selama 24 jam sejak diterima sebelum
-                kursi kembali tersedia.
+                Tinjau permintaan dan batas penahanan kursi sebelum mengambil keputusan.
             </p>
         </div>
         <button
             type="button"
             onclick={loadRequests}
             disabled={loading || hasPending}
-            class="flex min-h-11 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 text-sm font-bold text-slate-800 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50 active:scale-[0.98] dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+            class="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-input bg-background px-4 text-sm font-semibold text-foreground transition hover:bg-accent disabled:opacity-50"
             >{#if loading}<RefreshCw
                     class="h-4 w-4 animate-spin"
                 />{:else}<RefreshCw class="h-4 w-4" />{/if} Refresh</button
@@ -284,7 +295,7 @@
         >
             Memuat request...
         </div>{:else if requests.length === 0 && !error}<div
-            class="rounded-3xl border border-dashed border-slate-300 px-5 py-16 text-center"
+            class="rounded-2xl border border-dashed border-border bg-card px-5 py-16 text-center"
         >
             <Check class="mx-auto h-8 w-8 text-emerald-600" />
             <p class="mt-3 font-black">Inbox bersih</p>
@@ -294,24 +305,27 @@
         </div>{:else}<div class="grid gap-4 lg:grid-cols-2">
             {#each requests as item (item.id)}<article
                     aria-busy={!!pending[item.id]}
-                    class="rounded-3xl border border-slate-200 bg-white p-5 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
+                    class="min-w-0 rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-sm sm:p-5"
                 >
                     <div class="flex items-start justify-between gap-3">
-                        <div>
+                        <div class="min-w-0">
                             <p
-                                class="text-xs font-black tracking-widest text-emerald-700 dark:text-emerald-300"
+                                class="break-all text-xs font-semibold tracking-wide text-primary"
                             >
                                 {item.request_code}
                             </p>
-                            <h2 class="mt-1 text-lg font-black">
+                            <h2 class="mt-1 break-words text-lg font-semibold">
                                 {item.contact_name}
                             </h2>
                         </div>
                         <span
-                            class="rounded-full bg-amber-50 px-3 py-1 text-xs font-black text-amber-700"
+                            class="shrink-0 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
                             >Menunggu</span
                         >
                     </div>
+                    <p class="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+                        Batas penahanan: <span class="font-semibold">{formatExpiry(item.hold_expires_at)}</span>
+                    </p>
                     <div class="mt-4 grid gap-2 text-sm">
                         <p class="flex items-center gap-2 font-semibold">
                             <Clock3 class="h-4 w-4 text-emerald-600" />
@@ -332,7 +346,7 @@
                                     Pickup {item.pickup_time ||
                                         item.segment_pickup_times.join(', ') ||
                                         '-'}
-                                    Â· {formatRupiah(item.price)}
+                                    · {formatRupiah(item.price)}
                                 </p>
                                 <p
                                     class="mt-1 text-xs text-emerald-800/80 dark:text-emerald-200/80"
@@ -347,7 +361,7 @@
                                 >· {item.pool_name}</span
                             >
                         </p>
-                        <p class="font-semibold">Kursi: {seatSummary(item)}</p>
+                        <p class="break-words font-semibold">Kursi: {seatSummary(item)}</p>
                         <p
                             class="flex items-start gap-2 text-slate-600 dark:text-slate-300"
                         >
@@ -366,7 +380,7 @@
                             </p>{/if}
                     </div>
                     <div
-                        class="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-row"
+                        class="mt-5 grid grid-cols-2 gap-2 border-t border-border pt-4 sm:flex sm:flex-row"
                     >
                         <button
                             type="button"
