@@ -128,7 +128,7 @@ class PaymentPageTest extends TestCase
 
         $this->actingAs($operator);
 
-        $this->get(route('payments.index', ['status' => 'unpaid']))
+        $this->get(route('payments.index', ['status' => 'unpaid', 'date_from' => '2026-06-01', 'date_to' => '2026-06-30']))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Payments')
@@ -559,6 +559,8 @@ class PaymentPageTest extends TestCase
             'status' => 'unpaid',
             'source' => 'booking',
             'q' => 'export',
+            'date_from' => '2026-06-01',
+            'date_to' => '2026-06-30',
         ]));
 
         $response->assertOk();

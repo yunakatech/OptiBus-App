@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\SchemaCache;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -12,9 +14,26 @@ class AdminOpsDriverTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function tearDown(): void
+    {
+        SchemaCache::flush();
+        parent::tearDown();
+    }
+
     private function actingAsSuperAdmin(): User
     {
-        return $this->actingAsSuperAdminWithTenantContext($this->defaultTenantId());
+        $tenantId = $this->defaultTenantId();
+        $user = $this->actingAsSuperAdminWithTenantContext($tenantId);
+        $poolId = DB::table('pools')->insertGetId([
+            'tenant_id' => $tenantId,
+            'name' => 'Pool Driver Test',
+            'status' => 'active',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        $this->withSession(['active_pool_id' => $poolId]);
+
+        return $user;
     }
 
     private function defaultTenantId(): int
@@ -37,6 +56,7 @@ class AdminOpsDriverTest extends TestCase
         ] as $column) {
             $this->dropDriverColumnIfExists($column);
         }
+        SchemaCache::flush();
 
         $driver = $this->postJson(route('api.admin.drivers.save'), [
             'nama' => 'Supir Legacy',
@@ -69,17 +89,22 @@ class AdminOpsDriverTest extends TestCase
         $this->assertSame(0.0, (float) ($row['fixed_cost'] ?? -1));
     }
 
-    public function test_driver_save_returns_422_for_unknown_armada_nopol(): void
+    public function test_driver_save_does_not_assign_legacy_armada_input(): void
     {
         $this->actingAsSuperAdmin();
 
-        $this->postJson(route('api.admin.drivers.save'), [
+        $driverId = $this->postJson(route('api.admin.drivers.save'), [
             'nama' => 'Supir Salah Nopol',
             'armada_nopol' => 'DD 0000 NO',
         ])
-            ->assertStatus(422)
-            ->assertJsonPath('success', false)
-            ->assertJsonPath('error', 'Nopol armada tidak ditemukan.');
+            ->assertCreated()
+            ->json('id');
+
+        $this->assertDatabaseHas('drivers', [
+            'id' => $driverId,
+            'armada_id' => null,
+            'armada_nopol' => null,
+        ]);
     }
 
     private function dropDriverColumnIfExists(string $column): void

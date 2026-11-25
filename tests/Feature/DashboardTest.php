@@ -52,6 +52,8 @@ class DashboardTest extends TestCase
     public function test_authenticated_users_can_visit_the_dashboard()
     {
         $this->actingAsSuperAdmin();
+        $poolId = $this->createPool($this->defaultTenantId(), 'POOL DASHBOARD', 'dashboard-test', 0);
+        $this->withSession(['active_pool_id' => $poolId]);
 
         $response = $this->get(route('dashboard'));
         $response->assertOk();

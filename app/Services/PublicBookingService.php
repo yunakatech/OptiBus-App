@@ -294,6 +294,9 @@ class PublicBookingService
         $jam = substr((string) $schedule->jam, 0, 5);
         $bookingCutoffAt = $this->bookingCutoffAt($date, (string) $schedule->jam);
         $holdExpiresAt = now()->addMinutes(self::BOOKING_HOLD_MINUTES);
+        if ($holdExpiresAt->greaterThan($bookingCutoffAt)) {
+            $holdExpiresAt = $bookingCutoffAt;
+        }
         if (now()->greaterThanOrEqualTo($bookingCutoffAt)) {
             throw ValidationException::withMessages([
                 'schedule_id' => 'Pemesanan online ditutup 2 jam sebelum keberangkatan.',

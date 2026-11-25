@@ -27,7 +27,7 @@ class AdminOpsRolesPageTest extends TestCase
     {
         AccessControl::syncDefaults();
 
-        $user = User::factory()->create(['is_super_admin' => false]);
+        $user = User::factory()->create(['is_super_admin' => false, 'tenant_id' => $this->defaultTenantId()]);
         $roleId = (int) DB::table('roles')->where('slug', $roleSlug)->value('id');
 
         DB::table('user_role')->insert([

@@ -81,6 +81,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 });
 
 Route::middleware(['auth', 'verified', 'subscription.active'])->group(function () {
+    Route::get('admin-ops', static function (Request $request) {
+        abort_unless($request->query('tab') === 'reports', 404);
+
+        return redirect()->route('report.index', $request->except('tab'));
+    });
     Route::patch('api/user/ui-preferences', [UserPreferenceController::class, 'update'])->name('user.ui_preferences.update');
     Route::get('dashboard', DashboardController::class)->middleware('permission:dashboard.view')->name('dashboard');
     Route::get('menu', fn () => Inertia::render('Menu'))->name('menu.index');
