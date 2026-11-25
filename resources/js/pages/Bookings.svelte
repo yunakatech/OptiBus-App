@@ -10398,8 +10398,8 @@ return;
     {#if !consoleOnly && !groupDetailPage}
         <Card class="rounded-xl border border-border bg-card shadow-xs">
             <CardHeader class="border-b border-border/60 pb-3 sm:pb-4">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                    <div class="space-y-1">
+                <div class="flex flex-wrap items-center justify-between gap-4">
+                    <div class="min-w-0 space-y-1">
                         <div class="flex flex-wrap items-center gap-2.5">
                             <CardTitle
                                 class="text-lg font-bold tracking-tight text-foreground md:text-xl"
@@ -10445,7 +10445,7 @@ return;
                     </div>
 
                     {#if listOnly}
-                        <div class="flex flex-wrap items-center gap-2">
+                        <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                             <!-- View mode switcher -->
                             <ViewportOnly minWidth={1024}
                                 ><div
@@ -10545,7 +10545,7 @@ return;
                                 {/snippet}
                                 {#snippet desktop()}
                                     <div
-                                        class="grid gap-2.5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                                        class="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
                                     >
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
@@ -10696,7 +10696,7 @@ return;
                                         </Badge>
                                     {/if}
                                 </div>
-                                <div class="grid gap-2.5 md:grid-cols-5">
+                                <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
                                     <div class="space-y-1">
                                         <label
                                             for="emptyDepartureDate"
@@ -10712,7 +10712,7 @@ return;
                                             class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                         />
                                     </div>
-                                    <div class="space-y-1 md:col-span-2">
+                                    <div class="space-y-1 sm:col-span-2 xl:col-span-2">
                                         <label
                                             for="emptyDepartureRoute"
                                             class="text-sm font-medium text-muted-foreground"
@@ -10738,7 +10738,7 @@ return;
                                             {/each}
                                         </select>
                                     </div>
-                                    <div class="space-y-1">
+                                    <div class="space-y-1 xl:col-span-1">
                                         <label
                                             for="emptyDepartureJam"
                                             class="text-sm font-medium text-muted-foreground"
@@ -10766,7 +10766,7 @@ return;
                                             {/each}
                                         </select>
                                     </div>
-                                    <div class="space-y-1">
+                                    <div class="space-y-1 xl:col-span-2">
                                         <label
                                             for="emptyDepartureUnit"
                                             class="text-sm font-medium text-muted-foreground"
@@ -10951,10 +10951,10 @@ return;
 
                                                 <div class="table-container">
                                                     <table
-                                                        class="min-w-full text-left text-xs"
+                                                        class="min-w-full text-start text-xs"
                                                     >
                                                         <thead
-                                                            class="sticky top-0 z-10 border-b border-border/70 bg-muted/40 text-left text-xs md:text-[11px] font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur"
+                                                            class="sticky top-0 z-10 border-b border-border/70 bg-muted/40 text-start text-xs font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur md:text-[11px]"
                                                         >
                                                             <tr>
                                                                 <th
@@ -10985,7 +10985,7 @@ return;
                                                                     Pembayaran
                                                                 </th>
                                                                 <th
-                                                                    class="w-44 px-3.5 py-2.5 text-right"
+                                                                    class="w-44 px-3.5 py-2.5 text-end"
                                                                 >
                                                                     Aksi
                                                                 </th>
@@ -11430,8 +11430,8 @@ return;
 
                             <div
                                 class={bookingListDesktopView === 'sheet'
-                                    ? 'space-y-2.5 lg:hidden'
-                                    : 'grid gap-2 md:grid-cols-2 xl:grid-cols-3'}
+                                    ? 'space-y-3 lg:hidden'
+                                    : 'grid gap-3 md:grid-cols-2 xl:gap-4 xl:grid-cols-3'}
                             >
                                 {#each visibleBookingGroups() as group, index (`booking-group-card-${index}-${group.key}`)}
                                     {@const unpaidAmount =
@@ -11443,7 +11443,7 @@ return;
                                         <div
                                             class="flex items-start justify-between gap-2 border-b border-border/60 pb-3"
                                         >
-                                            <div class="space-y-1">
+                                            <div class="min-w-0 space-y-1">
                                                 <div
                                                     class="flex items-center gap-2"
                                                 >
@@ -11506,7 +11506,7 @@ return;
                                                     >
                                                     <span>•</span>
                                                     <span
-                                                        class="font-mono text-xs md:text-[11px] uppercase tracking-wider"
+                                                        class="break-all font-mono text-xs uppercase tracking-wider md:text-[11px]"
                                                         >{group.departure_code}</span
                                                     >
                                                 </p>
@@ -11633,7 +11633,7 @@ return;
                                         <!-- Route -->
                                         <div class="my-3">
                                             <p
-                                                class="font-semibold text-foreground text-sm leading-snug line-clamp-2"
+                                                class="break-words text-sm font-semibold leading-snug text-foreground"
                                             >
                                                 {group.rute}
                                             </p>
@@ -11647,7 +11647,7 @@ return;
                                                 class="flex items-center justify-between gap-2"
                                             >
                                                 <span
-                                                    class="inline-flex items-center gap-1.5 text-muted-foreground"
+                                                    class="inline-flex shrink-0 items-center gap-1.5 text-muted-foreground"
                                                 >
                                                     <UserRound
                                                         class="h-3.5 w-3.5 shrink-0"
@@ -11655,7 +11655,7 @@ return;
                                                     Driver
                                                 </span>
                                                 <span
-                                                    class={`font-medium truncate ${bookingAssignmentMissing(group.driver_name) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}
+                                                    class={`min-w-0 break-words text-end font-medium ${bookingAssignmentMissing(group.driver_name) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}
                                                 >
                                                     {bookingAssignmentText(
                                                         group.driver_name,
@@ -11667,7 +11667,7 @@ return;
                                                 class="flex items-center justify-between gap-2"
                                             >
                                                 <span
-                                                    class="inline-flex items-center gap-1.5 text-muted-foreground"
+                                                    class="inline-flex shrink-0 items-center gap-1.5 text-muted-foreground"
                                                 >
                                                     <CarFront
                                                         class="h-3.5 w-3.5 shrink-0"
@@ -11675,7 +11675,7 @@ return;
                                                     Armada
                                                 </span>
                                                 <span
-                                                    class={`font-medium truncate ${bookingAssignmentMissing(group.armada_nopol) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}
+                                                    class={`min-w-0 break-words text-end font-medium ${bookingAssignmentMissing(group.armada_nopol) ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}`}
                                                 >
                                                     {bookingAssignmentText(
                                                         group.armada_nopol,
@@ -11706,14 +11706,14 @@ return;
                                         <!-- Passenger & Payment Metrics -->
                                         <div class="my-3 space-y-2">
                                             <div
-                                                class="flex items-center justify-between text-xs"
+                                                class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs"
                                             >
                                                 <span
                                                     class="text-muted-foreground"
                                                     >Penumpang</span
                                                 >
                                                 <div
-                                                    class="flex items-center gap-2"
+                                                    class="flex flex-wrap items-center justify-end gap-x-2 gap-y-1"
                                                 >
                                                     <span
                                                         class="font-semibold text-foreground"
@@ -11733,7 +11733,7 @@ return;
 
                                             {#if unpaidAmount > 0}
                                                 <div
-                                                    class="flex items-center justify-between rounded-md border border-amber-200/80 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-800 dark:border-amber-500/25 dark:bg-amber-950/20 dark:text-amber-200"
+                                                    class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-amber-200/80 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-800 dark:border-amber-500/25 dark:bg-amber-950/20 dark:text-amber-200"
                                                 >
                                                     <span
                                                         >Belum Lunas ({group.belum_lunas}
@@ -11748,7 +11748,7 @@ return;
                                                 </div>
                                             {:else}
                                                 <div
-                                                    class="flex items-center justify-between rounded-md border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-950/20 dark:text-emerald-200"
+                                                    class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-950/20 dark:text-emerald-200"
                                                 >
                                                     <span
                                                         >Semua Lunas ({group.lunas}
@@ -11768,13 +11768,13 @@ return;
 
                                         <!-- Footer Actions -->
                                         <div
-                                            class="flex items-center gap-2 pt-2 border-t border-border/60"
+                                            class="flex flex-wrap items-center gap-2 border-t border-border/60 pt-3"
                                         >
                                             <Button
                                                 type="button"
                                                 size="sm"
                                                 variant="outline"
-                                                class="flex-1 text-xs h-8 font-medium"
+                                                class="h-8 min-w-0 flex-1 text-xs font-medium"
                                                 onclick={() =>
                                                     navigateToGroupDetail(
                                                         group,
