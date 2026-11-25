@@ -12,7 +12,7 @@
 </script>
 
 <script lang="ts">
-    import { ArrowRight, CheckCircle2, Circle, Copy } from 'lucide-svelte';
+    import { ArrowRight, BusFront, CheckCircle2, Circle, Copy, Package, Ticket, Wallet } from 'lucide-svelte';
     import { SvelteSet } from 'svelte/reactivity';
     import AppHead from '@/components/AppHead.svelte';
     import DashboardSection from '@/components/dashboard/DashboardSection.svelte';
@@ -692,22 +692,19 @@
 
 <div
     class:mobile-page={true}
-    data-content-density="compact"
-    class="flex h-full min-w-0 flex-1 flex-col gap-4 overflow-x-clip rounded-xl px-3 py-3 sm:px-4 md:gap-5 md:p-4"
+    class="mx-auto flex h-full w-full max-w-[1600px] min-w-0 flex-1 flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-7"
 >
-    <header class="rounded-2xl border border-border/70 bg-card p-4 shadow-sm sm:p-5">
-        <div class="flex flex-wrap items-end justify-between gap-4">
+    <header class="flex flex-wrap items-end justify-between gap-5">
             <div class="min-w-0">
-                <p class="text-xs font-semibold uppercase tracking-wider text-primary">Ringkasan operasional</p>
-                <h1 class="mt-1 text-xl font-semibold tracking-tight text-foreground sm:text-2xl">Dashboard</h1>
-                <p class="mt-1 text-sm text-muted-foreground">Pantau pendapatan dan aktivitas perjalanan Anda.</p>
+                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Ringkasan operasional</p>
+                <h1 class="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Dashboard</h1>
+                <p class="mt-2 text-sm text-muted-foreground">Pendapatan dan aktivitas perjalanan dalam satu tempat.</p>
             </div>
-            <nav aria-label="Bagian dashboard" class="flex flex-wrap gap-2">
-                <a href="#dashboard-pendapatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Pendapatan</a>
-                <a href="#dashboard-keberangkatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Keberangkatan</a>
-                <a href="#dashboard-carter" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-background px-3 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Carter</a>
+            <nav aria-label="Bagian dashboard" class="flex flex-wrap gap-2 text-sm">
+                <a href="#dashboard-pendapatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 font-medium text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Pendapatan</a>
+                <a href="#dashboard-keberangkatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 font-medium text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Keberangkatan</a>
+                <a href="#dashboard-carter" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 font-medium text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Carter</a>
             </nav>
-        </div>
     </header>
     {#if setupProgress && !setupProgress.completed}
         <section
@@ -725,7 +722,7 @@
                                 Lengkapi Setup
                             </p>
                             <h2
-                                class="mt-1 text-base font-semibold text-[#163A39]"
+                                class="mt-1 text-base font-semibold text-foreground"
                             >
                                 Data awal belum lengkap.
                             </h2>
@@ -760,7 +757,7 @@
                                     />
                                 {/if}
                                 <span
-                                    class={`truncate ${item.done ? 'text-[#163A39]' : 'text-amber-800'}`}
+                                    class={`break-words ${item.done ? 'text-foreground' : 'text-amber-800 dark:text-amber-200'}`}
                                 >
                                     {item.label}
                                 </span>
@@ -778,9 +775,32 @@
         </section>
     {/if}
 
-    <div id="dashboard-pendapatan" class="scroll-mt-24 space-y-2">
-        <!-- Command Center & Prioritas Grid -->
-        <div class="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+    <section id="dashboard-pendapatan" class="scroll-mt-24 space-y-4" aria-labelledby="dashboard-revenue-title">
+        <div class="flex flex-wrap items-end justify-between gap-2">
+            <div>
+                <h2 id="dashboard-revenue-title" class="text-lg font-semibold text-foreground">Ringkasan pendapatan</h2>
+                <p class="mt-1 text-sm text-muted-foreground">{safeSummaryPeriodByScope.month.current_label} · {_selectedPoolName}</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {#each [
+                { label: 'Total pendapatan', value: Number(activeSummaryStats.revenue_booking || 0) + Number(activeSummaryStats.revenue_charter || 0) + Number(activeSummaryStats.revenue_luggage || 0), icon: Wallet, accent: true },
+                { label: 'Booking', value: Number(activeSummaryStats.revenue_booking || 0), icon: Ticket, accent: false },
+                { label: 'Carter', value: Number(activeSummaryStats.revenue_charter || 0), icon: BusFront, accent: false },
+                { label: 'Bagasi', value: Number(activeSummaryStats.revenue_luggage || 0), icon: Package, accent: false },
+            ] as metric (metric.label)}
+                {@const MetricIcon = metric.icon}
+                <div class={`min-w-0 rounded-2xl border p-4 sm:p-5 ${metric.accent ? 'border-primary/30 bg-primary/5' : 'border-border bg-card'}`}>
+                    <div class="flex items-center justify-between gap-3">
+                        <p class="text-sm font-medium text-muted-foreground">{metric.label}</p>
+                        <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><MetricIcon class="size-5" aria-hidden="true" /></span>
+                    </div>
+                    <p class="mt-4 break-words text-xl font-semibold tracking-tight text-foreground tabular-nums sm:text-2xl">{toCurrency(metric.value)}</p>
+                    <p class="mt-1 text-xs text-muted-foreground">{safeSummaryPeriodByScope.month.current_label}</p>
+                </div>
+            {/each}
+        </div>
+        <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
             <!-- Revenue Activity Chart -->
             <DashboardSection data="dailyTrend" label="Pendapatan harian">
                 <LazyDashboardPanel
@@ -807,7 +827,7 @@
                 }}
             />
         </div>
-    </div>
+    </section>
 
     <div class="grid min-w-0 gap-3 xl:grid-cols-3 xl:items-start">
         <div class="min-w-0 space-y-3 xl:col-span-2">

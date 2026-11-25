@@ -360,15 +360,15 @@ align = 'right';
     class={`flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm ${chartTheme().panelClass}`}
 >
     <div
-        class="relative flex-1 min-h-[220px] px-3 pb-4 pt-3 sm:min-h-[260px] sm:px-4"
+        class="relative min-h-[260px] flex-1 p-4 sm:min-h-[300px] sm:p-5"
     >
-        <div class="mb-4 px-1 sm:px-2">
+        <div class="mb-4">
             <div class="flex flex-wrap items-center gap-2">
-                <h3 class={`text-sm font-bold ${chartTheme().titleClass}`}>
+                <h3 class={`text-base font-semibold ${chartTheme().titleClass}`}>
                     {title}
                 </h3>
                 <span
-                    class={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] ${chartTheme().subtitleClass}`}
+                    class={`rounded-full border px-2.5 py-1 text-xs font-medium ${chartTheme().subtitleClass}`}
                 >
                     {subtitle}
                 </span>
@@ -376,7 +376,7 @@ align = 'right';
         </div>
 
         <div
-            class={`mb-2 flex items-center justify-end text-[10px] font-medium uppercase tracking-[0.18em] ${chartTheme().countClass}`}
+            class={`mb-2 flex items-center justify-end text-xs font-medium ${chartTheme().countClass}`}
         >
             <span class="normal-case tracking-normal">
                 {monthlyTrend.length} titik
@@ -442,7 +442,7 @@ align = 'right';
         {/if}
 
         <div
-            class={`h-[180px] overflow-visible rounded-lg border p-2 shadow-inner sm:h-[220px] sm:p-3 md:h-[260px] ${isDark ? 'border-border/80 bg-[linear-gradient(180deg,rgba(15,23,42,0.94),rgba(15,23,42,0.82))] shadow-slate-950/40' : 'border-border/70 bg-[linear-gradient(180deg,rgba(248,250,252,0.96),rgba(255,255,255,0.92))]'}`}
+            class="h-[200px] overflow-visible rounded-xl bg-muted/20 p-2 sm:h-[250px] sm:p-3"
         >
             <canvas bind:this={chartCanvas} class="relative z-10 cursor-pointer"
             ></canvas>
