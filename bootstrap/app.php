@@ -105,8 +105,16 @@ $app = Application::configure(basePath: dirname(__DIR__))
             'superadmin.redirect' => RedirectSuperAdmin::class,
         ]);
     })
-    ->withExceptions(function (Exceptions $exceptions): void {
-        //
+    ->withExceptions(function (Exceptions $exceptions) use ($runningOnVercel): void {
+        if ($runningOnVercel && getenv('VERCEL_ENV') === 'preview') {
+            $exceptions->report(function (Throwable $exception): void {
+                error_log(sprintf('OptiBus exception: %s at %s:%d', $exception::class, $exception->getFile(), $exception->getLine()));
+                if ($exception->getPrevious()) {
+                    $previous = $exception->getPrevious();
+                    error_log(sprintf('OptiBus cause: %s at %s:%d', $previous::class, $previous->getFile(), $previous->getLine()));
+                }
+            })->stop();
+        }
     })->create();
 
 if ($runningOnVercel) {
