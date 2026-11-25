@@ -106,7 +106,8 @@ $app = Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) use ($runningOnVercel): void {
-        if ($runningOnVercel && getenv('VERCEL_ENV') === 'preview') {
+        if ($runningOnVercel && (getenv('VERCEL_ENV') === 'preview'
+            || ($_SERVER['HTTP_HOST'] ?? '') === 'optibus-app-git-main-yunaka-dev.vercel.app')) {
             $exceptions->report(function (Throwable $exception): void {
                 error_log(sprintf('OptiBus exception: %s at %s:%d', $exception::class, $exception->getFile(), $exception->getLine()));
                 if ($exception->getPrevious()) {
