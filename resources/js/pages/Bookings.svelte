@@ -478,7 +478,9 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
         initialBookingListDesktopView,
     );
     let bookingListDateManuallyChanged = $state(false);
-    let lastBookingListFilterSignature = $state('');
+    let lastBookingListFilterSignature = $state(
+        [bookingListRoute, bookingListDateFrom, bookingListDateTo, bookingListPayment, bookingListStatus].join('|'),
+    );
     let bookingListFilterDraft = $state({
         route: 'all',
         from: initialBookingListDate,
@@ -2733,8 +2735,8 @@ return;
         const currentToday = currentClockKey().slice(0, 10) || today;
 
         if (
-            bookingListDateFrom === currentToday &&
-            bookingListDateTo === currentToday
+            untrack(() => bookingListDateFrom) === currentToday &&
+            untrack(() => bookingListDateTo) === currentToday
         ) {
             return;
         }
@@ -10515,11 +10517,11 @@ return;
                                         >
                                         <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
                                             <span>Dari tanggal</span>
-                                            <input type="date" bind:value={bookingListDateFrom} max={bookingListDateTo} onchange={() => { bookingListDateManuallyChanged = true; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" />
+                                            <input type="date" bind:value={bookingListDateFrom} oninput={() => { bookingListDateManuallyChanged = true; }} onchange={(event) => { const value = event.currentTarget.value; if (value && value > bookingListDateTo) bookingListDateTo = value; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" />
                                         </label>
                                         <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
                                             <span>Sampai tanggal</span>
-                                            <input type="date" bind:value={bookingListDateTo} min={bookingListDateFrom} onchange={() => { bookingListDateManuallyChanged = true; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" />
+                                            <input type="date" bind:value={bookingListDateTo} oninput={() => { bookingListDateManuallyChanged = true; }} onchange={(event) => { const value = event.currentTarget.value; if (value && value < bookingListDateFrom) bookingListDateFrom = value; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" />
                                         </label>
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
@@ -10579,8 +10581,8 @@ return;
                                                 {/each}
                                             </select>
                                         </label>
-                                        <label class="grid gap-1.5 text-xs font-medium">Dari tanggal <input type="date" bind:value={bookingListFilterDraft.from} max={bookingListFilterDraft.to} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
-                                        <label class="grid gap-1.5 text-xs font-medium">Sampai tanggal <input type="date" bind:value={bookingListFilterDraft.to} min={bookingListFilterDraft.from} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
+                                        <label class="grid gap-1.5 text-xs font-medium">Dari tanggal <input type="date" bind:value={bookingListFilterDraft.from} onchange={(event) => { const value = event.currentTarget.value; if (value && value > bookingListFilterDraft.to) bookingListFilterDraft.to = value; }} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
+                                        <label class="grid gap-1.5 text-xs font-medium">Sampai tanggal <input type="date" bind:value={bookingListFilterDraft.to} onchange={(event) => { const value = event.currentTarget.value; if (value && value < bookingListFilterDraft.from) bookingListFilterDraft.from = value; }} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
                                         <label class="grid gap-1.5 text-xs font-medium">Status keberangkatan <select bind:value={bookingListFilterDraft.status} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="all">Semua status</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option></select></label>
                                         <label
                                             class="grid gap-1.5 text-xs font-medium"
