@@ -9998,7 +9998,7 @@ return;
 
                             <div
                                 data-customer-search
-                                class="flex w-full flex-col gap-2 md:w-[260px] md:flex-row md:items-end md:gap-3"
+                                class="flex w-full max-w-3xl flex-col gap-3 sm:flex-row sm:items-end"
                             >
                                 <div class="relative min-w-0 flex-1">
                                     <label
@@ -10021,12 +10021,12 @@ return;
                                                     customerSuggestionsOpen = true;
                                                 }
                                             }}
-                                            class="h-8 w-full text-xs md:text-[11px]"
+                                            class="h-10 w-full text-base sm:text-sm md:[html[data-density=compact]_&]:h-10"
                                         /></label
                                     >
                                     {#if customerSuggestionsOpen}
                                         <div
-                                            class="absolute left-0 right-0 top-9 z-[130] overflow-hidden rounded-md border border-border bg-background shadow-lg"
+                                            class="absolute inset-x-0 top-full z-[130] mt-1 overflow-hidden rounded-md border border-border bg-background shadow-lg"
                                         >
                                             {#if customerSuggestionsLoading}
                                                 <p
@@ -10077,13 +10077,13 @@ return;
                                 </div>
                                 <Button
                                     type="button"
-                                    class="h-8 px-3 text-xs md:text-[11px] md:ml-1 md:w-auto md:shrink-0"
+                                    class="h-10 px-5 text-sm sm:shrink-0 md:[html[data-density=compact]_&]:h-10"
                                     onclick={submitCustomerSearch}>Cari</Button
                                 >
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    class="h-8 px-3 text-xs md:text-[11px] md:w-auto md:shrink-0"
+                                    class="h-10 px-5 text-sm sm:shrink-0 md:[html[data-density=compact]_&]:h-10"
                                     onclick={resetCustomerSearch}
                                 >
                                     Reset

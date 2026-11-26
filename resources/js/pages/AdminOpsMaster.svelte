@@ -957,8 +957,8 @@
                     </ResponsiveFilterBar>
                     <div
                         class={masterFiltersExpanded
-                            ? 'mt-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
-                            : 'mt-2 hidden md:block md:max-w-sm'}
+                            ? 'mt-2 max-w-3xl rounded-lg border border-border/70 bg-muted/20 px-3 py-3 shadow-sm'
+                            : 'mt-2 hidden max-w-3xl md:block'}
                     >
                         <div
                             class="mb-2 flex items-center justify-between gap-2"
@@ -975,23 +975,24 @@
                             </span>
                         </div>
                         <div
-                            class="flex flex-col gap-2 md:flex-row md:items-center md:gap-2.5"
+                            class="flex flex-col gap-3 sm:flex-row sm:items-end"
                         >
                             <label
-                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                class="mobile-field grid min-w-0 flex-1 gap-1.5 text-sm font-medium"
                                 ><span>Pencarian</span><Input
-                                    placeholder="Cari nama/no hp/alamat"
+                                    placeholder="Nama, nomor HP, atau alamat"
                                     bind:value={bagasiQ}
-                                    class="h-8 text-xs md:text-[11px] md:flex-1 md:min-w-0"
+                                    class="h-10 w-full text-base sm:text-sm md:[html[data-density=compact]_&]:h-10"
                                 /></label
                             >
                             <Button
                                 type="button"
-                                class="h-8 px-3 text-xs md:text-[11px] md:shrink-0"
+                                class="h-10 px-5 text-sm sm:shrink-0 md:[html[data-density=compact]_&]:h-10"
                                 onclick={() =>
                                     void applySearch('customer-bagasi')}
                                 >Cari</Button
                             >
+                            <Button type="button" variant="outline" class="h-10 px-5 text-sm sm:shrink-0 md:[html[data-density=compact]_&]:h-10" onclick={() => { bagasiQ = ''; void applySearch('customer-bagasi'); }}>Reset</Button>
                         </div>
                     </div>
                     <ViewportOnly minWidth={0} maxWidth={767}
@@ -1318,8 +1319,8 @@
                     </ResponsiveFilterBar>
                     <div
                         class={masterFiltersExpanded
-                            ? 'mt-2 rounded-lg border border-border/70 bg-muted/20 px-3 py-2 shadow-sm md:max-w-sm'
-                            : 'mt-2 hidden md:block md:max-w-sm'}
+                            ? 'mt-2 max-w-3xl rounded-lg border border-border/70 bg-muted/20 px-3 py-3 shadow-sm'
+                            : 'mt-2 hidden max-w-3xl md:block'}
                     >
                         <div
                             class="mb-2 flex items-center justify-between gap-2"
@@ -1336,23 +1337,24 @@
                             </span>
                         </div>
                         <div
-                            class="flex flex-col gap-2 md:flex-row md:items-center md:gap-2.5"
+                            class="flex flex-col gap-3 sm:flex-row sm:items-end"
                         >
                             <label
-                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                class="mobile-field grid min-w-0 flex-1 gap-1.5 text-sm font-medium"
                                 ><span>Pencarian</span><Input
-                                    placeholder="Cari nama/no hp/perusahaan"
+                                    placeholder="Nama, nomor HP, atau perusahaan"
                                     bind:value={charterQ}
-                                    class="h-8 text-xs md:text-[11px] md:flex-1 md:min-w-0"
+                                    class="h-10 w-full text-base sm:text-sm md:[html[data-density=compact]_&]:h-10"
                                 /></label
                             >
                             <Button
                                 type="button"
-                                class="h-8 px-3 text-xs md:text-[11px] md:shrink-0"
+                                class="h-10 px-5 text-sm sm:shrink-0 md:[html[data-density=compact]_&]:h-10"
                                 onclick={() =>
                                     void applySearch('customer-charter')}
                                 >Cari</Button
                             >
+                            <Button type="button" variant="outline" class="h-10 px-5 text-sm sm:shrink-0 md:[html[data-density=compact]_&]:h-10" onclick={() => { charterQ = ''; void applySearch('customer-charter'); }}>Reset</Button>
                         </div>
                     </div>
                     <ViewportOnly minWidth={0} maxWidth={767}

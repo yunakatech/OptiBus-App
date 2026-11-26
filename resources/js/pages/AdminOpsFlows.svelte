@@ -4380,7 +4380,7 @@ return;
                     >
                         {#if activeTab === 'charters'}
                             <div
-                                class="grid gap-3 xl:grid-cols-[220px_minmax(0,1fr)_260px_240px_auto_auto]"
+                                class="grid max-w-6xl gap-3 md:grid-cols-2 xl:grid-cols-4"
                             >
                                 <label
                                     class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
@@ -4556,17 +4556,19 @@ return;
                                         </div>
                                     {/if}
                                 </div>
+                                <div class="flex flex-wrap items-center gap-2 md:col-span-2 xl:col-span-4">
                                 <Button
                                     type="button"
                                     onclick={() => void applyFilters()}
-                                    >Terapkan Filter</Button
+                                    >Terapkan filter</Button
                                 >
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onclick={() => void resetCharterFilters()}
-                                    >Reset</Button
+                                    >Reset filter</Button
                                 >
+                                </div>
                             </div>
                         {:else if activeTab === 'luggages'}
                             <div
@@ -4599,7 +4601,7 @@ return;
                                 </div>
 
                                 <div
-                                    class="mt-4 grid items-end gap-4 lg:grid-cols-[190px_minmax(250px,1fr)_190px_190px_auto]"
+                                    class="mt-4 grid max-w-6xl gap-3 md:grid-cols-2 xl:grid-cols-4"
                                 >
                                     <label class="grid gap-1.5">
                                         <span
@@ -4667,18 +4669,18 @@ return;
                                             {/each}
                                         </select>
                                     </label>
-                                    <div class="flex gap-2 lg:justify-end">
+                                    <div class="flex flex-wrap items-center gap-2 md:col-span-2 xl:col-span-4">
                                         <Button
                                             type="button"
                                             onclick={() => void applyFilters()}
-                                            >Terapkan Filter</Button
+                                            >Terapkan filter</Button
                                         >
                                         <Button
                                             type="button"
                                             variant="outline"
                                             onclick={() =>
                                                 void resetLuggageFilters()}
-                                            >Reset</Button
+                                            >Reset filter</Button
                                         >
                                     </div>
                                 </div>
@@ -5026,8 +5028,85 @@ return;
                                 Belum ada data carter sesuai filter.
                             </div>
                         {:else}
+                            <ViewportOnly minWidth={768}>
+                                <div class="hidden md:block">
+                                    <p class="mb-2 text-xs text-muted-foreground">Geser tabel ke samping jika ada kolom yang belum terlihat.</p>
+                                    <div class="overflow-x-auto rounded-xl border border-border/70 bg-card" role="region" aria-label="Daftar carter" tabindex="0">
+                                        <table class="w-full min-w-[1100px] text-start text-sm">
+                                            <thead>
+                                                <tr>
+                                                    <th class="px-4 py-3 text-start">Pelanggan</th>
+                                                    <th class="px-4 py-3 text-start">Jadwal</th>
+                                                    <th class="px-4 py-3 text-start">Rute</th>
+                                                    <th class="px-4 py-3 text-start">Driver & armada</th>
+                                                    <th class="px-4 py-3 text-start">Biaya</th>
+                                                    <th class="px-4 py-3 text-start">Status</th>
+                                                    <th class="px-4 py-3 text-end">Aksi</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {#each charters as row (row.id)}
+                                                    <tr class="align-top">
+                                                        <td class="px-4 py-3">
+                                                            <p class="font-semibold text-foreground">{row.name}</p>
+                                                            <p class="mt-1 text-xs text-muted-foreground">{row.company_name || '-'}</p>
+                                                            <p class="text-xs text-muted-foreground">{row.phone || '-'}</p>
+                                                        </td>
+                                                        <td class="px-4 py-3 tabular-nums">
+                                                            <p class="font-medium">{row.start_date} – {row.end_date}</p>
+                                                            <p class="mt-1 text-xs text-muted-foreground">{row.departure_time ? String(row.departure_time).slice(0, 5) : '--:--'}</p>
+                                                        </td>
+                                                        <td class="min-w-44 px-4 py-3"><p class="break-words">{row.pickup_point || '-'} → {row.drop_point || '-'}</p></td>
+                                                        <td class="px-4 py-3">
+                                                            <p class="font-medium">{row.driver_name || '-'}</p>
+                                                            <p class="mt-1 text-xs text-muted-foreground">{[row.unit_category, row.unit_nama_kategori, row.armada_nopol].filter(Boolean).join(' | ') || '-'}</p>
+                                                        </td>
+                                                        <td class="px-4 py-3 tabular-nums">
+                                                            <p class="font-semibold">{formatCurrencyId(row.price)}</p>
+                                                            <p class="mt-1 text-xs text-muted-foreground">DP {formatCurrencyId(row.down_payment ?? 0)}</p>
+                                                            <p class="text-xs text-muted-foreground">BOP {formatCurrencyId(row.bop_price ?? 0)}</p>
+                                                        </td>
+                                                        <td class="px-4 py-3">
+                                                            <div class="flex flex-col items-start gap-1.5">
+                                                                <span class={`rounded-full px-2 py-1 text-xs font-semibold ${charterStatusClass(row.status)}`}>{charterStatusLabel(row.status)}</span>
+                                                                <span class={`rounded-full px-2 py-1 text-xs font-semibold ${charterPaymentClass(row.payment_status)}`}>{row.payment_status ?? '-'}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td class="px-4 py-3">
+                                                            <div class="flex items-center justify-end gap-2">
+                                                                <Button type="button" size="sm" variant="outline" onclick={() => void openCharterView(row.id)}>Detail</Button>
+                                                                <DropdownMenu>
+                                                                    <DropdownMenuTrigger asChild>
+                                                                        {#snippet children(props)}
+                                                                            <Button type="button" size="icon" variant="ghost" aria-label={`Aksi carter ${row.name}`} onclick={props.onclick} aria-expanded={props['aria-expanded']} data-state={props['data-state']}>
+                                                                                <MoreHorizontal class="h-4 w-4" />
+                                                                            </Button>
+                                                                        {/snippet}
+                                                                    </DropdownMenuTrigger>
+                                                                    <DropdownMenuContent align="end" side="top" sideOffset={8} class="w-48">
+                                                                        <DropdownMenuItem onclick={() => void copyCharterData(row)}>Salin data</DropdownMenuItem>
+                                                                        {#if canCharterPrint}<DropdownMenuItem onclick={() => openCharterInvoice(row.id)}>Cetak invoice</DropdownMenuItem>{/if}
+                                                                        {#if charterCanEdit(row)}<DropdownMenuItem onclick={() => openCharterEditor(row)}>Edit carter</DropdownMenuItem>{/if}
+                                                                        {#if charterCanMarkDone(row)}<DropdownMenuItem onclick={() => void markCharterAsDone(row)}>Tandai selesai</DropdownMenuItem>{/if}
+                                                                        {#if charterCanCancel(row)}
+                                                                            <DropdownMenuItem onclick={() => void removeItem(`/api/admin/charters/${row.id}`, 'Charter canceled.', { confirmMessage: 'Yakin ingin membatalkan charter ini?', loadingMessage: 'Membatalkan charter...', errorMessage: 'Gagal membatalkan charter.', pendingKey: `charter-${row.id}` })}>
+                                                                                {pendingDeleteKey === `charter-${row.id}` ? 'Memproses...' : 'Batalkan carter'}
+                                                                            </DropdownMenuItem>
+                                                                        {/if}
+                                                                    </DropdownMenuContent>
+                                                                </DropdownMenu>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                {/each}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </ViewportOnly>
+                            <ViewportOnly minWidth={0} maxWidth={767}>
                             <div
-                                class="grid gap-3 md:grid-cols-2 2xl:grid-cols-3"
+                                class="space-y-3 md:hidden"
                             >
                                 {#each charters as row (row.id)}
                                     <article
@@ -5317,6 +5396,7 @@ return;
                                     </article>
                                 {/each}
                             </div>
+                            </ViewportOnly>
                         {/if}
                     </div>
                     <div
