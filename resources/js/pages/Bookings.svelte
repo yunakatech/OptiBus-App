@@ -10974,7 +10974,6 @@ return;
                                                     </div>
                                                 </div>
 
-                                                <p class="px-3 pt-2 text-xs text-muted-foreground">Geser tabel ke samping jika ada kolom yang belum terlihat.</p>
                                                 <div class="table-container" role="region" aria-label={`Daftar keberangkatan ${section.label}`} tabindex="0">
                                                     <table
                                                         class="min-w-[850px] w-full text-start text-sm"
@@ -10983,34 +10982,34 @@ return;
                                                             class="border-b border-border/70 bg-muted/40 text-start text-xs font-semibold tracking-wide text-muted-foreground"
                                                         >
                                                             <tr>
-                                                                <th
-                                                                    class="w-24 px-3 py-2"
+                                                                <th scope="col"
+                                                                    class="w-24 px-3 py-2 text-start"
                                                                 >
                                                                     Jam & Slot
                                                                 </th>
-                                                                <th
-                                                                    class="min-w-[160px] px-3 py-2"
+                                                                <th scope="col"
+                                                                    class="min-w-[160px] px-3 py-2 text-start"
                                                                 >
                                                                     Rute & Kode
                                                                 </th>
-                                                                <th
-                                                                    class="min-w-[150px] px-3 py-2"
+                                                                <th scope="col"
+                                                                    class="min-w-[150px] px-3 py-2 text-start"
                                                                 >
                                                                     Driver &
                                                                     Armada
                                                                 </th>
-                                                                <th
-                                                                    class="w-28 px-3 py-2"
+                                                                <th scope="col"
+                                                                    class="w-28 px-3 py-2 text-start"
                                                                 >
                                                                     Penumpang
                                                                 </th>
-                                                                <th
-                                                                    class="min-w-[180px] px-3 py-2"
+                                                                <th scope="col"
+                                                                    class="min-w-[180px] px-3 py-2 text-start"
                                                                 >
                                                                     Status
                                                                     Pembayaran
                                                                 </th>
-                                                                <th
+                                                                <th scope="col"
                                                                     class="w-28 px-3 py-2 text-end"
                                                                 >
                                                                     Aksi
