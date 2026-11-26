@@ -5766,7 +5766,7 @@ throw new Error('Detail keberangkatan gagal dimuat.');
         return payload.group as BookingGroup;
     };
     const copyBookingGroup = async (group: BookingGroup) => {
-        try {
+        const buildText = async () => {
             group = await ensureGroupDetails(group);
             const driverName = await resolveDriverNameForGroup(group);
             const copyableBookings = group.bookings.filter(
@@ -5789,7 +5789,24 @@ throw new Error('Detail keberangkatan gagal dimuat.');
                 `Driver: ${driverName}\n\n` +
                 lines.join('\n\n');
 
-            await copyText(text);
+            return text;
+        };
+
+        try {
+            const textPromise = buildText();
+            if (window.isSecureContext && navigator.clipboard?.write && typeof ClipboardItem !== 'undefined') {
+                try {
+                    await navigator.clipboard.write([
+                        new ClipboardItem({
+                            'text/plain': textPromise.then((text) => new Blob([text], { type: 'text/plain' })),
+                        }),
+                    ]);
+                } catch {
+                    await copyText(await textPromise);
+                }
+            } else {
+                await copyText(await textPromise);
+            }
             formSuccess = 'Data jadwal berhasil disalin.';
             formError = '';
         } catch {
@@ -5845,9 +5862,13 @@ throw new Error('Detail keberangkatan gagal dimuat.');
             typeof navigator.clipboard.writeText === 'function' &&
             window.isSecureContext
         ) {
-            await navigator.clipboard.writeText(text);
+            try {
+                await navigator.clipboard.writeText(text);
 
-            return;
+                return;
+            } catch {
+                // Fall back to selection-based copying when clipboard permission is denied.
+            }
         }
 
         const textarea = document.createElement('textarea');
@@ -10956,41 +10977,41 @@ return;
                                                 <p class="px-3 pt-2 text-xs text-muted-foreground">Geser tabel ke samping jika ada kolom yang belum terlihat.</p>
                                                 <div class="table-container" role="region" aria-label={`Daftar keberangkatan ${section.label}`} tabindex="0">
                                                     <table
-                                                        class="min-w-[1020px] w-full text-start text-sm"
+                                                        class="min-w-[850px] w-full text-start text-sm"
                                                     >
                                                         <thead
                                                             class="border-b border-border/70 bg-muted/40 text-start text-xs font-semibold tracking-wide text-muted-foreground"
                                                         >
                                                             <tr>
                                                                 <th
-                                                                    class="w-32 px-3.5 py-2.5"
+                                                                    class="w-24 px-3 py-2"
                                                                 >
                                                                     Jam & Slot
                                                                 </th>
                                                                 <th
-                                                                    class="min-w-[200px] px-3.5 py-2.5"
+                                                                    class="min-w-[160px] px-3 py-2"
                                                                 >
                                                                     Rute & Kode
                                                                 </th>
                                                                 <th
-                                                                    class="min-w-[180px] px-3.5 py-2.5"
+                                                                    class="min-w-[150px] px-3 py-2"
                                                                 >
                                                                     Driver &
                                                                     Armada
                                                                 </th>
                                                                 <th
-                                                                    class="w-36 px-3.5 py-2.5"
+                                                                    class="w-28 px-3 py-2"
                                                                 >
                                                                     Penumpang
                                                                 </th>
                                                                 <th
-                                                                    class="min-w-[210px] px-3.5 py-2.5"
+                                                                    class="min-w-[180px] px-3 py-2"
                                                                 >
                                                                     Status
                                                                     Pembayaran
                                                                 </th>
                                                                 <th
-                                                                    class="w-44 px-3.5 py-2.5 text-end"
+                                                                    class="w-28 px-3 py-2 text-end"
                                                                 >
                                                                     Aksi
                                                                 </th>
@@ -11016,7 +11037,7 @@ return;
                                                                     class={`align-top transition-colors hover:bg-muted/30 ${isCanceledDeparture(group) ? 'bg-rose-50/40 dark:bg-rose-950/15' : ''}`}
                                                                 >
                                                                     <td
-                                                                        class="px-3.5 py-3"
+                                                                        class="px-3 py-2"
                                                                     >
                                                                         <div
                                                                             class="space-y-1"
@@ -11075,7 +11096,7 @@ return;
                                                                         </div>
                                                                     </td>
                                                                     <td
-                                                                        class="px-3.5 py-2.5"
+                                                                        class="px-3 py-2"
                                                                     >
                                                                         <div
                                                                             class="space-y-0.5"
@@ -11093,7 +11114,7 @@ return;
                                                                         </div>
                                                                     </td>
                                                                     <td
-                                                                        class="px-3.5 py-2.5"
+                                                                        class="px-3 py-2"
                                                                     >
                                                                         <div
                                                                             class="space-y-1 text-xs"
@@ -11151,7 +11172,7 @@ return;
                                                                         </div>
                                                                     </td>
                                                                     <td
-                                                                        class="px-3.5 py-2.5"
+                                                                        class="px-3 py-2"
                                                                     >
                                                                         <div
                                                                             class="space-y-0.5"
@@ -11194,7 +11215,7 @@ return;
                                                                         </div>
                                                                     </td>
                                                                     <td
-                                                                        class="px-3.5 py-2.5"
+                                                                        class="px-3 py-2"
                                                                     >
                                                                         <div
                                                                             class="space-y-1"
@@ -11218,7 +11239,7 @@ return;
                                                                             </div>
                                                                             {#if unpaidAmount > 0}
                                                                                 <div
-                                                                                    class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded border border-amber-200/80 bg-amber-50 px-2 py-1 text-xs dark:border-amber-500/25 dark:bg-amber-950/20"
+                                                                                    class="flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5 text-xs"
                                                                                 >
                                                                                     <span
                                                                                         class="font-medium text-amber-700 dark:text-amber-300"
@@ -11244,10 +11265,10 @@ return;
                                                                         </div>
                                                                     </td>
                                                                     <td
-                                                                        class="px-3.5 py-2.5"
+                                                                        class="px-3 py-2"
                                                                     >
                                                                         <div
-                                                                            class="flex flex-wrap items-center justify-end gap-2"
+                                                                            class="flex items-center justify-end gap-1"
                                                                         >
                                                                             <Button
                                                                                 type="button"
@@ -11261,41 +11282,6 @@ return;
                                                                             >
                                                                                 Detail
                                                                             </Button>
-                                                                            {#if canMarkDepartureDeparted(group)}
-                                                                                <Button
-                                                                                    type="button"
-                                                                                    size="sm"
-                                                                                    class="h-9 rounded-md bg-amber-600 px-3 text-xs text-white hover:bg-amber-700"
-                                                                                    onclick={() =>
-                                                                                        void markDepartureDeparted(
-                                                                                            group,
-                                                                                        )}
-                                                                                    disabled={cancelingDepartureKey ===
-                                                                                        group.key}
-                                                                                >
-                                                                                    {cancelingDepartureKey ===
-                                                                                    group.key
-                                                                                        ? '...'
-                                                                                        : 'Berangkat'}
-                                                                                </Button>
-                                                                            {:else if canMarkDepartureArrived(group)}
-                                                                                <Button
-                                                                                    type="button"
-                                                                                    size="sm"
-                                                                                    class="h-9 rounded-md bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700"
-                                                                                    onclick={() =>
-                                                                                        void markDepartureArrived(
-                                                                                            group,
-                                                                                        )}
-                                                                                    disabled={cancelingDepartureKey ===
-                                                                                        group.key}
-                                                                                >
-                                                                                    {cancelingDepartureKey ===
-                                                                                    group.key
-                                                                                        ? '...'
-                                                                                        : 'Tiba'}
-                                                                                </Button>
-                                                                            {/if}
                                                                             <DropdownMenu
                                                                             >
                                                                                 <DropdownMenuTrigger
@@ -11359,6 +11345,7 @@ return;
                                                                                     </DropdownMenuItem>
                                                                                     {#if canMarkDepartureDeparted(group)}
                                                                                         <DropdownMenuItem
+                                                                                            disabled={cancelingDepartureKey === group.key}
                                                                                             onclick={() =>
                                                                                                 void markDepartureDeparted(
                                                                                                     group,
@@ -11372,6 +11359,7 @@ return;
                                                                                     {/if}
                                                                                     {#if canMarkDepartureArrived(group)}
                                                                                         <DropdownMenuItem
+                                                                                            disabled={cancelingDepartureKey === group.key}
                                                                                             onclick={() =>
                                                                                                 void markDepartureArrived(
                                                                                                     group,
@@ -11525,7 +11513,8 @@ return;
                                                             type="button"
                                                             size="icon"
                                                             variant="ghost"
-                                                            class="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground"
+                                                            class="h-9 w-9 rounded-md text-muted-foreground hover:text-foreground"
+                                                            aria-label={`Aksi keberangkatan ${group.departure_code}`}
                                                             onclick={props.onclick}
                                                             aria-expanded={props[
                                                                 'aria-expanded'
@@ -11737,39 +11726,16 @@ return;
                                                 </div>
                                             </div>
 
-                                            {#if unpaidAmount > 0}
-                                                <div
-                                                    class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-amber-200/80 bg-amber-50/80 px-2.5 py-1.5 text-xs text-amber-800 dark:border-amber-500/25 dark:bg-amber-950/20 dark:text-amber-200"
-                                                >
-                                                    <span
-                                                        >Belum Lunas ({group.belum_lunas}
-                                                        pax)</span
-                                                    >
-                                                    <span
-                                                        class="font-semibold tabular-nums"
-                                                        >{formatCurrency(
-                                                            unpaidAmount,
-                                                        )}</span
-                                                    >
+                                            <div class="grid gap-1.5 rounded-lg bg-muted/30 p-2.5 text-xs">
+                                                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                                                    <span class="text-muted-foreground">Lunas ({group.lunas} pax)</span>
+                                                    <span class="font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">{formatCurrency(bookingGroupPaidAmount(group))}</span>
                                                 </div>
-                                            {:else}
-                                                <div
-                                                    class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded-md border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-1.5 text-xs text-emerald-800 dark:border-emerald-500/25 dark:bg-emerald-950/20 dark:text-emerald-200"
-                                                >
-                                                    <span
-                                                        >Semua Lunas ({group.lunas}
-                                                        pax)</span
-                                                    >
-                                                    <span
-                                                        class="font-semibold tabular-nums"
-                                                        >{formatCurrency(
-                                                            bookingGroupPaidAmount(
-                                                                group,
-                                                            ),
-                                                        )}</span
-                                                    >
+                                                <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+                                                    <span class="text-muted-foreground">Belum lunas ({group.belum_lunas} pax)</span>
+                                                    <span class="font-semibold tabular-nums {unpaidAmount > 0 ? 'text-amber-700 dark:text-amber-300' : 'text-foreground'}">{formatCurrency(unpaidAmount)}</span>
                                                 </div>
-                                            {/if}
+                                            </div>
                                         </div>
 
                                         <!-- Footer Actions -->

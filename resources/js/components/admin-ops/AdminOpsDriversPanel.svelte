@@ -141,9 +141,7 @@
             last_page: 1,
         },
         driverSearch = $bindable(''),
-        driverPeriod = $bindable(
-            `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
-        ),
+        driverPeriod = $bindable(''),
         formatCurrency,
         driverGrossMargin,
         driverNetMargin,
@@ -976,12 +974,14 @@ return raw;
                     class="mobile-field grid w-full min-w-0 gap-1.5 text-sm font-medium sm:w-48"
                     ><span class="sr-only">Filter periode</span>
                     <select
-                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring {driverPeriod === '' ? 'text-muted-foreground' : 'text-foreground'}"
+                        title="Periode laporan (bulan ini jika belum dipilih)"
                         bind:value={driverPeriod}
                         onchange={() => void loadDrivers(1)}
                     >
+                        <option value="">Periode</option>
                         {#each periodOptions as period (period.value)}
-                            <option value={period.value}>Periode: {period.label}</option>
+                            <option value={period.value}>{period.label}</option>
                         {/each}
                     </select></label
                 >

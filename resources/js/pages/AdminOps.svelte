@@ -1029,13 +1029,9 @@
         }
     };
     let driverSearch = $state('');
-    let driverPeriod = $state(
-        `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
-    );
+    let driverPeriod = $state('');
     let armadaSearch = $state('');
-    let armadaPeriod = $state(
-        `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
-    );
+    let armadaPeriod = $state('');
     let armadaCategories = $state<string[]>([]);
     let armadaTemplateSearch = $state('');
     let armadaTemplateLookupOpen = $state(false);

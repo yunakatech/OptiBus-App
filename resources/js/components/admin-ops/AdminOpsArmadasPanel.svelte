@@ -136,9 +136,7 @@
         armadas = [],
         armadaSearch = $bindable(''),
         armadaPoolId = 0,
-        armadaPeriod = $bindable(
-            `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
-        ),
+        armadaPeriod = $bindable(''),
         formatCurrency,
         armadaGrossMargin,
         armadaNetMargin,
@@ -1295,13 +1293,15 @@
                         ><span class="sr-only">Filter periode</span>
                         <select
                             aria-label="Filter periode"
-                            class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            class="h-10 w-full rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring {armadaPeriod === '' ? 'text-muted-foreground' : 'text-foreground'}"
+                            title="Periode laporan (bulan ini jika belum dipilih)"
                             bind:value={armadaPeriod}
                             onchange={() => void loadArmadas()}
                         >
+                            <option value="">Periode</option>
                             {#each periodOptions as period (period.value)}
                                 <option value={period.value}
-                                    >Periode: {period.label}</option
+                                    >{period.label}</option
                                 >
                             {/each}
                         </select></label
