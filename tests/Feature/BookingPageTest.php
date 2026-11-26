@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Support\BookingCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -137,6 +138,10 @@ class BookingPageTest extends TestCase
                 'armada_nopol' => $plate, 'status' => 'active', 'created_at' => now(),
             ]);
         }
+        $this->getJson(route('api.bookings.filter-suggestions', ['type' => 'driver', 'q' => 'andi']))
+            ->assertOk()->assertJsonPath('suggestions.0', 'DRIVER ANDI');
+        $this->getJson(route('api.bookings.filter-suggestions', ['type' => 'nopol', 'q' => '1234']))
+            ->assertOk()->assertJsonPath('suggestions.0', 'DD 1234 AB')->assertJsonCount(1, 'suggestions');
         $this->get(route('bookings.index', [
             'from' => '2099-01-01', 'to' => '2099-01-03', 'driver' => 'andi', 'nopol' => '1234', 'per_page' => 1, 'page' => 2,
         ]))->assertInertia(fn (Assert $page) => $page
@@ -144,6 +149,25 @@ class BookingPageTest extends TestCase
             ->loadDeferredProps('booking-list', fn (Assert $reload) => $reload
                 ->where('bookingPagination.total', 2)->where('bookingPagination.page', 2)
                 ->has('bookingGroups', 1)->where('bookingGroups.0.tanggal', '2099-01-02')));
+    }
+
+    public function test_manifest_number_filter_matches_generated_departure_code_before_pagination(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        foreach ([1, 2, 3] as $unit) {
+            DB::table('trip_assignments')->insert([
+                'tenant_id' => $tenantId, 'rute' => 'RUTE FILTER', 'tanggal' => '2099-01-01',
+                'jam' => '09:00:00', 'unit' => $unit, 'status' => 'active', 'created_at' => now(),
+            ]);
+        }
+        $code = BookingCode::departureCode('2099-01-01', '09:00', 2, 'RUTE FILTER');
+        $this->get(route('bookings.index', [
+            'from' => '2099-01-01', 'to' => '2099-01-01', 'manifest' => strtolower($code), 'per_page' => 1,
+        ]))->assertInertia(fn (Assert $page) => $page
+            ->loadDeferredProps('booking-list', fn (Assert $reload) => $reload
+                ->where('bookingPagination.total', 1)->has('bookingGroups', 1)
+                ->where('bookingGroups.0.departure_code', $code)));
     }
 
     public function test_booking_route_filter_follows_master_routes_and_refund_is_counted_separately(): void

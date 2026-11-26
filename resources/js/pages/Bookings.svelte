@@ -345,6 +345,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
             route: string;
             driver?: string;
             nopol?: string;
+            manifest?: string;
             payment: 'all' | 'lunas' | 'belum_lunas';
             departure_status?: 'all' | 'open' | 'departed' | 'arrived' | 'closed';
         };
@@ -469,6 +470,11 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     let bookingListRoute = $state(untrack(() => bookingQuery?.route) || 'all');
     let bookingListDriver = $state(untrack(() => bookingQuery?.driver) || '');
     let bookingListNopol = $state(untrack(() => bookingQuery?.nopol) || '');
+    let bookingListManifest = $state(untrack(() => bookingQuery?.manifest) || '');
+    let filterDriverSuggestions = $state<string[]>([]);
+    let filterNopolSuggestions = $state<string[]>([]);
+    const filterSuggestionTimers: Record<string, ReturnType<typeof setTimeout> | undefined> = {};
+    const filterSuggestionRequests: Record<string, number> = {};
     let bookingListDateFrom = $state(initialBookingListDate);
     let bookingListDateTo = $state(
         untrack(() => bookingQuery?.to) || initialBookingListDate,
@@ -484,12 +490,13 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     );
     let bookingListDateManuallyChanged = $state(false);
     let lastBookingListFilterSignature = $state(
-        [bookingListRoute, bookingListDateFrom, bookingListDateTo, bookingListPayment, bookingListStatus, bookingListDriver, bookingListNopol].join('|'),
+        [bookingListRoute, bookingListDateFrom, bookingListDateTo, bookingListPayment, bookingListStatus, bookingListDriver, bookingListNopol, bookingListManifest].join('|'),
     );
     let bookingListFilterDraft = $state({
         route: 'all',
         driver: '',
         nopol: '',
+        manifest: '',
         from: initialBookingListDate,
         to: untrack(() => bookingQuery?.to) || initialBookingListDate,
         status: 'all' as 'all' | 'open' | 'departed' | 'arrived' | 'closed',
@@ -3295,6 +3302,7 @@ return true;
             bookingListStatus,
             bookingListDriver,
             bookingListNopol,
+            bookingListManifest,
         ].join('|'),
     );
     const bookingListFilterActiveCount = $derived(
@@ -3305,6 +3313,7 @@ return true;
             bookingListStatus !== 'all',
             bookingListDriver.trim() !== '',
             bookingListNopol.trim() !== '',
+            bookingListManifest.trim() !== '',
         ].filter(Boolean).length,
     );
     const bookingListFilterSummary = $derived.by(() => {
@@ -3357,12 +3366,32 @@ untrack(() => requestBookingPage(1));
         bookingListDesktopView = viewMode;
         persistUiPreferences({ defaultViewMode: viewMode });
     };
+    const queueFilterSuggestions = (type: 'driver' | 'nopol', query: string) => {
+        clearTimeout(filterSuggestionTimers[type]);
+        const request = (filterSuggestionRequests[type] ?? 0) + 1;
+        filterSuggestionRequests[type] = request;
+        filterSuggestionTimers[type] = setTimeout(async () => {
+            try {
+                const result = await apiGet('/api/bookings/filter-suggestions', { type, q: query });
+                if (filterSuggestionRequests[type] !== request) return;
+                const options = Array.isArray(result.suggestions) ? result.suggestions.map(String) : [];
+                if (type === 'driver') filterDriverSuggestions = options;
+                else filterNopolSuggestions = options;
+            } catch {
+                if (filterSuggestionRequests[type] !== request) return;
+                if (type === 'driver') filterDriverSuggestions = [];
+                else filterNopolSuggestions = [];
+            }
+        }, 200);
+    };
+
     const bookingListParams = (nextPage = 1) => ({
         from: bookingListDateFrom,
         to: bookingListDateTo,
         route: bookingListRoute,
         driver: bookingListDriver.trim(),
         nopol: bookingListNopol.trim(),
+        manifest: bookingListManifest.trim(),
         payment: bookingListPayment,
         departure_status: bookingListStatus,
         page: nextPage,
@@ -3435,6 +3464,7 @@ clearTimeout(bookingListReloadTimer);
         bookingListRoute = 'all';
         bookingListDriver = '';
         bookingListNopol = '';
+        bookingListManifest = '';
         bookingListDateFrom = currentToday;
         bookingListDateTo = currentToday;
         bookingListPayment = 'all';
@@ -3446,6 +3476,7 @@ clearTimeout(bookingListReloadTimer);
             route: bookingListRoute,
             driver: bookingListDriver,
             nopol: bookingListNopol,
+            manifest: bookingListManifest,
             from: bookingListDateFrom,
             to: bookingListDateTo,
             status: bookingListStatus,
@@ -3456,6 +3487,7 @@ clearTimeout(bookingListReloadTimer);
         bookingListRoute = bookingListFilterDraft.route;
         bookingListDriver = bookingListFilterDraft.driver;
         bookingListNopol = bookingListFilterDraft.nopol;
+        bookingListManifest = bookingListFilterDraft.manifest;
         bookingListPayment = bookingListFilterDraft.payment;
         bookingListDateFrom = bookingListFilterDraft.from || today;
         bookingListDateTo = bookingListFilterDraft.to || bookingListDateFrom;
@@ -3467,6 +3499,7 @@ clearTimeout(bookingListReloadTimer);
             route: 'all',
             driver: '',
             nopol: '',
+            manifest: '',
             from: today,
             to: today,
             status: 'all',
@@ -10604,6 +10637,8 @@ return;
                         <div
                             class="rounded-xl border border-border/80 bg-muted/20 p-2.5 sm:p-3"
                         >
+                            <datalist id="departure-driver-options">{#each filterDriverSuggestions as suggestion (suggestion)}<option value={suggestion}></option>{/each}</datalist>
+                            <datalist id="departure-nopol-options">{#each filterNopolSuggestions as suggestion (suggestion)}<option value={suggestion}></option>{/each}</datalist>
                             <ResponsiveFilterBar
                                 label="Keberangkatan"
                                 activeCount={bookingListFilterActiveCount}
@@ -10632,9 +10667,8 @@ return;
                                     >
                                 {/snippet}
                                 {#snippet desktop()}
-                                    <div
-                                        class="grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-3 xl:items-end"
-                                    >
+                                    <div class="space-y-4">
+                                    <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-3">
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
                                             ><span>Rute</span
@@ -10655,11 +10689,20 @@ return;
                                         >
                                         <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
                                             <span>Dari tanggal</span>
-                                            <input type="date" bind:value={bookingListDateFrom} oninput={() => { bookingListDateManuallyChanged = true; }} onchange={(event) => { const value = event.currentTarget.value; if (value && value > bookingListDateTo) bookingListDateTo = value; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" />
+                                            <input type="date" bind:value={bookingListDateFrom} oninput={() => { bookingListDateManuallyChanged = true; }} onchange={(event) => { const value = event.currentTarget.value; if (value && value > bookingListDateTo) bookingListDateTo = value; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
                                         </label>
                                         <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
                                             <span>Sampai tanggal</span>
-                                            <input type="date" bind:value={bookingListDateTo} oninput={() => { bookingListDateManuallyChanged = true; }} onchange={(event) => { const value = event.currentTarget.value; if (value && value < bookingListDateFrom) bookingListDateFrom = value; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" />
+                                            <input type="date" bind:value={bookingListDateTo} oninput={() => { bookingListDateManuallyChanged = true; }} onchange={(event) => { const value = event.currentTarget.value; if (value && value < bookingListDateFrom) bookingListDateFrom = value; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" />
+                                        </label>
+                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"><span>Nomor manifest</span><input type="search" value={bookingListManifest} onchange={(event) => (bookingListManifest = event.currentTarget.value)} placeholder="Cari nomor manifest" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
+                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"><span>Driver</span><input type="search" list="departure-driver-options" onfocus={(event) => queueFilterSuggestions('driver', event.currentTarget.value)} oninput={(event) => queueFilterSuggestions('driver', event.currentTarget.value)} value={bookingListDriver} onchange={(event) => (bookingListDriver = event.currentTarget.value)} placeholder="Cari nama driver" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
+                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"><span>Nomor polisi</span><input type="search" list="departure-nopol-options" onfocus={(event) => queueFilterSuggestions('nopol', event.currentTarget.value)} oninput={(event) => queueFilterSuggestions('nopol', event.currentTarget.value)} value={bookingListNopol} onchange={(event) => (bookingListNopol = event.currentTarget.value)} placeholder="Cari nomor polisi" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
+                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
+                                            <span>Status keberangkatan</span>
+                                            <select bind:value={bookingListStatus} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                                                <option value="all">Semua status</option><option value="open">Manifest terbuka</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option>
+                                            </select>
                                         </label>
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
@@ -10680,33 +10723,28 @@ return;
                                                 >
                                             </select></label
                                         >
-                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"><span>Driver</span><input type="search" value={bookingListDriver} onchange={(event) => (bookingListDriver = event.currentTarget.value)} placeholder="Cari nama driver" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
-                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"><span>Nomor polisi</span><input type="search" value={bookingListNopol} onchange={(event) => (bookingListNopol = event.currentTarget.value)} placeholder="Cari nomor polisi" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
-                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
-                                            <span>Status keberangkatan</span>
-                                            <select bind:value={bookingListStatus} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm">
-                                                <option value="all">Semua status</option><option value="open">Manifest terbuka</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option>
-                                            </select>
-                                        </label>
+                                    </div>
+                                    <div class="flex justify-start">
                                         <Button
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            class="h-10 w-fit self-end rounded-lg px-4 text-sm"
+                                            class="h-10 rounded-lg px-4 text-sm"
                                             onclick={resetBookingListFilters}
                                         >
                                             Reset filter
                                         </Button>
                                     </div>
+                                    </div>
                                 {/snippet}
                                 {#snippet filters()}
-                                    <div class="grid gap-3">
+                                    <div class="grid gap-4">
                                         <label
-                                            class="grid gap-1.5 text-xs font-medium"
+                                            class="grid min-w-0 gap-1.5 text-sm font-medium"
                                         >
                                             Rute
                                             <select
-                                                class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                                                class="h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                                 bind:value={
                                                     bookingListFilterDraft.route
                                                 }
@@ -10721,17 +10759,18 @@ return;
                                                 {/each}
                                             </select>
                                         </label>
-                                        <label class="grid gap-1.5 text-xs font-medium">Dari tanggal <input type="date" bind:value={bookingListFilterDraft.from} onchange={(event) => { const value = event.currentTarget.value; if (value && value > bookingListFilterDraft.to) bookingListFilterDraft.to = value; }} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
-                                        <label class="grid gap-1.5 text-xs font-medium">Sampai tanggal <input type="date" bind:value={bookingListFilterDraft.to} onchange={(event) => { const value = event.currentTarget.value; if (value && value < bookingListFilterDraft.from) bookingListFilterDraft.from = value; }} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
-                                        <label class="grid gap-1.5 text-xs font-medium">Driver <input type="search" bind:value={bookingListFilterDraft.driver} placeholder="Cari nama driver" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
-                                        <label class="grid gap-1.5 text-xs font-medium">Nomor polisi <input type="search" bind:value={bookingListFilterDraft.nopol} placeholder="Cari nomor polisi" class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
-                                        <label class="grid gap-1.5 text-xs font-medium">Status keberangkatan <select bind:value={bookingListFilterDraft.status} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="all">Semua status</option><option value="open">Manifest terbuka</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option></select></label>
+                                        <label class="grid min-w-0 gap-1.5 text-sm font-medium">Dari tanggal <input type="date" bind:value={bookingListFilterDraft.from} onchange={(event) => { const value = event.currentTarget.value; if (value && value > bookingListFilterDraft.to) bookingListFilterDraft.to = value; }} class="h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
+                                        <label class="grid min-w-0 gap-1.5 text-sm font-medium">Sampai tanggal <input type="date" bind:value={bookingListFilterDraft.to} onchange={(event) => { const value = event.currentTarget.value; if (value && value < bookingListFilterDraft.from) bookingListFilterDraft.from = value; }} class="h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
+                                        <label class="grid min-w-0 gap-1.5 text-sm font-medium">Nomor manifest <input type="search" bind:value={bookingListFilterDraft.manifest} placeholder="Cari nomor manifest" class="h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
+                                        <label class="grid min-w-0 gap-1.5 text-sm font-medium">Driver <input type="search" list="departure-driver-options" onfocus={(event) => queueFilterSuggestions('driver', event.currentTarget.value)} oninput={(event) => queueFilterSuggestions('driver', event.currentTarget.value)} bind:value={bookingListFilterDraft.driver} placeholder="Cari nama driver" class="h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
+                                        <label class="grid min-w-0 gap-1.5 text-sm font-medium">Nomor polisi <input type="search" list="departure-nopol-options" onfocus={(event) => queueFilterSuggestions('nopol', event.currentTarget.value)} oninput={(event) => queueFilterSuggestions('nopol', event.currentTarget.value)} bind:value={bookingListFilterDraft.nopol} placeholder="Cari nomor polisi" class="h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
+                                        <label class="grid min-w-0 gap-1.5 text-sm font-medium">Status keberangkatan <select bind:value={bookingListFilterDraft.status} class="h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><option value="all">Semua status</option><option value="open">Manifest terbuka</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option></select></label>
                                         <label
-                                            class="grid gap-1.5 text-xs font-medium"
+                                            class="grid min-w-0 gap-1.5 text-sm font-medium"
                                         >
                                             Pembayaran
                                             <select
-                                                class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+                                                class="h-11 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                                 bind:value={
                                                     bookingListFilterDraft.payment
                                                 }

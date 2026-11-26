@@ -634,6 +634,7 @@ class BookingController extends Controller
             'route' => (string) $request->query('route', 'all'),
             'driver' => mb_substr(trim((string) $request->query('driver', '')), 0, 120),
             'nopol' => mb_substr(trim((string) $request->query('nopol', '')), 0, 50),
+            'manifest' => mb_substr(trim((string) $request->query('manifest', '')), 0, 120),
             'departure_status' => in_array($request->query('departure_status'), ['open', 'departed', 'arrived', 'closed'], true)
                 ? $request->query('departure_status') : 'all',
             'payment' => in_array($request->query('payment'), ['lunas', 'belum_lunas'], true)
@@ -722,7 +723,7 @@ class BookingController extends Controller
         $identities = array_values(array_filter($identities, fn (array $trip): bool => ($filters['route'] === 'all' || $this->normalizeTripRoute($trip['rute']) === $this->normalizeTripRoute($filters['route']))
             && ($filters['payment'] !== 'lunas' || ($trip['unpaid'] === 0 && $trip['refunded'] === 0))
             && ($filters['payment'] !== 'belum_lunas' || $trip['unpaid'] > 0)));
-        if (($filters['departure_status'] !== 'all' || $filters['driver'] !== '' || $filters['nopol'] !== '') && $identities !== []) {
+        if (($filters['departure_status'] !== 'all' || $filters['driver'] !== '' || $filters['nopol'] !== '' || $filters['manifest'] !== '') && $identities !== []) {
             $matchingKeys = collect();
             foreach (array_chunk($identities, 100) as $chunk) {
                 foreach ($this->buildBookingGroups($chunk, false) as $group) {
@@ -731,7 +732,8 @@ class BookingController extends Controller
                         : $group['departure_status'] === $filters['departure_status']);
                     $driverMatches = $filters['driver'] === '' || mb_stripos($group['driver_name'], $filters['driver']) !== false;
                     $nopolMatches = $filters['nopol'] === '' || mb_stripos($group['armada_nopol'], $filters['nopol']) !== false;
-                    if ($statusMatches && $driverMatches && $nopolMatches) {
+                    $manifestMatches = $filters['manifest'] === '' || mb_stripos($group['departure_code'], $filters['manifest']) !== false;
+                    if ($statusMatches && $driverMatches && $nopolMatches && $manifestMatches) {
                         $matchingKeys->put($group['key'], true);
                     }
                 }
@@ -1216,6 +1218,43 @@ class BookingController extends Controller
         }
 
         return null;
+    }
+
+    public function filterSuggestions(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'type' => ['required', 'in:driver,nopol'],
+            'q' => ['nullable', 'string', 'max:120'],
+        ]);
+        if (! SchemaCache::hasTable('trip_assignments')) {
+            return response()->json(['suggestions' => []]);
+        }
+        $query = $this->scopedBookingQuery('trip_assignments as t', 't.rute');
+        if ($data['type'] === 'driver') {
+            if (! SchemaCache::hasTable('drivers') || ! SchemaCache::hasColumn('trip_assignments', 'driver_id')) {
+                return response()->json(['suggestions' => []]);
+            }
+            $query->join('drivers as d', 'd.id', '=', 't.driver_id');
+            $expression = 'd.nama';
+        } else {
+            $hasNopol = $this->tripAssignmentsHasArmadaNopol();
+            $hasArmada = $this->tripAssignmentsHasArmadaId() && SchemaCache::hasTable('armadas');
+            if (! $hasNopol && ! $hasArmada) {
+                return response()->json(['suggestions' => []]);
+            }
+            if ($hasArmada) {
+                $query->leftJoin('armadas as a', 'a.id', '=', 't.armada_id');
+            }
+            $expression = $hasNopol && $hasArmada ? "COALESCE(NULLIF(TRIM(t.armada_nopol), ''), a.nopol)" : ($hasNopol ? 't.armada_nopol' : 'a.nopol');
+        }
+        $term = trim((string) ($data['q'] ?? ''));
+        $query->whereRaw("$expression IS NOT NULL AND TRIM($expression) <> ''");
+        if ($term !== '') {
+            $query->whereRaw("LOWER($expression) LIKE LOWER(?)", ['%'.$term.'%']);
+        }
+        $suggestions = $query->selectRaw("DISTINCT $expression AS value")->orderBy('value')->limit(20)->pluck('value');
+
+        return response()->json(['suggestions' => $suggestions]);
     }
 
     public function groupDetails(string $groupKey): JsonResponse
