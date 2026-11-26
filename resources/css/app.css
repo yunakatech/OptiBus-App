@@ -20,6 +20,9 @@
     --color-background: var(--background);
     --color-foreground: var(--foreground);
 
+    --color-departure-am: var(--departure-am);
+    --color-departure-pm: var(--departure-pm);
+
     --color-card: var(--card);
     --color-card-foreground: var(--card-foreground);
 
@@ -171,6 +174,8 @@
     --brand-mint: #55e8b4;
     --brand-soft: #e7faf3;
     --brand-secondary-text: #647c79;
+    --departure-am: #f7faff;
+    --departure-pm: #fff9f0;
     --background: #f7faf9;
     --foreground: #163a39;
     --card: #ffffff;
@@ -213,6 +218,8 @@
     --brand-mint: #55e8b4;
     --brand-soft: #1a4242;
     --brand-secondary-text: #adc6c0;
+    --departure-am: #152e3b;
+    --departure-pm: #352c24;
     --background: #0b2223;
     --foreground: #eaf6f2;
     --card: #123133;
@@ -250,6 +257,8 @@
 
 /* Terminal Control Tower theme overrides */
 :root[data-theme='terminal'] {
+    --departure-am: #152e3b;
+    --departure-pm: #352c24;
     --background: #0b2223;
     --foreground: #eaf6f2;
     --card: #123133;

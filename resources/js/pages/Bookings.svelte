@@ -2998,6 +2998,13 @@ return;
     };
     const formatGroupTimeLabel = (jam: string) =>
         normalizeJamToken(jam) || '--:--';
+    const departurePeriod = (time: string): 'AM' | 'PM' | null => {
+        const match = /^(\d{1,2}):([0-5]\d)(?::[0-5]\d)?$/.exec(String(time || '').trim());
+        if (!match || Number(match[1]) > 23) return null;
+        return Number(match[1]) < 12 ? 'AM' : 'PM';
+    };
+    const departurePeriodSurface = (time: string) =>
+        departurePeriod(time) === 'AM' ? 'bg-departure-am' : departurePeriod(time) === 'PM' ? 'bg-departure-pm' : 'bg-card';
     const activeGroupBookings = () =>
         visibleGroupBookingRows(
             (openGroupDetail?.bookings ?? []).filter(
@@ -11173,7 +11180,7 @@ return;
                                                                         group.armada_nopol,
                                                                     )}
                                                                 <tr
-                                                                    class={`align-top transition-colors hover:bg-muted/30 ${isCanceledDeparture(group) ? 'bg-rose-50/40 dark:bg-rose-950/15' : ''}`}
+                                                                    class={`align-top ${departurePeriodSurface(group.jam)}`}
                                                                 >
                                                                     {#if !tenantWriteDisabled && hasPermission(grantedPermissions, 'booking.update')}<td class="px-3 py-2"><input type="checkbox" class="h-4 w-4 accent-primary" aria-label={`Pilih keberangkatan ${group.departure_code}`} checked={bulkDepartureKeys.includes(group.key)} disabled={bulkDepartureBusy} onchange={(event) => toggleBulkDeparture(group.key, event.currentTarget.checked)} /></td>{/if}
                                                                     <td
@@ -11191,6 +11198,7 @@ return;
                                                                                 {formatGroupTimeLabel(
                                                                                     group.jam,
                                                                                 )}
+                                                                                {#if departurePeriod(group.jam)}<span class="text-xs font-medium text-muted-foreground">{departurePeriod(group.jam)}</span>{/if}
                                                                             </div>
                                                                             <div
                                                                                 class="flex flex-wrap items-center gap-1"
@@ -11542,7 +11550,7 @@ return;
                                     {@const unpaidAmount =
                                         bookingGroupUnpaidAmount(group)}
                                     <div
-                                        class={`group relative rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/40 hover:shadow-sm ${isCanceledDeparture(group) ? 'border-rose-300/70 bg-rose-50/40 dark:border-rose-500/30 dark:bg-rose-950/15' : ''}`}
+                                        class={`group relative rounded-xl border border-border p-4 transition-all hover:border-primary/40 hover:shadow-sm ${departurePeriodSurface(group.jam)} ${isCanceledDeparture(group) ? 'border-rose-300/70 dark:border-rose-500/30' : ''}`}
                                     >
                                         <!-- Top Row: Time, Unit, Badges, Menu -->
                                         <div
@@ -11562,6 +11570,7 @@ return;
                                                         {formatGroupTimeLabel(
                                                             group.jam,
                                                         )}
+                                                        {#if departurePeriod(group.jam)}<span class="text-xs font-medium text-muted-foreground">{departurePeriod(group.jam)}</span>{/if}
                                                     </span>
                                                     <Badge
                                                         variant="outline"
