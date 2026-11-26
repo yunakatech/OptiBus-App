@@ -344,7 +344,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
             to: string;
             route: string;
             payment: 'all' | 'lunas' | 'belum_lunas';
-            departure_status?: 'all' | 'departed' | 'arrived' | 'closed';
+            departure_status?: 'all' | 'open' | 'departed' | 'arrived' | 'closed';
         };
         migrationChecklist: string[];
         consoleOnly?: boolean;
@@ -472,7 +472,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>(
         untrack(() => bookingQuery?.payment) || 'all',
     );
-    let bookingListStatus = $state<'all' | 'departed' | 'arrived' | 'closed'>(untrack(() => bookingQuery?.departure_status) || 'all');
+    let bookingListStatus = $state<'all' | 'open' | 'departed' | 'arrived' | 'closed'>(untrack(() => bookingQuery?.departure_status) || 'all');
     let bookingListRequestError = $state('');
     let bookingListRequestId = 0;
     let bookingListDesktopView = $state<'sheet' | 'cards'>(
@@ -486,7 +486,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
         route: 'all',
         from: initialBookingListDate,
         to: untrack(() => bookingQuery?.to) || initialBookingListDate,
-        status: 'all' as 'all' | 'departed' | 'arrived' | 'closed',
+        status: 'all' as 'all' | 'open' | 'departed' | 'arrived' | 'closed',
         payment: 'all' as 'all' | 'lunas' | 'belum_lunas',
     });
     let bookingListReloadTimer: ReturnType<typeof setTimeout> | null = null;
@@ -10587,7 +10587,7 @@ return;
                                         <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
                                             <span>Status keberangkatan</span>
                                             <select bind:value={bookingListStatus} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm">
-                                                <option value="all">Semua status</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option>
+                                                <option value="all">Semua status</option><option value="open">Manifest terbuka</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option>
                                             </select>
                                         </label>
                                         <Button
@@ -10625,7 +10625,7 @@ return;
                                         </label>
                                         <label class="grid gap-1.5 text-xs font-medium">Dari tanggal <input type="date" bind:value={bookingListFilterDraft.from} onchange={(event) => { const value = event.currentTarget.value; if (value && value > bookingListFilterDraft.to) bookingListFilterDraft.to = value; }} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
                                         <label class="grid gap-1.5 text-xs font-medium">Sampai tanggal <input type="date" bind:value={bookingListFilterDraft.to} onchange={(event) => { const value = event.currentTarget.value; if (value && value < bookingListFilterDraft.from) bookingListFilterDraft.from = value; }} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
-                                        <label class="grid gap-1.5 text-xs font-medium">Status keberangkatan <select bind:value={bookingListFilterDraft.status} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="all">Semua status</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option></select></label>
+                                        <label class="grid gap-1.5 text-xs font-medium">Status keberangkatan <select bind:value={bookingListFilterDraft.status} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="all">Semua status</option><option value="open">Manifest terbuka</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option></select></label>
                                         <label
                                             class="grid gap-1.5 text-xs font-medium"
                                         >

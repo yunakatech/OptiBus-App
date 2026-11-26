@@ -632,7 +632,7 @@ class BookingController extends Controller
         return [
             'from' => min($from, $to), 'to' => max($from, $to),
             'route' => (string) $request->query('route', 'all'),
-            'departure_status' => in_array($request->query('departure_status'), ['departed', 'arrived', 'closed'], true)
+            'departure_status' => in_array($request->query('departure_status'), ['open', 'departed', 'arrived', 'closed'], true)
                 ? $request->query('departure_status') : 'all',
             'payment' => in_array($request->query('payment'), ['lunas', 'belum_lunas'], true)
                 ? $request->query('payment') : 'all',
@@ -724,7 +724,9 @@ class BookingController extends Controller
             $matchingKeys = collect();
             foreach (array_chunk($identities, 100) as $chunk) {
                 foreach ($this->buildBookingGroups($chunk, false) as $group) {
-                    if ($group['departure_status'] === $filters['departure_status']) {
+                    if ($filters['departure_status'] === 'open'
+                        ? in_array($group['departure_status'], ['active', 'departed', 'arrived'], true)
+                        : $group['departure_status'] === $filters['departure_status']) {
                         $matchingKeys->put($group['key'], true);
                     }
                 }
