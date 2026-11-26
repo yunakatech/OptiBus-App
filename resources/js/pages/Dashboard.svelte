@@ -230,7 +230,6 @@
         stats: _stats = createDashboardStats(),
         pools: _pools = [] as PoolOption[],
         selectedPoolId = 0,
-        selectedPoolName: _selectedPoolName = 'Semua Pool',
         setupProgress = null as SetupProgress | null,
         dailyTrend = [],
         monthlyTrend = [],
@@ -694,12 +693,7 @@
     class:mobile-page={true}
     class="mx-auto flex h-full w-full max-w-[1600px] min-w-0 flex-1 flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-7"
 >
-    <header class="flex flex-wrap items-end justify-between gap-5">
-            <div class="min-w-0">
-                <p class="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Ringkasan operasional</p>
-                <h1 class="mt-2 text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">Dashboard</h1>
-                <p class="mt-2 text-sm text-muted-foreground">Pendapatan dan aktivitas perjalanan dalam satu tempat.</p>
-            </div>
+    <header class="flex flex-wrap justify-end gap-5">
             <nav aria-label="Bagian dashboard" class="flex flex-wrap gap-2 text-sm">
                 <a href="#dashboard-pendapatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 font-medium text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Pendapatan</a>
                 <a href="#dashboard-keberangkatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 font-medium text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Keberangkatan</a>
@@ -775,13 +769,7 @@
         </section>
     {/if}
 
-    <section id="dashboard-pendapatan" class="scroll-mt-24 space-y-4" aria-labelledby="dashboard-revenue-title">
-        <div class="flex flex-wrap items-end justify-between gap-2">
-            <div>
-                <h2 id="dashboard-revenue-title" class="text-lg font-semibold text-foreground">Pendapatan</h2>
-                <p class="mt-1 text-sm text-muted-foreground">{_selectedPoolName}</p>
-            </div>
-        </div>
+    <section id="dashboard-pendapatan" class="scroll-mt-24 space-y-4" aria-label="Pendapatan">
         <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-stretch">
             <!-- Revenue Activity Chart -->
             <DashboardSection data="dailyTrend" label="Pendapatan harian">
