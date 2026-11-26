@@ -62,6 +62,7 @@
     import { LoadingButton } from '@/components/ui/loading-button';
     import { Skeleton } from '@/components/ui/skeleton';
     import ViewportOnly from '@/components/ViewportOnly.svelte';
+    import WhatsAppIcon from '@/components/WhatsAppIcon.svelte';
     import { hasPermission } from '@/lib/access';
     import { runWithFeedback } from '@/lib/action-feedback';
     import { showError, showSuccess } from '@/lib/toast';
@@ -9670,6 +9671,22 @@ return;
                             </p>
                         </div>
                     {/if}
+                    {#snippet passengerPhone(phone: string | null | undefined, name: string)}
+                        {@const whatsappNumber = normalizeWhatsappPhone(phone || '')}
+                        <span class="inline-flex max-w-full flex-wrap items-center gap-1 text-xs text-muted-foreground">
+                            <span>{phone || '-'}</span>
+                            {#if whatsappNumber.length >= 9 && whatsappNumber.length <= 15 && /^[+\d\s().-]+$/.test(phone || '')}
+                                <a
+                                    href={`https://wa.me/${whatsappNumber}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-[#168344] transition-colors hover:bg-emerald-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                                    aria-label={`Chat WhatsApp ${name || 'penumpang'} di nomor ${phone}`}
+                                    title="Chat WhatsApp"
+                                ><WhatsAppIcon class="h-5 w-5" /></a>
+                            {/if}
+                        </span>
+                    {/snippet}
                     <ViewportOnly minWidth={0} maxWidth={767}
                         ><div class="space-y-2 md:hidden">
                             {#if visibleGroupBookings().length === 0}
@@ -9692,12 +9709,10 @@ return;
                                             <p class="text-sm font-semibold">
                                                 Kursi {row.seat} • {row.name}
                                             </p>
-                                            <p
-                                                class="text-xs md:text-[11px] text-muted-foreground"
-                                            >
-                                                {row.phone || '-'} • {row.ticket_code ||
-                                                    '-'}
-                                            </p>
+                                            <div class="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                                                {@render passengerPhone(row.phone, row.name)}
+                                                <span>· {row.ticket_code || '-'}</span>
+                                            </div>
                                         </div>
                                         <div class="flex items-start gap-2">
                                             <div
@@ -10074,11 +10089,9 @@ return;
                                                 >
                                                     {row.name || '-'}
                                                 </p>
-                                                <p
-                                                    class="mt-1 text-xs md:text-[11px] text-muted-foreground"
-                                                >
-                                                    {row.phone || '-'}
-                                                </p>
+                                                <div class="mt-1">
+                                                    {@render passengerPhone(row.phone, row.name)}
+                                                </div>
                                                 <div
                                                     class="mt-2 inline-flex rounded-full border border-border/70 bg-background/80 px-2.5 py-1 text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
                                                 >
