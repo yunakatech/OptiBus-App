@@ -1457,7 +1457,7 @@ class AdminOpsApiController extends Controller
                     })
                     ->where('b.phone', $phone)
                     ->where('b.status', '!=', 'canceled')
-                    ->where('t.status', 'arrived')
+                    ->whereIn('t.status', ['arrived', 'closed'])
                     ->whereBetween('t.tanggal', [
                         sprintf('%d-01-01', $currentYear),
                         sprintf('%d-12-31', $currentYear),

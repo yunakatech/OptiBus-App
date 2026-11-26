@@ -41,7 +41,6 @@
     import { onMount, untrack } from 'svelte';
     import { SvelteMap, SvelteSet } from 'svelte/reactivity';
     import AppHead from '@/components/AppHead.svelte';
-    import FilterDateInput from '@/components/FilterDateInput.svelte';
     import ResponsiveFilterBar from '@/components/ResponsiveFilterBar.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
@@ -61,6 +60,7 @@
     import { Input } from '@/components/ui/input';
     import { LoadingButton } from '@/components/ui/loading-button';
     import { Skeleton } from '@/components/ui/skeleton';
+    import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
     import ViewportOnly from '@/components/ViewportOnly.svelte';
     import WhatsAppIcon from '@/components/WhatsAppIcon.svelte';
     import { hasPermission } from '@/lib/access';
@@ -343,6 +343,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
             to: string;
             route: string;
             payment: 'all' | 'lunas' | 'belum_lunas';
+            departure_status?: 'all' | 'departed' | 'arrived' | 'closed';
         };
         migrationChecklist: string[];
         consoleOnly?: boolean;
@@ -419,7 +420,6 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
         return toDateKey(new Date());
     })();
     const initialUiPreferences = readUiPreferences();
-    const isIsoDateKey = (value: string) => /^\d{4}-\d{2}-\d{2}$/.test(value);
     const initialBookingListDate = untrack(() => bookingQuery?.from) || today;
     const initialBookingListDesktopView =
         initialUiPreferences.defaultViewMode === 'cards' ? 'cards' : 'sheet';
@@ -471,6 +471,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     let bookingListPayment = $state<'all' | 'lunas' | 'belum_lunas'>(
         untrack(() => bookingQuery?.payment) || 'all',
     );
+    let bookingListStatus = $state<'all' | 'departed' | 'arrived' | 'closed'>(untrack(() => bookingQuery?.departure_status) || 'all');
     let bookingListRequestError = $state('');
     let bookingListRequestId = 0;
     let bookingListDesktopView = $state<'sheet' | 'cards'>(
@@ -480,7 +481,9 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     let lastBookingListFilterSignature = $state('');
     let bookingListFilterDraft = $state({
         route: 'all',
-        date: initialBookingListDate,
+        from: initialBookingListDate,
+        to: untrack(() => bookingQuery?.to) || initialBookingListDate,
+        status: 'all' as 'all' | 'departed' | 'arrived' | 'closed',
         payment: 'all' as 'all' | 'lunas' | 'belum_lunas',
     });
     let bookingListReloadTimer: ReturnType<typeof setTimeout> | null = null;
@@ -613,6 +616,8 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     let loadingGroupArmada = $state(false);
     let groupArmadaLookupOpen = $state(false);
     let groupMappingEditMode = $state(false);
+    let quickDriverOpen = $state(false);
+    let quickDriverLoadFailed = $state(false);
     let groupPassengerTab = $state<'active' | 'history' | 'ritur'>('active');
     let loadingGroupRiturs = $state(false);
     let savingGroupRiturId = $state<number | null>(null);
@@ -718,71 +723,8 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     let seatTapTimer: ReturnType<typeof setTimeout> | null = null;
     let seatPulseTimer: ReturnType<typeof setTimeout> | null = null;
     let bookingDateInput = $state<HTMLInputElement | null>(null);
-    let bookingListDateInput = $state<HTMLInputElement | null>(null);
     let bookingDatePicker: FlatpickrInstance | null = null;
-    let bookingListDatePicker: FlatpickrInstance | null = null;
-    let bookingListDatePickerRequest = 0;
 
-    $effect(() => {
-        const shouldShowBookingList =
-            listOnly && !consoleOnly && !groupDetailPage;
-        const input = bookingListDateInput;
-
-        if (!shouldShowBookingList || !input) {
-            bookingListDatePicker?.destroy();
-            bookingListDatePicker = null;
-            bookingListDatePickerRequest += 1;
-
-            return;
-        }
-
-        if (bookingListDatePicker?.input === input) {
-            return;
-        }
-
-        bookingListDatePicker?.destroy();
-        bookingListDatePicker = null;
-        const requestId = ++bookingListDatePickerRequest;
-        let cancelled = false;
-
-        void loadFlatpickr()
-            .then((flatpickr) => {
-                if (
-                    cancelled ||
-                    requestId !== bookingListDatePickerRequest ||
-                    bookingListDateInput !== input ||
-                    !listOnly ||
-                    consoleOnly ||
-                    groupDetailPage
-                ) {
-                    return;
-                }
-
-                const currentDate = untrack(() => bookingListDateFrom || today);
-                bookingListDatePicker = flatpickr(input, {
-                    dateFormat: 'Y-m-d',
-                    defaultDate: currentDate,
-                    disableMobile: true,
-                    onChange: (_selectedDates, dateStr) => {
-                        if (dateStr && dateStr !== bookingListDateFrom) {
-                            setBookingListDate(dateStr);
-                        }
-                    },
-                });
-            })
-            .catch(() => {
-                // Keep the native input usable if Flatpickr fails to load.
-            });
-
-        return () => {
-            cancelled = true;
-
-            if (bookingListDatePicker?.input === input) {
-                bookingListDatePicker.destroy();
-                bookingListDatePicker = null;
-            }
-        };
-    });
     const API_TIMEOUT_MS = 15000;
     const BOOKING_SUCCESS_MESSAGE_TITLE = 'BOOKING BERHASIL';
     const BOOKING_LIST_DATA_PROPS = [
@@ -2799,7 +2741,6 @@ return;
 
         bookingListDateFrom = currentToday;
         bookingListDateTo = currentToday;
-        bookingListDatePicker?.setDate(currentToday, false, 'Y-m-d');
     });
 
     const isArrivedDeparture = (group: BookingGroup | null | undefined) =>
@@ -3267,13 +3208,15 @@ return true;
             bookingListDateFrom,
             bookingListDateTo,
             bookingListPayment,
+            bookingListStatus,
         ].join('|'),
     );
     const bookingListFilterActiveCount = $derived(
         [
             bookingListRoute !== 'all',
-            bookingListDateFrom !== today,
+            bookingListDateFrom !== today || bookingListDateTo !== today,
             bookingListPayment !== 'all',
+            bookingListStatus !== 'all',
         ].filter(Boolean).length,
     );
     const bookingListFilterSummary = $derived.by(() => {
@@ -3326,29 +3269,12 @@ untrack(() => requestBookingPage(1));
         bookingListDesktopView = viewMode;
         persistUiPreferences({ defaultViewMode: viewMode });
     };
-    const setBookingListDate = (value: string, manual = true) => {
-        const safeDate = isIsoDateKey(value) ? value : today;
-
-        if (
-            bookingListDateFrom === safeDate &&
-            bookingListDateTo === safeDate
-        ) {
-            if (manual) {
-                bookingListDateManuallyChanged = true;
-            }
-
-            return;
-        }
-
-        bookingListDateFrom = safeDate;
-        bookingListDateTo = safeDate;
-        bookingListDateManuallyChanged = manual;
-    };
     const bookingListParams = (nextPage = 1) => ({
         from: bookingListDateFrom,
         to: bookingListDateTo,
         route: bookingListRoute,
         payment: bookingListPayment,
+        departure_status: bookingListStatus,
         page: nextPage,
         per_page: bookingPagination.per_page || 24,
     });
@@ -3419,30 +3345,32 @@ clearTimeout(bookingListReloadTimer);
         bookingListDateFrom = currentToday;
         bookingListDateTo = currentToday;
         bookingListPayment = 'all';
+        bookingListStatus = 'all';
         bookingListDateManuallyChanged = false;
-        bookingListDatePicker?.setDate(currentToday, false, 'Y-m-d');
     };
     const beginBookingListFilterDraft = () => {
         bookingListFilterDraft = {
             route: bookingListRoute,
-            date: bookingListDateFrom,
+            from: bookingListDateFrom,
+            to: bookingListDateTo,
+            status: bookingListStatus,
             payment: bookingListPayment,
         };
     };
     const applyBookingListFilterDraft = () => {
         bookingListRoute = bookingListFilterDraft.route;
         bookingListPayment = bookingListFilterDraft.payment;
-        setBookingListDate(bookingListFilterDraft.date || today);
-        bookingListDatePicker?.setDate(
-            bookingListFilterDraft.date || today,
-            false,
-            'Y-m-d',
-        );
+        bookingListDateFrom = bookingListFilterDraft.from || today;
+        bookingListDateTo = bookingListFilterDraft.to || bookingListDateFrom;
+        bookingListStatus = bookingListFilterDraft.status;
+        bookingListDateManuallyChanged = true;
     };
     const resetBookingListFilterDraft = () => {
         bookingListFilterDraft = {
             route: 'all',
-            date: today,
+            from: today,
+            to: today,
+            status: 'all',
             payment: 'all',
         };
     };
@@ -5767,6 +5695,27 @@ throw new Error('Detail keberangkatan gagal dimuat.');
 
         return payload.group as BookingGroup;
     };
+    const openQuickDriver = async (group: BookingGroup) => {
+        if (tenantWriteDisabled || isManifestLocked(group) || isCanceledDeparture(group)) return;
+        openGroupDetail = group;
+        quickDriverOpen = true;
+        quickDriverLoadFailed = false;
+        formError = '';
+        await loadGroupDriverState(group);
+        quickDriverLoadFailed = formError !== '';
+        groupMappingEditMode = !quickDriverLoadFailed;
+    };
+
+    const saveQuickDriver = async () => {
+        formError = '';
+        await saveGroupDriverMapping();
+        if (!groupMappingEditMode && !formError) {
+            quickDriverOpen = false;
+            showSuccess('Driver berhasil diperbarui.');
+            scheduleBookingListReload();
+        }
+    };
+
     const copyBookingGroup = async (group: BookingGroup) => {
         const buildText = async () => {
             group = await ensureGroupDetails(group);
@@ -8589,6 +8538,28 @@ return;
         </div>
     {/if}
 
+    <Dialog bind:open={quickDriverOpen}>
+        <DialogContent class="sm:max-w-md">
+            <DialogTitle>Sunting driver</DialogTitle>
+            <DialogDescription>Pilih driver untuk {openGroupDetail?.rute} · {openGroupDetail?.tanggal} {openGroupDetail?.jam?.slice(0, 5)}. Armada tetap menggunakan pilihan saat ini.</DialogDescription>
+            {#if loadingGroupDriver}
+                <p class="py-3 text-sm text-muted-foreground" role="status">Memuat daftar driver...</p>
+            {:else if !quickDriverLoadFailed}
+                <label class="grid gap-2 text-sm font-medium">Driver
+                    <select bind:value={groupDriverSelectedId} class="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm">
+                        <option value="0">Pilih driver</option>
+                        {#each groupDrivers as driver (driver.id)}<option value={String(driver.id)}>{driver.nama}</option>{/each}
+                    </select>
+                </label>
+            {/if}
+            {#if formError}<p role="alert" class="text-sm text-destructive">{formError}</p>{/if}
+            <div class="flex justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" onclick={() => (quickDriverOpen = false)} disabled={savingGroupDriver}>Batal</Button>
+                <Button type="button" onclick={() => void saveQuickDriver()} disabled={loadingGroupDriver || quickDriverLoadFailed || savingGroupDriver || groupDriverSelectedId === '0'}>{savingGroupDriver ? 'Menyimpan...' : 'Simpan'}</Button>
+            </div>
+        </DialogContent>
+    </Dialog>
+
     {#if listOnly && groupDetailPage}
         {#if openGroupDetail}
             <div
@@ -10522,7 +10493,7 @@ return;
                                 {/snippet}
                                 {#snippet desktop()}
                                     <div
-                                        class="grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.85fr)_minmax(0,1fr)_auto] xl:items-end"
+                                        class="grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-3 xl:items-end"
                                     >
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
@@ -10542,20 +10513,14 @@ return;
                                                 {/each}
                                             </select></label
                                         >
-                                        <label
-                                            class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
-                                            ><span>Tanggal keberangkatan</span
-                                            ><input
-                                                bind:this={bookingListDateInput}
-                                                aria-label="Tanggal keberangkatan"
-                                                type="text"
-                                                value={bookingListDateFrom}
-                                                readonly
-                                                autocomplete="off"
-                                                placeholder="Pilih tanggal"
-                                                class="flex h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                                            /></label
-                                        >
+                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
+                                            <span>Dari tanggal</span>
+                                            <input type="date" bind:value={bookingListDateFrom} max={bookingListDateTo} onchange={() => { bookingListDateManuallyChanged = true; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" />
+                                        </label>
+                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
+                                            <span>Sampai tanggal</span>
+                                            <input type="date" bind:value={bookingListDateTo} min={bookingListDateFrom} onchange={() => { bookingListDateManuallyChanged = true; }} class="h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 text-sm" />
+                                        </label>
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
                                             ><span>Status pembayaran</span
@@ -10575,6 +10540,12 @@ return;
                                                 >
                                             </select></label
                                         >
+                                        <label class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium">
+                                            <span>Status keberangkatan</span>
+                                            <select bind:value={bookingListStatus} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm">
+                                                <option value="all">Semua status</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option>
+                                            </select>
+                                        </label>
                                         <Button
                                             type="button"
                                             size="sm"
@@ -10608,12 +10579,9 @@ return;
                                                 {/each}
                                             </select>
                                         </label>
-                                        <FilterDateInput
-                                            label="Tanggal"
-                                            bind:value={
-                                                bookingListFilterDraft.date
-                                            }
-                                        />
+                                        <label class="grid gap-1.5 text-xs font-medium">Dari tanggal <input type="date" bind:value={bookingListFilterDraft.from} max={bookingListFilterDraft.to} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
+                                        <label class="grid gap-1.5 text-xs font-medium">Sampai tanggal <input type="date" bind:value={bookingListFilterDraft.to} min={bookingListFilterDraft.from} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
+                                        <label class="grid gap-1.5 text-xs font-medium">Status keberangkatan <select bind:value={bookingListFilterDraft.status} class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"><option value="all">Semua status</option><option value="departed">Berangkat</option><option value="arrived">Tiba</option><option value="closed">Manifest ditutup</option></select></label>
                                         <label
                                             class="grid gap-1.5 text-xs font-medium"
                                         >
@@ -11274,6 +11242,9 @@ return;
                                                                                     >
                                                                                         Detail
                                                                                     </DropdownMenuItem>
+                                                                                    {#if !isManifestLocked(group) && !isCanceledDeparture(group)}
+                                                                                        <DropdownMenuItem disabled={tenantWriteDisabled} onclick={() => void openQuickDriver(group)}>Sunting driver</DropdownMenuItem>
+                                                                                    {/if}
                                                                                     {#if !isManifestLocked(group)}
                                                                                         <DropdownMenuItem
                                                                                             onclick={() =>
@@ -11494,6 +11465,9 @@ return;
                                                     >
                                                         Detail
                                                     </DropdownMenuItem>
+                                                    {#if !isManifestLocked(group) && !isCanceledDeparture(group)}
+                                                        <DropdownMenuItem disabled={tenantWriteDisabled} onclick={() => void openQuickDriver(group)}>Sunting driver</DropdownMenuItem>
+                                                    {/if}
                                                     {#if !isManifestLocked(group)}
                                                         <DropdownMenuItem
                                                             onclick={() =>

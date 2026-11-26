@@ -13453,7 +13453,7 @@ return;
                 <div class="space-y-1">
                 <DialogTitle>Detail Riwayat Pelanggan</DialogTitle>
                 <DialogDescription>
-                    Riwayat booking, pembatalan, dan keberangkatan yang telah tiba.
+                    Riwayat booking, pembatalan, dan keberangkatan yang tiba atau manifestnya ditutup.
                 </DialogDescription>
                 </div>
                 <Button type="button" variant="ghost" size="icon" class="shrink-0" aria-label="Tutup detail riwayat" onclick={() => (customerHistoryOpen = false)}><X class="h-4 w-4" /></Button>
@@ -13641,7 +13641,7 @@ return;
                             <p
                                 class="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground"
                             >
-                                Belum ada keberangkatan yang berstatus tiba.
+                                Belum ada keberangkatan yang tiba atau manifestnya ditutup tahun ini.
                             </p>
                         {:else}
                             <div class="max-h-56 space-y-2 overflow-y-auto">
@@ -13664,7 +13664,7 @@ return;
                                                 )} · Unit {item.unit}
                                             </p>
                                         </div>
-                                        <Badge variant="secondary">Tiba</Badge>
+                                        <Badge variant="secondary">{item.status === 'closed' ? 'Manifest ditutup' : 'Tiba'}</Badge>
                                     </article>
                                 {/each}
                             </div>

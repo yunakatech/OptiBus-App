@@ -632,6 +632,8 @@ class BookingController extends Controller
         return [
             'from' => min($from, $to), 'to' => max($from, $to),
             'route' => (string) $request->query('route', 'all'),
+            'departure_status' => in_array($request->query('departure_status'), ['departed', 'arrived', 'closed'], true)
+                ? $request->query('departure_status') : 'all',
             'payment' => in_array($request->query('payment'), ['lunas', 'belum_lunas'], true)
                 ? $request->query('payment') : 'all',
             'page' => max(1, (int) $request->query('page', 1)),
@@ -718,6 +720,17 @@ class BookingController extends Controller
         $identities = array_values(array_filter($identities, fn (array $trip): bool => ($filters['route'] === 'all' || $this->normalizeTripRoute($trip['rute']) === $this->normalizeTripRoute($filters['route']))
             && ($filters['payment'] !== 'lunas' || ($trip['unpaid'] === 0 && $trip['refunded'] === 0))
             && ($filters['payment'] !== 'belum_lunas' || $trip['unpaid'] > 0)));
+        if ($filters['departure_status'] !== 'all' && $identities !== []) {
+            $matchingKeys = collect();
+            foreach (array_chunk($identities, 100) as $chunk) {
+                foreach ($this->buildBookingGroups($chunk, false) as $group) {
+                    if ($group['departure_status'] === $filters['departure_status']) {
+                        $matchingKeys->put($group['key'], true);
+                    }
+                }
+            }
+            $identities = array_values(array_filter($identities, static fn (array $trip): bool => $matchingKeys->has($trip['key'])));
+        }
         usort($identities, static fn (array $a, array $b): int => [$a['tanggal'], $a['jam'], $a['rute'], $a['unit'], $a['key']] <=> [$b['tanggal'], $b['jam'], $b['rute'], $b['unit'], $b['key']]);
         $total = count($identities);
         $lastPage = max(1, (int) ceil($total / $filters['per_page']));

@@ -68,6 +68,37 @@ class AdminOpsApiTest extends TestCase
             ->assertJsonPath('booking_pagination.page', 2);
     }
 
+    public function test_customer_history_counts_arrived_and_closed_manifests_in_current_year(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $poolId = $this->activatePoolForTenant($tenantId, 'POOL SUKSES', 'SUKSES');
+        $customerId = DB::table('customers')->insertGetId([
+            'tenant_id' => $tenantId, 'pool_id' => $poolId, 'name' => 'PELANGGAN SUKSES',
+            'phone' => '089999111222', 'created_at' => now(),
+        ]);
+
+        foreach (['arrived', 'closed', 'departed', 'canceled', 'closed_old'] as $index => $status) {
+            $date = $status === 'closed_old'
+                ? now()->subYear()->startOfYear()->toDateString()
+                : now()->startOfYear()->addDays($index)->toDateString();
+            $common = [
+                'tenant_id' => $tenantId, 'pool_id' => $poolId, 'rute' => 'RUTE SUKSES',
+                'tanggal' => $date, 'jam' => '08:00:00', 'unit' => 1, 'created_at' => now(),
+            ];
+            DB::table('trip_assignments')->insert([...$common, 'status' => $status === 'closed_old' ? 'closed' : $status]);
+            DB::table('bookings')->insert([...$common, 'seat' => '1', 'name' => 'PELANGGAN SUKSES',
+                'phone' => '089999111222', 'status' => 'active', 'pembayaran' => 'Lunas']);
+        }
+
+        $response = $this->getJson(route('api.admin.customers.history', ['id' => $customerId]));
+        $response->assertOk()
+            ->assertJsonPath('summary.successful_departure_count', 2)
+            ->assertJsonPath('successful_departure_pagination.total', 2)
+            ->assertJsonCount(2, 'successful_departures');
+        $this->assertEqualsCanonicalizing(['arrived', 'closed'], array_column($response->json('successful_departures'), 'status'));
+    }
+
     public function test_private_subscription_entitlements_are_saved_and_cleared_by_api(): void
     {
         $this->actingAsSuperAdmin();

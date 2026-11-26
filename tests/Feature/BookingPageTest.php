@@ -80,6 +80,29 @@ class BookingPageTest extends TestCase
             );
     }
 
+    public function test_departure_date_range_and_status_are_applied_before_pagination(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        foreach (['departed', 'closed', 'closed', 'arrived'] as $index => $status) {
+            DB::table('trip_assignments')->insert([
+                'tenant_id' => $tenantId, 'rute' => 'RUTE FILTER', 'tanggal' => '2099-01-0'.($index + 1),
+                'jam' => '09:00:00', 'unit' => 1, 'status' => $status, 'created_at' => now(),
+            ]);
+        }
+
+        $this->get(route('bookings.index', [
+            'from' => '2099-01-01', 'to' => '2099-01-03', 'departure_status' => 'closed', 'per_page' => 1, 'page' => 2,
+        ]))->assertInertia(fn (Assert $page) => $page
+            ->where('bookingQuery.departure_status', 'closed')
+            ->loadDeferredProps('booking-list', fn (Assert $reload) => $reload
+                ->where('bookingPagination.total', 2)
+                ->where('bookingPagination.page', 2)
+                ->has('bookingGroups', 1)
+                ->where('bookingGroups.0.tanggal', '2099-01-03')
+                ->where('bookingGroups.0.departure_status', 'closed')));
+    }
+
     public function test_booking_route_filter_follows_master_routes_and_refund_is_counted_separately(): void
     {
         $this->actingAsSuperAdmin();
