@@ -41,59 +41,10 @@
         features: PlanFeature[];
     };
 
-    const fallbackPlans: Plan[] = [
-        {
-            id: 1,
-            name: 'Starter',
-            slug: 'starter',
-            description:
-                'Untuk pengemudi individu dan travel yang baru merapikan operasional.',
-            price_monthly: 49000,
-            price_yearly: 490000,
-            max_armadas: 1,
-            max_routes: 2,
-            max_users: 1,
-            max_pools: 1,
-            max_drivers: 1,
-            features: [],
-        },
-        {
-            id: 2,
-            name: 'Pro',
-            slug: 'pro',
-            description:
-                'Untuk travel kecil yang butuh peta kursi, laporan, dan pemesanan online.',
-            price_monthly: 99000,
-            price_yearly: 990000,
-            max_armadas: 3,
-            max_routes: 0,
-            max_users: 3,
-            max_pools: 2,
-            max_drivers: 3,
-            features: [],
-        },
-        {
-            id: 3,
-            name: 'Fleet',
-            slug: 'fleet',
-            description:
-                'Untuk pemilik armada dengan multi-pool dan kontrol peran tim.',
-            price_monthly: 199000,
-            price_yearly: 1990000,
-            max_armadas: 10,
-            max_routes: 0,
-            max_users: 10,
-            max_pools: 5,
-            max_drivers: 15,
-            features: [],
-        },
-    ];
-
-    const plans = $derived(
-        ((page.props.plans ?? []) as Plan[]).length > 0
-            ? ((page.props.plans ?? []) as Plan[])
-            : fallbackPlans,
-    );
+    const plans = $derived((page.props.plans ?? []) as Plan[]);
+    const trialDays = $derived(Math.max(0, Number(page.props.trialDays ?? 0)));
+    const trialAvailable = $derived(trialDays > 0 && plans.some((plan) => plan.slug === 'starter'));
+    const registerHref = $derived(trialAvailable ? '/register?plan=starter&intent=trial' : '/register');
     const featuredPlans = $derived(plans.slice(0, 3));
     const isAuthenticated = $derived(Boolean(page.props.auth?.user));
     const appHref = '/dashboard';
@@ -257,7 +208,7 @@ return;
             </a>
             <ViewportOnly minWidth={768}
                 ><div
-                    class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:flex"
+                    class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-[#42635f] md:flex"
                 >
                     <a
                         href="#workflow"
@@ -280,14 +231,14 @@ return;
                 {#if !isAuthenticated}
                     <a
                         href="/login"
-                        class="inline-flex h-10 items-center justify-center px-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79] sm:px-3"
+                        class="inline-flex h-10 items-center justify-center px-2 text-xs font-semibold text-[#42635f] transition-colors hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79] sm:px-3"
                         >Masuk</a
                     >
                 {/if}
                 <a
                     href={isAuthenticated
                         ? appHref
-                        : '/register?plan=starter&intent=trial'}
+                        : registerHref}
                     class="inline-flex h-10 items-center justify-center bg-[#087F79] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#075B5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                 >
                     {isAuthenticated ? 'Dasbor' : 'Mulai'}
@@ -311,7 +262,7 @@ return;
                     class="hero-copy relative z-10 flex flex-col justify-center"
                 >
                     <div
-                        class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#55E8B4] pl-3 text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground sm:mb-6"
+                        class="mb-5 inline-flex w-fit items-center gap-2 border-l-2 border-[#55E8B4] pl-3 text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-[#42635f] sm:mb-6"
                     >
                         <Clock3 class="h-4 w-4 text-[#087F79]" />
                         Software operasional travel & shuttle
@@ -322,7 +273,7 @@ return;
                         Operasional travel lebih rapi, dari booking hingga laporan.
                     </h1>
                     <p
-                        class="mt-5 max-w-xl text-[15px] leading-7 text-muted-foreground sm:mt-6 sm:text-base sm:leading-8"
+                        class="mt-5 max-w-xl text-[15px] leading-7 text-[#42635f] sm:mt-6 sm:text-base sm:leading-8"
                     >
                         Kelola kursi, jadwal, penumpang, pembayaran, dan armada
                         dalam satu platform yang mudah digunakan bersama tim.
@@ -331,12 +282,12 @@ return;
                         <a
                             href={isAuthenticated
                                 ? appHref
-                                : '/register?plan=starter&intent=trial'}
+                                : registerHref}
                             class="motion-button inline-flex h-12 items-center justify-center bg-[#087F79] px-5 text-sm font-semibold text-white transition-colors hover:bg-[#075B5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                         >
                             {isAuthenticated
                                 ? 'Buka dasbor'
-                                : 'Mulai uji coba gratis'}
+                                : trialAvailable ? 'Daftar gratis' : 'Daftar sekarang'}
                             <ArrowRight class="motion-arrow ml-2 h-4 w-4" />
                         </a>
                         <a
@@ -346,15 +297,16 @@ return;
                             Bandingkan paket
                         </a>
                     </div>
-                    <p class="mt-4 text-sm font-medium text-[#42635f]">
-                        Coba OptiBus · Pilih paket sesuai kebutuhan
+                    <a href={supportWhatsappHref} target="_blank" rel="noopener noreferrer" class="mt-4 inline-flex min-h-11 w-fit items-center text-sm font-semibold text-[#087F79] underline underline-offset-4">Konsultasi via WhatsApp</a>
+                    <p class="mt-1 text-sm font-medium text-[#42635f]">
+                        {trialAvailable ? `Daftar gratis · Uji coba Starter ${trialDays} hari` : 'Pilih paket sesuai kebutuhan operasional Anda'}
                     </p>
                     <dl
                         class="mt-8 grid max-w-xl grid-cols-3 gap-2 border-y border-[#DCE9E6] py-4 sm:mt-10 sm:gap-5 sm:py-5"
                     >
                         <div>
                             <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]"
                             >
                                 Transaksi
                             </dt>
@@ -366,7 +318,7 @@ return;
                         </div>
                         <div>
                             <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]"
                             >
                                 Cakupan
                             </dt>
@@ -378,7 +330,7 @@ return;
                         </div>
                         <div>
                             <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground sm:text-[11px]"
+                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]"
                             >
                                 Audit
                             </dt>
@@ -395,7 +347,7 @@ return;
                     class="relative flex items-center justify-center overflow-hidden rounded-3xl border border-[#c8e5da] bg-[#E7FAF3] px-4 py-3 sm:px-8 sm:py-6 lg:min-h-[550px]"
                 >
                     <div
-                        class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#DCE9E6] px-4 py-2 text-xs md:text-[9px] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:px-6"
+                        class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#DCE9E6] px-4 py-2 text-xs md:text-[9px] font-semibold uppercase tracking-[0.18em] text-[#42635f] sm:px-6"
                     >
                         <span>Ruang kendali / 01</span>
                         <span>OptiBus</span>
@@ -434,7 +386,7 @@ return;
                     >
                         Satu catatan untuk seluruh perjalanan.
                     </h2>
-                    <p class="mt-4 max-w-md leading-7 text-muted-foreground">
+                    <p class="mt-4 max-w-md leading-7 text-[#42635f]">
                         Pesanan yang masuk menjadi dasar manifest, status
                         pembayaran, dan laporan harian. Informasi tetap
                         tersambung saat berpindah dari meja reservasi ke
@@ -464,7 +416,7 @@ return;
                                 >
                                     {item.label}
                                 </h3>
-                                <p class="text-sm text-muted-foreground">
+                                <p class="text-sm text-[#42635f]">
                                     {item.value}
                                 </p>
                             </div>
@@ -528,12 +480,48 @@ return;
                                 {item.title}
                             </h3>
                             <p
-                                class="mt-2 text-sm leading-6 text-muted-foreground"
+                                class="mt-2 text-sm leading-6 text-[#42635f]"
                             >
                                 {item.body}
                             </p>
                         </article>
                     {/each}
+                </div>
+            </div>
+        </section>
+
+        <section class="border-b border-[#DCE9E6] bg-[#F1F8F5]">
+            <div class="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1fr_1fr] lg:px-10">
+                <div><p class="text-xs font-bold uppercase tracking-[0.18em] text-[#087F79]">Booking dari ponsel</p><h2 class="mt-4 max-w-xl text-3xl font-medium leading-tight tracking-tight text-[#163A39] sm:text-4xl">Peta kursi dan pesanan dalam genggaman.</h2><p class="mt-4 max-w-lg text-sm leading-7 text-[#42635f]">Lihat kursi yang tersedia, pilih tempat duduk, dan lanjutkan pengisian data penumpang dari ponsel.</p></div>
+                <figure class="flex justify-center rounded-3xl border border-[#c8e5da] bg-white p-5 sm:p-8"><img src="/landing/booking-mobile.png" alt="Tampilan peta kursi dan rekap booking OptiBus pada ponsel" width="317" height="689" loading="lazy" decoding="async" class="h-auto w-full max-w-[280px] rounded-xl border border-[#DCE9E6] shadow-lg" /></figure>
+            </div>
+        </section>
+
+        <section class="bg-white">
+            <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-10">
+                <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#087F79]">Lihat OptiBus bekerja</p>
+                <h2 class="mt-4 max-w-2xl text-3xl font-medium leading-tight tracking-tight text-[#163A39] sm:text-4xl">Informasi perjalanan, siap dilihat tim Anda.</h2>
+                <div class="mt-8 grid gap-6 lg:grid-cols-2">
+                    <figure class="overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><img src="/landing/keberangkatan-desktop.png" alt="Tabel data keberangkatan, driver, armada, dan status pembayaran di OptiBus" width="1920" height="827" loading="lazy" decoding="async" class="h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Pantau keberangkatan dan manifest</figcaption></figure>
+                    <figure class="overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><img src="/landing/booking-desktop.png" alt="Form booking dan peta kursi OptiBus di komputer" width="1920" height="827" loading="lazy" decoding="async" class="h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Catat booking dan pilih kursi</figcaption></figure>
+                    <figure class="overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9] lg:col-span-2"><img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dengan grafik pendapatan dan ringkasan layanan" width="1920" height="827" loading="lazy" decoding="async" class="h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Lihat perkembangan pendapatan</figcaption></figure>
+                </div>
+            </div>
+        </section>
+
+        <section id="solusi" class="border-b border-[#DCE9E6] bg-white">
+            <div class="mx-auto max-w-7xl px-4 py-14 sm:px-6 sm:py-20 lg:px-10">
+                <div class="grid gap-5 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
+                    <div>
+                        <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#087F79]">Dibuat untuk perjalanan Anda</p>
+                        <h2 class="mt-4 max-w-md text-3xl font-medium leading-tight tracking-tight text-[#163A39] sm:text-4xl">Satu sistem, sesuai cara Anda bekerja.</h2>
+                        <p class="mt-4 max-w-md text-sm leading-7 text-[#42635f]">Dari kendaraan sendiri hingga tim di beberapa pool, mulai dengan kebutuhan operasional Anda hari ini.</p>
+                    </div>
+                    <div class="divide-y divide-[#DCE9E6] border-y border-[#DCE9E6]">
+                        <article class="grid gap-2 py-5 sm:grid-cols-[10rem_1fr]"><h3 class="font-semibold text-[#163A39]">Individu</h3><p class="text-sm leading-6 text-[#42635f]">Catat pelanggan dan perjalanan dari perangkat yang Anda gunakan sehari-hari.</p></article>
+                        <article class="grid gap-2 py-5 sm:grid-cols-[10rem_1fr]"><h3 class="font-semibold text-[#163A39]">Travel berkembang</h3><p class="text-sm leading-6 text-[#42635f]">Pantau jadwal, kursi, pembayaran, carter, dan bagasi bersama tim.</p></article>
+                        <article class="grid gap-2 py-5 sm:grid-cols-[10rem_1fr]"><h3 class="font-semibold text-[#163A39]">Perusahaan</h3><p class="text-sm leading-6 text-[#42635f]">Kelola kebutuhan multi-pool dan akses pengguna sesuai paket. <a href={supportWhatsappHref} target="_blank" rel="noopener noreferrer" class="font-semibold text-[#087F79] underline underline-offset-4">Konsultasikan kebutuhan Anda</a>.</p></article>
+                    </div>
                 </div>
             </div>
         </section>
@@ -564,6 +552,9 @@ return;
                     Buka harga lengkap
                 </a>
             </div>
+            {#if featuredPlans.length === 0}
+                <p class="rounded-xl border border-[#DCE9E6] bg-white p-5 text-sm text-[#42635f]">Informasi paket belum tersedia. <a href={supportWhatsappHref} target="_blank" rel="noopener noreferrer" class="font-semibold text-[#087F79] underline">Hubungi kami melalui WhatsApp</a>.</p>
+            {/if}
             <div
                 class="grid gap-4 md:grid-cols-3"
             >
@@ -581,7 +572,7 @@ return;
                                     {plan.name}
                                 </h3>
                                 <p
-                                    class="mt-2 min-h-10 text-sm leading-6 text-muted-foreground"
+                                    class="mt-2 min-h-10 text-sm leading-6 text-[#42635f]"
                                 >
                                     {plan.description}
                                 </p>
@@ -599,7 +590,7 @@ return;
                                 >{formatRupiah(plan.price_monthly)}</span
                             >
                             <span
-                                class="text-xs uppercase tracking-[0.08em] text-muted-foreground"
+                                class="text-xs uppercase tracking-[0.08em] text-[#42635f]"
                                 >/ bulan</span
                             >
                         </div>
@@ -618,6 +609,10 @@ return;
                                 <UsersRound class="h-4 w-4 text-[#087F79]" />
                                 {limitLabel(plan.max_users, 'pengguna')}
                             </div>
+                            <div class="flex items-center gap-2">
+                                <UsersRound class="h-4 w-4 text-[#087F79]" />
+                                {limitLabel(plan.max_pools, 'pool')}
+                            </div>
                         </div>
                         <a
                             href={isAuthenticated
@@ -631,6 +626,18 @@ return;
                         </a>
                     </article>
                 {/each}
+            </div>
+        </section>
+
+        <section class="border-t border-[#DCE9E6] bg-white">
+            <div class="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16 lg:px-10">
+                <div><p class="text-xs font-bold uppercase tracking-[0.18em] text-[#087F79]">Mulai dengan OptiBus</p><h2 class="mt-4 text-3xl font-medium leading-tight tracking-tight text-[#163A39] sm:text-4xl">Siap dipakai untuk perjalanan berikutnya.</h2><p class="mt-4 text-sm leading-7 text-[#42635f]">Mulai dengan tiga langkah sederhana.</p><ol class="mt-6 space-y-3 text-sm text-[#163A39]"><li><span class="mr-3 font-semibold text-[#087F79]">01</span>Daftar dan buat akun.</li><li><span class="mr-3 font-semibold text-[#087F79]">02</span>Lengkapi data operasional.</li><li><span class="mr-3 font-semibold text-[#087F79]">03</span>Mulai mencatat perjalanan.</li></ol></div>
+                <div class="divide-y divide-[#DCE9E6] border-y border-[#DCE9E6]">
+                    {#if trialAvailable}<details class="group py-5"><summary class="cursor-pointer font-semibold text-[#163A39]">Bagaimana uji coba gratis bekerja?</summary><p class="mt-3 text-sm leading-6 text-[#42635f]">Daftar untuk mencoba paket Starter selama {trialDays} hari. Uji coba tersedia bagi email yang belum pernah menggunakannya. Setelah masa uji coba berakhir, pilih langganan untuk melanjutkan akses.</p></details>{/if}
+                    <details class="group py-5"><summary class="cursor-pointer font-semibold text-[#163A39]">Apakah OptiBus bisa digunakan dari ponsel?</summary><p class="mt-3 text-sm leading-6 text-[#42635f]">Ya. OptiBus dapat diakses melalui browser di ponsel dan komputer.</p></details>
+                    <details class="group py-5"><summary class="cursor-pointer font-semibold text-[#163A39]">Bagaimana memilih paket untuk tim saya?</summary><p class="mt-3 text-sm leading-6 text-[#42635f]">Bandingkan kapasitas armada, pengguna, dan pool di halaman harga. Untuk kebutuhan khusus, hubungi tim kami melalui WhatsApp.</p></details>
+                    <details class="group py-5"><summary class="cursor-pointer font-semibold text-[#163A39]">Bagaimana jika saya memerlukan bantuan?</summary><p class="mt-3 text-sm leading-6 text-[#42635f]">Tim OptiBus dapat dihubungi melalui <a href={supportWhatsappHref} target="_blank" rel="noopener noreferrer" class="font-semibold text-[#087F79] underline underline-offset-4">WhatsApp</a> untuk membahas penggunaan dan kebutuhan usaha Anda.</p></details>
+                </div>
             </div>
         </section>
 
@@ -654,10 +661,10 @@ return;
                 <a
                     href={isAuthenticated
                         ? appHref
-                        : '/register?plan=starter&intent=trial'}
+                        : registerHref}
                     class="motion-button inline-flex h-12 items-center justify-center bg-[#F7FAF9] px-5 text-sm font-semibold text-[#163A39] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55E8B4]"
                 >
-                    {isAuthenticated ? 'Buka dasbor' : 'Mulai uji coba'}
+                    {isAuthenticated ? 'Buka dasbor' : trialAvailable ? `Daftar gratis · ${trialDays} hari` : 'Daftar sekarang'}
                     <ArrowRight class="motion-arrow ml-2 h-4 w-4" />
                 </a>
             </div>
@@ -666,11 +673,11 @@ return;
 
     <footer class="border-t border-[#DCE9E6] bg-[#F7FAF9]">
         <div
-            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6 md:flex-row md:items-center md:justify-between lg:px-10"
+            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-[#42635f] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-10"
         >
             <span class="font-sans text-base text-[#163A39]">
                 OptiBus
-                <span class="font-sans text-xs text-muted-foreground">
+                <span class="font-sans text-xs text-[#42635f]">
                     / operasional perjalanan
                 </span>
             </span>
@@ -698,7 +705,7 @@ return;
                         >Masuk</a
                     >
                     <a
-                        href="/register?plan=starter&intent=trial"
+                        href={registerHref}
                         class="inline-flex min-h-10 items-center hover:text-[#087F79]"
                         >Daftar</a
                     >

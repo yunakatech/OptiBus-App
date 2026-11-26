@@ -18,6 +18,7 @@ class PublicController extends Controller
     {
         return Inertia::render('Welcome', [
             'plans' => $this->publicPlans(),
+            'trialDays' => max(0, (int) config('saas.trial_days', 14)),
         ]);
     }
 
@@ -29,6 +30,7 @@ class PublicController extends Controller
     {
         return Inertia::render('Pricing', [
             'plans' => $this->publicPlans(),
+            'trialDays' => max(0, (int) config('saas.trial_days', 14)),
         ]);
     }
 

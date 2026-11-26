@@ -25,6 +25,7 @@
     import AppLogo from '@/components/AppLogo.svelte';
     import NavigationMetrics from '@/components/NavigationMetrics.svelte';
     import ViewportOnly from '@/components/ViewportOnly.svelte';
+    import { getSupportWhatsappHref } from '@/lib/support';
 
     type PlanFeature = {
         name: string;
@@ -47,158 +48,10 @@
         features: PlanFeature[];
     };
 
-    const fallbackPlans: Plan[] = [
-        {
-            id: 1,
-            name: 'Starter',
-            slug: 'starter',
-            description:
-                'Untuk pengemudi individu dan travel yang mulai digital.',
-            price_monthly: 49000,
-            price_yearly: 490000,
-            max_armadas: 1,
-            max_routes: 2,
-            max_users: 1,
-            max_pools: 1,
-            max_drivers: 1,
-            features: [
-                {
-                    name: 'Dasbor Pendapatan',
-                    group: 'Dasbor',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Pemesanan Kursi Dasar',
-                    group: 'Pemesanan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Pembayaran Terpadu',
-                    group: 'Keuangan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Peta Kursi Visual',
-                    group: 'Pemesanan',
-                    included: false,
-                    limit: 0,
-                },
-                {
-                    name: 'Ekspor CSV',
-                    group: 'Laporan',
-                    included: false,
-                    limit: 0,
-                },
-            ],
-        },
-        {
-            id: 2,
-            name: 'Pro',
-            slug: 'pro',
-            description:
-                'Untuk travel kecil dengan jadwal aktif dan tim admin.',
-            price_monthly: 99000,
-            price_yearly: 990000,
-            max_armadas: 3,
-            max_routes: 0,
-            max_users: 3,
-            max_pools: 2,
-            max_drivers: 3,
-            features: [
-                {
-                    name: 'Dasbor Pendapatan',
-                    group: 'Dasbor',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Pemesanan Kursi Dasar',
-                    group: 'Pemesanan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Pembayaran Terpadu',
-                    group: 'Keuangan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Peta Kursi Visual',
-                    group: 'Pemesanan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Ekspor CSV',
-                    group: 'Laporan',
-                    included: true,
-                    limit: null,
-                },
-            ],
-        },
-        {
-            id: 3,
-            name: 'Fleet',
-            slug: 'fleet',
-            description:
-                'Untuk multi-pool, banyak armada, dan kontrol akses tim.',
-            price_monthly: 199000,
-            price_yearly: 1990000,
-            max_armadas: 10,
-            max_routes: 0,
-            max_users: 10,
-            max_pools: 5,
-            max_drivers: 15,
-            features: [
-                {
-                    name: 'Dasbor Pendapatan',
-                    group: 'Dasbor',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Pemesanan Kursi Dasar',
-                    group: 'Pemesanan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Pembayaran Terpadu',
-                    group: 'Keuangan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Peta Kursi Visual',
-                    group: 'Pemesanan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Ekspor CSV',
-                    group: 'Laporan',
-                    included: true,
-                    limit: null,
-                },
-                {
-                    name: 'Peran Khusus',
-                    group: 'Akses',
-                    included: true,
-                    limit: null,
-                },
-            ],
-        },
-    ];
-
-    const plans = $derived(
-        ((page.props.plans ?? []) as Plan[]).length > 0
-            ? ((page.props.plans ?? []) as Plan[])
-            : fallbackPlans,
-    );
+    const plans = $derived((page.props.plans ?? []) as Plan[]);
+    const trialDays = $derived(Math.max(0, Number(page.props.trialDays ?? 0)));
+    const trialAvailable = $derived(trialDays > 0 && plans.some((plan) => plan.slug === 'starter'));
+    const registerHref = $derived(trialAvailable ? '/register?plan=starter&intent=trial' : '/register');
     const allFeatureNames = $derived(
         [
             ...new Set(
@@ -233,6 +86,7 @@
         })),
     ]);
     const isAuthenticated = $derived(Boolean(page.props.auth?.user));
+    const supportWhatsappHref = getSupportWhatsappHref();
     const appHref = '/dashboard';
     const subscriptionHref = '/subscription';
 
@@ -297,7 +151,7 @@
             </a>
             <ViewportOnly minWidth={768}
                 ><div
-                    class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground md:flex"
+                    class="hidden items-center gap-7 text-xs font-semibold uppercase tracking-[0.12em] text-[#42635f] md:flex"
                 >
                     <a
                         href="/"
@@ -322,14 +176,14 @@
                 {#if !isAuthenticated}
                     <a
                         href="/login"
-                        class="inline-flex h-10 items-center justify-center px-2 text-xs font-semibold text-muted-foreground transition-colors hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79] sm:px-3"
+                        class="inline-flex h-10 items-center justify-center px-2 text-xs font-semibold text-[#42635f] transition-colors hover:text-[#087F79] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79] sm:px-3"
                         >Masuk</a
                     >
                 {/if}
                 <a
                     href={isAuthenticated
                         ? appHref
-                        : '/register?plan=starter&intent=trial'}
+                        : registerHref}
                     class="inline-flex h-10 items-center justify-center bg-[#087F79] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#075B5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                 >
                     {isAuthenticated ? 'Dasbor' : 'Mulai'}
@@ -355,14 +209,15 @@
                         Pilih paket yang pas untuk operasional travel Anda.
                     </h1>
                     <p
-                        class="mt-5 max-w-2xl text-[15px] leading-7 text-muted-foreground sm:text-base"
+                        class="mt-5 max-w-2xl text-[15px] leading-7 text-[#42635f] sm:text-base"
                     >
                         Mulai dari kebutuhan hari ini, lalu bandingkan kapasitas
                         armada, tim, dan fitur untuk setiap tahap perjalanan bisnis Anda.
+                        {#if trialAvailable}Daftar gratis dan coba paket Starter selama {trialDays} hari.{/if}
                     </p>
                 </div>
                 <div
-                    class="max-w-xs border-l-2 border-[#55E8B4] py-1 pl-4 text-sm leading-6 text-muted-foreground"
+                    class="max-w-xs border-l-2 border-[#55E8B4] py-1 pl-4 text-sm leading-6 text-[#42635f]"
                 >
                     <div
                         class="flex items-center gap-2 font-semibold text-[#163A39]"
@@ -381,6 +236,9 @@
             </div>
         </section>
 
+        {#if plans.length === 0}
+            <p class="mx-auto max-w-7xl px-4 py-6 text-sm text-[#42635f]">Paket belum tersedia. <a href={supportWhatsappHref} target="_blank" rel="noopener noreferrer" class="font-semibold text-[#087F79] underline">Hubungi kami melalui WhatsApp</a> untuk informasi harga.</p>
+        {/if}
         <section class="mx-auto max-w-7xl px-4 py-10 sm:px-6 sm:py-14 lg:px-10">
             <div
                 class="grid gap-4 lg:grid-cols-3"
@@ -397,7 +255,7 @@
                                     {plan.name}
                                 </h2>
                                 <p
-                                    class="mt-2 min-h-10 text-sm leading-6 text-muted-foreground"
+                                    class="mt-2 min-h-10 text-sm leading-6 text-[#42635f]"
                                 >
                                     {plan.description}
                                 </p>
@@ -417,11 +275,11 @@
                                     >{formatRupiah(plan.price_monthly)}</span
                                 >
                                 <span
-                                    class="text-xs uppercase tracking-[0.08em] text-muted-foreground"
+                                    class="text-xs uppercase tracking-[0.08em] text-[#42635f]"
                                     >/ bulan</span
                                 >
                             </div>
-                            <p class="mt-2 text-sm text-muted-foreground">
+                            <p class="mt-2 text-sm text-[#42635f]">
                                 {formatRupiah(plan.price_yearly)}/tahun
                                 {#if yearlySaving(plan) > 0}
                                     <span class="font-semibold text-[#087F79]">
@@ -520,7 +378,7 @@
                         </h2>
                     </div>
                     <div
-                        class="inline-flex min-h-10 w-fit items-center gap-2 border-l-2 border-[#55E8B4] pl-3 text-xs text-muted-foreground"
+                        class="inline-flex min-h-10 w-fit items-center gap-2 border-l-2 border-[#55E8B4] pl-3 text-xs text-[#42635f]"
                     >
                         <ShieldCheck
                             class="h-4 w-4 text-[#087F79]"
@@ -552,7 +410,7 @@
                                             <span
                                                 class={row.values[index] ===
                                                 'Tidak'
-                                                    ? 'text-muted-foreground'
+                                                    ? 'text-[#42635f]'
                                                     : 'font-semibold text-[#087F79]'}
                                             >
                                                 {row.values[index]}
@@ -645,7 +503,7 @@
                                                         />
                                                     {:else}
                                                         <X
-                                                            class="mx-auto h-4 w-4 text-muted-foreground"
+                                                            class="mx-auto h-4 w-4 text-[#42635f]"
                                                             aria-label="Tidak termasuk"
                                                         />
                                                     {/if}
@@ -691,7 +549,7 @@
                                     {guide.title}
                                 </h3>
                                 <p
-                                    class="mt-1 text-sm leading-6 text-muted-foreground"
+                                    class="mt-1 text-sm leading-6 text-[#42635f]"
                                 >
                                     {guide.body}
                                 </p>
@@ -721,7 +579,7 @@
                 <a
                     href={isAuthenticated
                         ? subscriptionHref
-                        : '/register?plan=starter&intent=trial'}
+                        : registerHref}
                     class="inline-flex h-12 items-center justify-center bg-[#F7FAF9] px-5 text-sm font-semibold text-[#163A39] transition-colors hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#55E8B4]"
                 >
                     {isAuthenticated ? 'Kelola langganan' : 'Daftar sekarang'}
@@ -733,11 +591,11 @@
 
     <footer class="border-t border-[#DCE9E6] bg-[#F7FAF9]">
         <div
-            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-muted-foreground sm:px-6 md:flex-row md:items-center md:justify-between lg:px-10"
+            class="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-6 text-sm text-[#42635f] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-10"
         >
             <span class="font-sans text-base text-[#163A39]">
                 OptiBus
-                <span class="font-sans text-xs text-muted-foreground">
+                <span class="font-sans text-xs text-[#42635f]">
                     / paket operasional perjalanan
                 </span>
             </span>
@@ -765,7 +623,7 @@
                         >Masuk</a
                     >
                     <a
-                        href="/register?plan=starter&intent=trial"
+                        href={registerHref}
                         class="inline-flex min-h-10 items-center hover:text-[#087F79]"
                         >Daftar</a
                     >

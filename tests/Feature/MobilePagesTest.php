@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class MobilePagesTest extends TestCase
@@ -18,6 +19,18 @@ class MobilePagesTest extends TestCase
         config(['ui.navigation_metrics' => true]);
         $response = $this->get('/')->assertOk();
         $this->assertMatchesRegularExpression('/app;dur=\d+(\.\d+)?/', $response->headers->get('Server-Timing'));
+    }
+
+    public function test_public_marketing_pages_receive_active_plans_and_configured_trial(): void
+    {
+        config(['saas.trial_days' => 21]);
+        DB::table('plans')->where('slug', 'starter')->update(['is_active' => false]);
+        $activePlans = DB::table('plans')->where('is_active', true)->count();
+
+        foreach (['/' => 'Welcome', '/pricing' => 'Pricing'] as $url => $component) {
+            $this->get($url)->assertOk()->assertInertia(fn (Assert $page) => $page
+                ->component($component)->where('trialDays', 21)->has('plans', $activePlans));
+        }
     }
 
     public function test_mobile_page_families_return_valid_inertia_payloads(): void
