@@ -211,12 +211,12 @@
 </script>
 
 <div
-    class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-background px-3 py-2"
+    class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-background px-4 py-3"
 >
     <div class="min-w-0">
-        <p class="text-xs font-medium text-muted-foreground">Form Charter</p>
-        <p class="truncate text-sm font-semibold text-foreground">
-            {charterForm.id ? 'Edit Data Charter' : 'Data Charter Baru'}
+        <p class="text-xs font-medium text-muted-foreground">Formulir carter</p>
+        <p class="text-base font-semibold text-foreground">
+            {charterForm.id ? 'Edit data carter' : 'Data carter baru'}
         </p>
     </div>
     <Button
@@ -234,7 +234,7 @@
     class="overflow-hidden rounded-lg border border-border/70 bg-background shadow-sm"
 >
     <form
-        class="grid gap-4 p-4 xl:grid-cols-[minmax(0,1.7fr)_320px]"
+        class="grid gap-6 p-4 sm:p-5 xl:grid-cols-[minmax(0,1.7fr)_minmax(260px,320px)] [&_label]:text-sm"
         onsubmit={saveCharter}
     >
         <div class="space-y-4">
@@ -248,8 +248,8 @@
                         >{charterForm.payment_status || 'Belum Lunas'}</span
                     >
                 </div>
-                <div class="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                    <div class="space-y-1 md:col-span-2 xl:col-span-4">
+                <div class="grid gap-4 md:grid-cols-2">
+                    <div class="space-y-1.5 md:col-span-2">
                         <label
                             for="charter-customer-lookup"
                             class="text-xs font-medium text-muted-foreground"
@@ -309,16 +309,16 @@
                             </p>
                         {/if}
                     </div>
-                    <div class="space-y-1 xl:col-span-2">
+                    <div class="space-y-1.5">
                         <label
                             for="charter-name"
                             class="text-xs font-medium text-muted-foreground"
-                            >Nama Charter</label
+                            >Nama pelanggan / PIC</label
                         >
                         <Input
                             id="charter-name"
                             class="rounded-lg"
-                            placeholder="Nama pelanggan / PIC"
+                            placeholder="Contoh: Andi Saputra"
                             bind:value={charterForm.name}
                             oninput={(event) =>
                                 onCharterCustomerQueryInput(
@@ -332,12 +332,12 @@
                         <label
                             for="charter-phone"
                             class="text-xs font-medium text-muted-foreground"
-                            >Telepon</label
+                            >Nomor telepon</label
                         >
                         <Input
                             id="charter-phone"
                             class="rounded-lg"
-                            placeholder="Nomor telepon"
+                            placeholder="Contoh: 081234567890"
                             bind:value={charterForm.phone}
                             oninput={(event) =>
                                 onCharterCustomerQueryInput(
@@ -355,11 +355,11 @@
                         <Input
                             id="charter-company"
                             class="rounded-lg"
-                            placeholder="Nama perusahaan"
+                            placeholder="Contoh: PT Nusantara"
                             bind:value={charterForm.company_name}
                         />
                     </div>
-                    <div class="space-y-1 xl:col-span-2">
+                    <div class="space-y-1.5">
                         <label
                             for="charter-service"
                             class="text-xs font-medium text-muted-foreground"
@@ -390,7 +390,7 @@
                     </p>
                 </div>
                 <div class="grid gap-3 md:grid-cols-12">
-                    <div class="space-y-1 md:col-span-2">
+                    <div class="space-y-1.5 md:col-span-4">
                         <label
                             for="charter-start-date"
                             class="text-xs font-medium text-muted-foreground"
@@ -407,7 +407,7 @@
                             class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                         />
                     </div>
-                    <div class="space-y-1 md:col-span-2">
+                    <div class="space-y-1.5 md:col-span-4">
                         <label
                             for="charter-end-date"
                             class="text-xs font-medium text-muted-foreground"
@@ -424,7 +424,7 @@
                             class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                         />
                     </div>
-                    <div class="space-y-1 md:col-span-2">
+                    <div class="space-y-1.5 md:col-span-4">
                         <label
                             for="charter-departure-time"
                             class="text-xs font-medium text-muted-foreground"
@@ -440,8 +440,8 @@
                             class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                         />
                     </div>
-                    <div class="relative space-y-1 md:col-span-6">
-                        <label for="charter-route-master" class="sr-only"
+                    <div class="relative space-y-1.5 md:col-span-12">
+                        <label for="charter-route-master" class="text-xs font-medium text-muted-foreground"
                             >Rute carter</label
                         >
                         <Input
@@ -513,7 +513,7 @@
                         <Input
                             id="charter-pickup"
                             class="rounded-lg"
-                            placeholder="Pickup point"
+                            placeholder="Contoh: Terminal Makassar"
                             bind:value={charterForm.pickup_point}
                             oninput={() => (charterForm.master_carter_id = 0)}
                         />
@@ -527,7 +527,7 @@
                         <Input
                             id="charter-drop"
                             class="rounded-lg"
-                            placeholder="Drop point"
+                            placeholder="Contoh: Terminal Parepare"
                             bind:value={charterForm.drop_point}
                             oninput={() => (charterForm.master_carter_id = 0)}
                         />
@@ -864,7 +864,7 @@
                             id="charter-bop-hint"
                             class="text-xs text-muted-foreground"
                         >
-                            Wajib lebih dari Rp 0.
+                            BOP boleh Rp 0 saat disimpan. Untuk menyelesaikan carter, BOP harus lebih dari Rp 0.
                         </p>
                     </div>
                 </div>

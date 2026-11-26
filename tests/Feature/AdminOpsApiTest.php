@@ -2408,7 +2408,7 @@ class AdminOpsApiTest extends TestCase
         ]);
     }
 
-    public function test_charter_bop_must_be_positive_when_saved(): void
+    public function test_charter_bop_can_be_zero_when_saved(): void
     {
         $this->actingAsSuperAdmin();
         $tenantId = $this->defaultTenantId();
@@ -2423,26 +2423,27 @@ class AdminOpsApiTest extends TestCase
             'payment_status' => 'Lunas',
         ];
 
-        $this->postJson(route('api.admin.charters.save'), $payload)
+        $this->postJson(route('api.admin.charters.save'), array_diff_key($payload, ['bop_price' => true]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('bop_price');
-        $this->postJson(route('api.admin.charters.save'), array_diff_key($payload, ['bop_price' => true]))
+        $this->postJson(route('api.admin.charters.save'), array_merge($payload, ['bop_price' => -1]))
             ->assertUnprocessable()
             ->assertJsonValidationErrors('bop_price');
         $this->assertDatabaseMissing('charters', ['name' => 'CARTER BOP TEST']);
 
-        $payload['bop_price'] = 150000;
         $charterId = (int) $this->postJson(route('api.admin.charters.save'), $payload)
             ->assertCreated()
             ->json('id');
+        $this->assertDatabaseHas('charters', ['id' => $charterId, 'bop_price' => 0]);
 
+        $payload['bop_price'] = 150000;
         $this->postJson(route('api.admin.charters.save'), $payload + ['id' => $charterId])
             ->assertOk();
         $this->postJson(route('api.admin.charters.save'), array_merge($payload, [
             'id' => $charterId,
             'bop_price' => 0,
-        ]))->assertUnprocessable()->assertJsonValidationErrors('bop_price');
-        $this->assertDatabaseHas('charters', ['id' => $charterId, 'bop_price' => 150000]);
+        ]))->assertOk();
+        $this->assertDatabaseHas('charters', ['id' => $charterId, 'bop_price' => 0]);
     }
 
     public function test_charter_with_zero_bop_cannot_be_marked_done(): void

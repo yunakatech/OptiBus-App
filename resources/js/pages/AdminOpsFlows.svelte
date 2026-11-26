@@ -3117,15 +3117,6 @@ return;
             return;
         }
 
-        if (parseCurrencyInput(charterForm.bop_price) <= 0) {
-            error = 'Nominal BOP harus lebih dari Rp 0.';
-            (event.currentTarget as HTMLFormElement)
-                .querySelector<HTMLInputElement>('#charter-bop-price')
-                ?.focus();
-
-            return;
-        }
-
         savingCharter = true;
 
         try {
@@ -4225,7 +4216,7 @@ return;
 
 <div
     class:mobile-page={true}
-    data-content-density="compact"
+    data-content-density={activeMode === 'form' ? undefined : 'compact'}
     class="space-y-4 bg-background p-3 pb-28 sm:p-4 md:p-5"
 >
     {#if tenantWriteDisabled}
@@ -5373,10 +5364,10 @@ return;
             {#if activeTab === 'luggages' && !busy}
                 {#if activeMode === 'form'}
                     <div
-                        class="flex items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2"
+                        class="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 px-4 py-3"
                     >
                         <p class="text-xs font-medium text-muted-foreground">
-                            Halaman Form Bagasi
+                            Formulir bagasi
                         </p>
                         <Button
                             type="button"
@@ -5406,9 +5397,7 @@ return;
                                             : 'Tambah Data Bagasi Baru'}
                                     </p>
                                     <p class="text-xs text-muted-foreground">
-                                        Kelola pengirim, penerima, rute kirim,
-                                        dan biaya bagasi dalam tampilan yang
-                                        lebih padat.
+                                        Lengkapi pengirim, penerima, rute, dan biaya pengiriman.
                                     </p>
                                 </div>
                                 <div class="flex flex-wrap gap-2">
@@ -5429,7 +5418,7 @@ return;
                             </div>
                         </div>
                         <form
-                            class="grid gap-4 p-4 md:p-5 xl:grid-cols-[minmax(0,1.55fr)_320px]"
+                            class="grid gap-6 p-4 md:p-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(260px,320px)] [&_label]:text-sm"
                             onsubmit={saveLuggage}
                         >
                             <div class="space-y-4">
@@ -5445,12 +5434,11 @@ return;
                                         <p
                                             class="text-sm font-medium text-foreground"
                                         >
-                                            Cari pelanggan bagasi pengirim
-                                            supaya kontak terisi otomatis
+                                            Pilih pelanggan yang sudah ada untuk mengisi kontak otomatis.
                                         </p>
                                     </div>
-                                    <div class="grid gap-3 md:grid-cols-2">
-                                        <div class="space-y-1 md:col-span-2">
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div class="space-y-1.5">
                                             <label
                                                 for="luggage-sender-name"
                                                 class="text-xs font-medium text-muted-foreground"
@@ -5461,7 +5449,7 @@ return;
                                                     id="luggage-sender-name"
                                                     class="rounded-xl"
                                                     type="search"
-                                                    placeholder="Cari nama pelanggan bagasi pengirim"
+                                                    placeholder="Contoh: Andi Saputra"
                                                     value={luggageForm.sender_name}
                                                     oninput={(event) =>
                                                         onLuggageCustomerInput(
@@ -5553,6 +5541,8 @@ return;
                                             ><Input
                                                 id="luggage-sender-phone"
                                                 class="rounded-xl"
+                                                type="tel"
+                                                placeholder="Contoh: 081234567890"
                                                 bind:value={
                                                     luggageForm.sender_phone
                                                 }
@@ -5567,6 +5557,7 @@ return;
                                             ><Input
                                                 id="luggage-sender-address"
                                                 class="rounded-xl"
+                                                placeholder="Contoh: Jl. Ahmad Yani No. 10"
                                                 bind:value={
                                                     luggageForm.sender_address
                                                 }
@@ -5587,12 +5578,11 @@ return;
                                         <p
                                             class="text-sm font-medium text-foreground"
                                         >
-                                            Cari pelanggan bagasi penerima
-                                            supaya kontak terisi otomatis
+                                            Pilih pelanggan yang sudah ada untuk mengisi kontak otomatis.
                                         </p>
                                     </div>
-                                    <div class="grid gap-3 md:grid-cols-2">
-                                        <div class="space-y-1 md:col-span-2">
+                                    <div class="grid gap-4 md:grid-cols-2">
+                                        <div class="space-y-1.5">
                                             <label
                                                 for="luggage-receiver-name"
                                                 class="text-xs font-medium text-muted-foreground"
@@ -5603,7 +5593,7 @@ return;
                                                     id="luggage-receiver-name"
                                                     class="rounded-xl"
                                                     type="search"
-                                                    placeholder="Cari nama pelanggan bagasi penerima"
+                                                    placeholder="Contoh: Siti Aminah"
                                                     value={luggageForm.receiver_name}
                                                     oninput={(event) =>
                                                         onLuggageCustomerInput(
@@ -5695,6 +5685,8 @@ return;
                                             ><Input
                                                 id="luggage-receiver-phone"
                                                 class="rounded-xl"
+                                                type="tel"
+                                                placeholder="Contoh: 081234567890"
                                                 bind:value={
                                                     luggageForm.receiver_phone
                                                 }
@@ -5709,6 +5701,7 @@ return;
                                             ><Input
                                                 id="luggage-receiver-address"
                                                 class="rounded-xl"
+                                                placeholder="Contoh: Jl. Sudirman No. 12"
                                                 bind:value={
                                                     luggageForm.receiver_address
                                                 }
@@ -5733,9 +5726,9 @@ return;
                                         </p>
                                     </div>
                                     <div
-                                        class="grid gap-3 md:grid-cols-2 xl:grid-cols-4"
+                                        class="grid gap-4 md:grid-cols-2"
                                     >
-                                        <div class="space-y-1 xl:col-span-2">
+                                        <div class="space-y-1.5">
                                             <label
                                                 for="luggage-pool"
                                                 class="text-xs font-medium text-muted-foreground"
@@ -5766,7 +5759,7 @@ return;
                                                 laporan pool.
                                             </p>
                                         </div>
-                                        <div class="space-y-1 xl:col-span-2">
+                                        <div class="space-y-1.5">
                                             <label
                                                 for="luggage-route"
                                                 class="text-xs font-medium text-muted-foreground"
@@ -5792,11 +5785,11 @@ return;
                                                 {/each}
                                             </select>
                                         </div>
-                                        <div class="space-y-1 xl:col-span-2">
+                                        <div class="space-y-1.5">
                                             <label
                                                 for="luggage-segment"
                                                 class="text-xs font-medium text-muted-foreground"
-                                                >Segment Perjalanan</label
+                                                >Segmen perjalanan</label
                                             >
                                             <select
                                                 id="luggage-segment"
@@ -5824,7 +5817,7 @@ return;
                                                 {/each}
                                             </select>
                                         </div>
-                                        <div class="space-y-1 xl:col-span-2">
+                                        <div class="space-y-1.5">
                                             <label
                                                 for="luggage-service"
                                                 class="text-xs font-medium text-muted-foreground"
@@ -5902,7 +5895,7 @@ return;
                                             <label
                                                 for="luggage-price"
                                                 class="text-xs font-medium text-muted-foreground"
-                                                >Total Bagasi</label
+                                                >Total biaya bagasi</label
                                             >
                                             <Input
                                                 id="luggage-price"
@@ -5931,7 +5924,7 @@ return;
                                         </div>
                                         {#if canLuggageTariffOverride && selectedLuggageCategory}
                                             <div
-                                                class="space-y-2 xl:col-span-4"
+                                                class="space-y-2 md:col-span-2"
                                             >
                                                 <label
                                                     class="flex items-center gap-2 text-xs font-medium"
@@ -6006,7 +5999,7 @@ return;
                                                     >{/each}</select
                                             >
                                         </div>
-                                        <div class="space-y-1 xl:col-span-4">
+                                        <div class="space-y-1 md:col-span-2">
                                             <label
                                                 for="luggage-notes"
                                                 class="text-xs font-medium text-muted-foreground"
@@ -6015,7 +6008,7 @@ return;
                                             <Input
                                                 id="luggage-notes"
                                                 class="rounded-xl"
-                                                placeholder="Catatan tambahan"
+                                                placeholder="Contoh: Barang mudah pecah"
                                                 bind:value={luggageForm.notes}
                                             />
                                         </div>

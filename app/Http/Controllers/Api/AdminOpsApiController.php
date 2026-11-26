@@ -2883,15 +2883,15 @@ class AdminOpsApiController extends Controller
             'driver_name' => ['nullable', 'string', 'max:120'],
             'price' => ['nullable', 'numeric', 'min:0'],
             'layanan' => ['nullable', 'string', 'max:120'],
-            'bop_price' => ['required', 'numeric', 'gt:0'],
+            'bop_price' => ['required', 'numeric', 'min:0'],
             'bop_status' => ['nullable', 'string', 'max:30'],
             'down_payment' => ['nullable', 'numeric', 'min:0'],
             'payment_status' => ['nullable', 'string', 'max:30'],
             'status' => ['nullable', Rule::in(['active', 'canceled', 'done'])],
         ], [
-            'bop_price.required' => 'Nominal BOP wajib diisi dan harus lebih dari Rp 0.',
+            'bop_price.required' => 'Nominal BOP wajib diisi.',
             'bop_price.numeric' => 'Nominal BOP harus berupa angka.',
-            'bop_price.gt' => 'Nominal BOP harus lebih dari Rp 0.',
+            'bop_price.min' => 'Nominal BOP tidak boleh kurang dari Rp 0.',
         ]);
 
         $id = (int) ($data['id'] ?? 0);
