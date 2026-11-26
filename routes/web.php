@@ -258,6 +258,7 @@ Route::middleware(['auth', 'verified', 'subscription.active'])->group(function (
     Route::post('subscription/checkout', [SubscriptionPaymentController::class, 'checkout'])->middleware('subscription.active')->name('subscription.checkout');
 
     Route::prefix('api/bookings')->middleware('superadmin.tenant-context')->name('api.bookings.')->group(function () {
+        Route::get('export', [BookingController::class, 'export'])->middleware('permission:booking.view')->middleware('permission:report.export')->name('export');
         Route::get('filter-suggestions', [BookingController::class, 'filterSuggestions'])->middleware('permission:booking.view')->name('filter-suggestions');
         Route::get('groups/{groupKey}', [BookingController::class, 'groupDetails'])->middleware('permission:booking.view')->where('groupKey', '[a-f0-9]{32}')->name('groups.show');
         Route::get('routes-by-date', [BookingApiController::class, 'routesByDate'])->middleware('permission:booking.view')->name('routes-by-date');

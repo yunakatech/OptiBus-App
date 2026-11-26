@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\View as ViewFactory;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class BookingController extends Controller
 {
@@ -1218,6 +1219,35 @@ class BookingController extends Controller
         }
 
         return null;
+    }
+
+    public function export(Request $request): StreamedResponse
+    {
+        $groups = $this->bookingListPage($request)['groups'];
+        $safe = static function (mixed $value): string {
+            $text = (string) ($value ?? '');
+
+            return preg_match('/^[\s\x00-\x1F]*[=+@-]/u', $text) ? "'".$text : $text;
+        };
+
+        return response()->streamDownload(static function () use ($groups, $safe): void {
+            $output = fopen('php://output', 'w');
+            if ($output === false) {
+                return;
+            }
+            fwrite($output, "\xEF\xBB\xBF");
+            fputcsv($output, ['Tanggal', 'Jam', 'Slot', 'Nomor Manifest', 'Rute', 'Driver', 'Nomor Polisi', 'Penumpang Aktif', 'Total Penumpang', 'Lunas', 'Belum Lunas', 'Nilai Lunas', 'Nilai Belum Lunas', 'Status Keberangkatan']);
+            foreach ($groups as $group) {
+                fputcsv($output, [
+                    $safe($group['tanggal']), $safe($group['jam']), (int) $group['unit'],
+                    $safe($group['departure_code']), $safe($group['rute']), $safe($group['driver_name']),
+                    $safe($group['armada_nopol']), (int) $group['active'], (int) $group['total'],
+                    (int) $group['lunas'], (int) $group['belum_lunas'], (float) $group['paid_amount'],
+                    (float) $group['unpaid_amount'], $safe($group['departure_status']),
+                ]);
+            }
+            fclose($output);
+        }, 'data-keberangkatan-'.now()->format('Ymd-His').'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     public function filterSuggestions(Request $request): JsonResponse

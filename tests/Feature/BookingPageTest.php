@@ -170,6 +170,25 @@ class BookingPageTest extends TestCase
                 ->where('bookingGroups.0.departure_code', $code)));
     }
 
+    public function test_departure_export_contains_only_the_filtered_page(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        foreach (['DD 1111 AA', 'DD 2222 BB', 'DD 3333 CC'] as $index => $plate) {
+            DB::table('trip_assignments')->insert([
+                'tenant_id' => $tenantId, 'rute' => 'RUTE EXPORT', 'tanggal' => '2099-01-0'.($index + 1),
+                'jam' => '09:00:00', 'unit' => 1, 'armada_nopol' => $plate, 'status' => 'active', 'created_at' => now(),
+            ]);
+        }
+        $response = $this->get(route('api.bookings.export', [
+            'from' => '2099-01-01', 'to' => '2099-01-03', 'per_page' => 1, 'page' => 2,
+        ]))->assertOk();
+        $csv = $response->streamedContent();
+        $this->assertStringContainsString('DD 2222 BB', $csv);
+        $this->assertStringNotContainsString('DD 1111 AA', $csv);
+        $this->assertStringNotContainsString('DD 3333 CC', $csv);
+    }
+
     public function test_booking_route_filter_follows_master_routes_and_refund_is_counted_separately(): void
     {
         $this->actingAsSuperAdmin();

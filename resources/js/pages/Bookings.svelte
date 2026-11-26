@@ -20,6 +20,7 @@
         CarFront,
         Clock3,
         Copy,
+        Download,
         CheckCircle2,
         LayoutGrid,
         MessageCircle,
@@ -483,6 +484,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
         untrack(() => bookingQuery?.payment) || 'all',
     );
     let bookingListStatus = $state<'all' | 'open' | 'departed' | 'arrived' | 'closed'>(untrack(() => bookingQuery?.departure_status) || 'all');
+    let bookingListFiltersOpen = $state(false);
     let bookingListRequestError = $state('');
     let bookingListRequestId = 0;
     let bookingListDesktopView = $state<'sheet' | 'cards'>(
@@ -10601,6 +10603,12 @@ return;
                                 </div></ViewportOnly
                             >
 
+                            {#if hasPermission(grantedPermissions, 'report.export')}
+                                <a href={`/api/bookings/export?${new URLSearchParams(Object.entries(bookingListParams(bookingPagination.page)).map(([key, value]) => [key, String(value)]))}`} class="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-input bg-background px-3 text-xs font-medium shadow-xs hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" title="Ekspor data pada halaman ini ke CSV">
+                                    <Download class="h-3.5 w-3.5" /> Ekspor halaman
+                                </a>
+                            {/if}
+
                             <!-- Tambah Jadwal Button -->
                             <Button
                                 type="button"
@@ -10667,7 +10675,15 @@ return;
                                     >
                                 {/snippet}
                                 {#snippet desktop()}
-                                    <div class="space-y-4">
+                                    <div class="space-y-3">
+                                        <div class="flex flex-wrap items-center justify-between gap-3">
+                                            <Button type="button" variant="outline" class="h-10 gap-2" aria-expanded={bookingListFiltersOpen} aria-controls="departure-desktop-filters" onclick={() => (bookingListFiltersOpen = !bookingListFiltersOpen)}>
+                                                {bookingListFiltersOpen ? 'Sembunyikan filter' : 'Tampilkan filter'}
+                                                {#if bookingListFilterActiveCount > 0}<span class="rounded-full bg-muted px-2 py-0.5 text-xs">{bookingListFilterActiveCount} aktif</span>{/if}
+                                            </Button>
+                                            <p class="text-sm text-muted-foreground">{bookingListFilterSummary}</p>
+                                        </div>
+                                        <div id="departure-desktop-filters" hidden={!bookingListFiltersOpen} class="space-y-4">
                                     <div class="grid gap-x-4 gap-y-3 md:grid-cols-2 xl:grid-cols-3">
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
@@ -10734,6 +10750,7 @@ return;
                                         >
                                             Reset filter
                                         </Button>
+                                    </div>
                                     </div>
                                     </div>
                                 {/snippet}
