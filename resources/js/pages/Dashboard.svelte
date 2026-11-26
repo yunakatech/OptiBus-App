@@ -693,13 +693,6 @@
     class:mobile-page={true}
     class="mx-auto flex h-full w-full max-w-[1600px] min-w-0 flex-1 flex-col gap-6 px-4 py-5 sm:px-6 lg:px-8 lg:py-7"
 >
-    <header class="flex flex-wrap justify-end gap-5">
-            <nav aria-label="Bagian dashboard" class="flex flex-wrap gap-2 text-sm">
-                <a href="#dashboard-pendapatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 font-medium text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Pendapatan</a>
-                <a href="#dashboard-keberangkatan" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 font-medium text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Keberangkatan</a>
-                <a href="#dashboard-carter" class="inline-flex min-h-11 items-center rounded-lg border border-border bg-card px-4 font-medium text-foreground no-underline transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">Carter</a>
-            </nav>
-    </header>
     {#if setupProgress && !setupProgress.completed}
         <section
             class="overflow-hidden rounded-2xl border border-amber-200/80 bg-[linear-gradient(135deg,#fff8e1,#f7fbef)] shadow-sm dark:border-amber-500/20 dark:bg-[linear-gradient(135deg,rgba(69,26,3,0.72),rgba(9,14,24,0.94))]"

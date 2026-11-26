@@ -8703,7 +8703,7 @@ return;
                 </div>
 
                 <div
-                    class="mb-4 rounded-lg border border-border/80 bg-linear-to-br from-background via-background to-cyan-50/35 p-4 shadow-sm dark:to-cyan-950/15 md:p-5"
+                    class="mb-4 border-b border-border/70 pb-5"
                 >
                     <div
                         class="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]"
@@ -8716,10 +8716,10 @@ return;
                                     Ringkasan Keberangkatan
                                 </p>
                                 <div
-                                    class="mt-3 grid grid-cols-3 gap-1.5 sm:grid-cols-3 xl:grid-cols-6"
+                                    class="mt-3 grid grid-cols-3 gap-x-4 gap-y-3 sm:grid-cols-6"
                                 >
                                     <div
-                                        class="rounded-xl border border-border/70 bg-background/85 px-2.5 py-2"
+                                        class="min-w-0"
                                     >
                                         <p
                                             class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
@@ -8733,7 +8733,7 @@ return;
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-xl border border-border/70 bg-background/85 px-2.5 py-2"
+                                        class="min-w-0"
                                     >
                                         <p
                                             class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-muted-foreground"
@@ -8747,7 +8747,7 @@ return;
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-xl border border-rose-200/80 bg-rose-50/80 px-2.5 py-2 dark:border-rose-500/20 dark:bg-rose-950/20"
+                                        class="min-w-0"
                                     >
                                         <p
                                             class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-rose-700 dark:text-rose-300"
@@ -8761,7 +8761,7 @@ return;
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-xl border border-emerald-200/80 bg-emerald-50/80 px-2.5 py-2 dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                                        class="min-w-0"
                                     >
                                         <p
                                             class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-300"
@@ -8775,7 +8775,7 @@ return;
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-xl border border-sky-200/80 bg-sky-50/80 px-2.5 py-2 dark:border-sky-500/20 dark:bg-sky-950/20"
+                                        class="min-w-0"
                                     >
                                         <p
                                             class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-sky-700 dark:text-sky-300"
@@ -8789,7 +8789,7 @@ return;
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-xl border border-amber-200/80 bg-amber-50/80 px-2.5 py-2 dark:border-amber-500/20 dark:bg-amber-950/20"
+                                        class="min-w-0"
                                     >
                                         <p
                                             class="text-xs md:text-[9px] uppercase tracking-[0.1em] text-amber-700 dark:text-amber-300"
@@ -8803,9 +8803,9 @@ return;
                                         </p>
                                     </div>
                                 </div>
-                                <div class="mt-3 grid gap-2 sm:grid-cols-2">
+                                <div class="mt-4 grid gap-3 border-t border-border/60 pt-3 sm:grid-cols-2">
                                     <div
-                                        class="rounded-lg border border-emerald-200/70 bg-emerald-50/70 px-3 py-2.5 dark:border-emerald-500/20 dark:bg-emerald-950/20"
+                                        class="min-w-0"
                                     >
                                         <p
                                             class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-emerald-700 dark:text-emerald-300"
@@ -8813,7 +8813,7 @@ return;
                                             Total Pembayaran Lunas
                                         </p>
                                         <p
-                                            class="mt-1 text-sm font-semibold text-emerald-700 dark:text-emerald-200"
+                                            class="mt-1 break-words text-sm font-semibold text-emerald-700 tabular-nums dark:text-emerald-200"
                                         >
                                             Rp {groupPaymentTotals().lunas.toLocaleString(
                                                 'id-ID',
@@ -8821,7 +8821,7 @@ return;
                                         </p>
                                     </div>
                                     <div
-                                        class="rounded-lg border border-amber-200/70 bg-amber-50/70 px-3 py-2.5 dark:border-amber-500/20 dark:bg-amber-950/20"
+                                        class="min-w-0"
                                     >
                                         <p
                                             class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-amber-700 dark:text-amber-300"
@@ -8829,7 +8829,7 @@ return;
                                             Total Pembayaran Belum Lunas
                                         </p>
                                         <p
-                                            class="mt-1 text-sm font-semibold text-amber-700 dark:text-amber-200"
+                                            class="mt-1 break-words text-sm font-semibold text-amber-700 tabular-nums dark:text-amber-200"
                                         >
                                             Rp {groupPaymentTotals().belumLunas.toLocaleString(
                                                 'id-ID',
@@ -9894,7 +9894,7 @@ return;
                                             </div>
                                         </div>
                                         {#if row.gmaps}
-                                            <p class="truncate">
+                                            <p class="break-all">
                                                 <span
                                                     class="font-medium text-foreground"
                                                     >Gmaps:</span
@@ -9954,9 +9954,9 @@ return;
                     >
 
                     <ViewportOnly minWidth={768}
-                        ><div
-                            class="hidden overflow-visible rounded-lg border border-border/80 bg-card/95 md:block"
-                        >
+                        ><div class="hidden md:block">
+                            <p class="mb-2 text-xs text-muted-foreground">Geser tabel ke samping jika ada kolom yang belum terlihat.</p>
+                            <div class="overflow-x-auto rounded-lg border border-border/80 bg-card/95" role="region" aria-label="Tabel penumpang" tabindex="0">
                             <table class="w-full min-w-[980px] text-xs">
                                 <thead>
                                     <tr
@@ -10003,6 +10003,7 @@ return;
                                                                     size="icon"
                                                                     variant="outline"
                                                                     class="h-7 w-7 rounded-full"
+                                                                    aria-label={`Aksi penumpang ${row.name || row.seat}`}
                                                                     onclick={props.onclick}
                                                                     aria-expanded={props[
                                                                         'aria-expanded'
@@ -10128,7 +10129,7 @@ return;
                                                 class="px-3 py-3 text-xs md:text-[11px] leading-relaxed"
                                             >
                                                 <div
-                                                    class="grid gap-2 rounded-lg border border-border/70 bg-background/80 p-3"
+                                                    class="min-w-0 space-y-2"
                                                 >
                                                     <div
                                                         class="grid grid-cols-2 gap-2"
@@ -10162,7 +10163,7 @@ return;
                                                     </div>
                                                     {#if row.gmaps}
                                                         <p
-                                                            class="max-w-[280px] truncate text-muted-foreground"
+                                                            class="max-w-[280px] break-all text-muted-foreground"
                                                         >
                                                             <span
                                                                 class="font-medium text-foreground"
@@ -10177,7 +10178,7 @@ return;
                                                 class="px-2 py-3 text-xs md:text-[11px] leading-relaxed"
                                             >
                                                 <div
-                                                    class="min-w-40 rounded-xl border border-border/70 bg-background/80 p-2"
+                                                    class="min-w-40 space-y-1 tabular-nums"
                                                 >
                                                     <div
                                                         class="flex items-center justify-between gap-2"
@@ -10213,7 +10214,7 @@ return;
                                                         >
                                                     </div>
                                                     <div
-                                                        class="mt-1 flex items-center justify-between gap-2 rounded-lg bg-cyan-50 px-2 py-1 dark:bg-cyan-950/25"
+                                                        class="flex items-center justify-between gap-2 border-t border-border/60 pt-1"
                                                     >
                                                         <span
                                                             class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
@@ -10262,6 +10263,7 @@ return;
                                     {/each}
                                 </tbody>
                             </table>
+                            </div>
                         </div></ViewportOnly
                     >
                 {/if}
