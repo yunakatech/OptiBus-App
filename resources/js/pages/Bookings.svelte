@@ -8542,17 +8542,52 @@ return;
 
     <Dialog bind:open={quickDriverOpen}>
         <DialogContent class="sm:max-w-md">
-            <DialogTitle>Sunting driver</DialogTitle>
-            <DialogDescription>Pilih driver untuk {openGroupDetail?.rute} · {openGroupDetail?.tanggal} {openGroupDetail?.jam?.slice(0, 5)}. Armada tetap menggunakan pilihan saat ini.</DialogDescription>
+            <div class="flex items-start justify-between gap-4">
+                <div class="space-y-1">
+                    <DialogTitle>Sunting driver dan armada</DialogTitle>
+                    <DialogDescription>{openGroupDetail?.rute} · {openGroupDetail?.tanggal} {openGroupDetail?.jam?.slice(0, 5)}</DialogDescription>
+                </div>
+                <Button type="button" variant="ghost" size="icon" class="h-9 w-9 shrink-0" aria-label="Tutup popup sunting driver dan armada" disabled={savingGroupDriver} onclick={() => (quickDriverOpen = false)}><X class="h-4 w-4" /></Button>
+            </div>
             {#if loadingGroupDriver}
-                <p class="py-3 text-sm text-muted-foreground" role="status">Memuat daftar driver...</p>
+                <p class="py-3 text-sm text-muted-foreground" role="status">Memuat driver dan armada...</p>
             {:else if !quickDriverLoadFailed}
-                <label class="grid gap-2 text-sm font-medium">Driver
-                    <select bind:value={groupDriverSelectedId} class="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm">
-                        <option value="0">Pilih driver</option>
-                        {#each groupDrivers as driver (driver.id)}<option value={String(driver.id)}>{driver.nama}</option>{/each}
-                    </select>
-                </label>
+                <div class="grid gap-4">
+                    <div class="relative">
+                        <label for="quick-driver-search" class="mb-1.5 block text-sm font-medium">Driver</label>
+                        <Input id="quick-driver-search" bind:value={groupDriverSearch} placeholder="Cari nama atau nomor telepon driver" class="h-11" disabled={savingGroupDriver} oninput={queueGroupDriverSearch} onfocus={() => (groupDriverLookupOpen = true)} onblur={(event) => { const container = event.currentTarget.parentElement; setTimeout(() => { if (!container?.contains(document.activeElement)) groupDriverLookupOpen = false; }, 120); }} aria-autocomplete="list" aria-expanded={groupDriverLookupOpen} />
+                        {#if groupDriverLookupOpen}
+                            <div class="absolute z-30 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-border bg-popover p-1 shadow-lg">
+                                {#each filteredGroupDrivers() as driver (driver.id)}
+                                    <button type="button" class="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none" onmousedown={(event) => event.preventDefault()} onclick={() => selectGroupDriver(driver)}>
+                                        <span class="block font-medium">{driver.nama}</span><span class="block text-xs text-muted-foreground">{driver.phone || 'Driver aktif'}</span>
+                                    </button>
+                                {:else}
+                                    <p class="px-3 py-2 text-sm text-muted-foreground">Driver tidak ditemukan.</p>
+                                {/each}
+                            </div>
+                        {/if}
+                    </div>
+                    <div class="relative">
+                        <label for="quick-armada-search" class="mb-1.5 block text-sm font-medium">Nomor polisi armada</label>
+                        <Input id="quick-armada-search" bind:value={groupArmadaSearch} placeholder="Cari nomor polisi armada" class="h-11" disabled={savingGroupDriver} oninput={queueGroupArmadaSearch} onfocus={() => { groupArmadaLookupOpen = true; if (groupArmadas.length === 0) void loadGroupArmadas(groupArmadaSearch); }} onblur={(event) => { const container = event.currentTarget.parentElement; setTimeout(() => { if (!container?.contains(document.activeElement)) groupArmadaLookupOpen = false; }, 120); }} aria-autocomplete="list" aria-expanded={groupArmadaLookupOpen} />
+                        {#if groupArmadaLookupOpen}
+                            <div class="absolute z-30 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-border bg-popover p-1 shadow-lg">
+                                {#if loadingGroupArmada}
+                                    <p class="px-3 py-2 text-sm text-muted-foreground">Memuat armada...</p>
+                                {:else}
+                                    {#each filteredGroupArmadas() as armada (armada.id)}
+                                        <button type="button" class="block w-full rounded-md px-3 py-2 text-left text-sm hover:bg-muted focus-visible:bg-muted focus-visible:outline-none" onmousedown={(event) => event.preventDefault()} onclick={() => selectGroupArmada(armada)}>
+                                            <span class="block font-medium">{armada.nopol}</span><span class="block text-xs text-muted-foreground">{[armada.merk, armada.kategori].filter(Boolean).join(' · ') || 'Armada aktif'}</span>
+                                        </button>
+                                    {:else}
+                                        <p class="px-3 py-2 text-sm text-muted-foreground">Armada tidak ditemukan.</p>
+                                    {/each}
+                                {/if}
+                            </div>
+                        {/if}
+                    </div>
+                </div>
             {/if}
             {#if formError}<p role="alert" class="text-sm text-destructive">{formError}</p>{/if}
             <div class="flex justify-end gap-2 pt-2">
