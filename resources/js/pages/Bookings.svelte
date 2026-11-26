@@ -64,6 +64,7 @@
     import ViewportOnly from '@/components/ViewportOnly.svelte';
     import { hasPermission } from '@/lib/access';
     import { runWithFeedback } from '@/lib/action-feedback';
+    import { showError, showSuccess } from '@/lib/toast';
     import { extractApiErrorMessage } from '@/lib/api-errors';
     import {
         formatCurrencyDisplay,
@@ -5809,8 +5810,11 @@ throw new Error('Detail keberangkatan gagal dimuat.');
             }
             formSuccess = 'Data jadwal berhasil disalin.';
             formError = '';
+            if (groupDetailPage) showSuccess(formSuccess);
         } catch {
+            formSuccess = '';
             formError = 'Gagal menyalin data jadwal.';
+            if (groupDetailPage) showError(formError);
         }
     };
 
@@ -5850,8 +5854,11 @@ throw new Error('Detail keberangkatan gagal dimuat.');
             await copyText(lines.join('\n'));
             formSuccess = `Data penumpang kursi ${row.seat} disalin.`;
             formError = '';
+            if (groupDetailPage) showSuccess(formSuccess);
         } catch {
+            formSuccess = '';
             formError = 'Gagal menyalin data penumpang.';
+            if (groupDetailPage) showError(formError);
         }
     };
 
@@ -8664,6 +8671,9 @@ return;
                                 </span>
                             {/if}
                         </div>
+                        <p class="text-sm text-muted-foreground">
+                            {formatGroupDateLabel(openGroupDetail.tanggal)} · {formatGroupTimeLabel(openGroupDetail.jam)}
+                        </p>
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
@@ -8727,7 +8737,7 @@ return;
                     class="mb-4 border-b border-border/70 pb-5"
                 >
                     <div
-                        class="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]"
+                        class="grid gap-4"
                     >
                         <div class="space-y-4">
                             <div>
@@ -9180,77 +9190,6 @@ return;
                             </div>
                         </div>
 
-                        <div
-                            class="rounded-lg border border-cyan-200/70 bg-background/90 p-4 dark:border-cyan-500/20"
-                        >
-                            <p
-                                class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-cyan-700 dark:text-cyan-300"
-                            >
-                                Info Perjalanan
-                            </p>
-                            <div class="mt-3 space-y-2">
-                                <div
-                                    class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
-                                >
-                                    <p
-                                        class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                    >
-                                        Kode
-                                    </p>
-                                    <p
-                                        class="mt-1 text-sm font-semibold break-all"
-                                    >
-                                        {openGroupDetail.departure_code}
-                                    </p>
-                                </div>
-                                <div
-                                    class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
-                                >
-                                    <p
-                                        class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                    >
-                                        Jadwal
-                                    </p>
-                                    <p class="mt-1 text-sm font-semibold">
-                                        {formatGroupDateLabel(
-                                            openGroupDetail.tanggal,
-                                        )} • {formatGroupTimeLabel(
-                                            openGroupDetail.jam,
-                                        )}
-                                    </p>
-                                </div>
-                                {#if !consoleOnly}
-                                    <div
-                                        class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
-                                    >
-                                        <p
-                                            class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                        >
-                                            Nilai sudah lunas
-                                        </p>
-                                        <p class="mt-1 text-sm font-semibold">
-                                            {formatCurrency(
-                                                bookingGroupPaidAmount(
-                                                    openGroupDetail,
-                                                ),
-                                            )}
-                                        </p>
-                                    </div>
-                                {/if}
-                                <div
-                                    class="rounded-lg border border-border/70 bg-background/80 px-3 py-3"
-                                >
-                                    <p
-                                        class="text-xs md:text-[10px] uppercase tracking-[0.12em] text-muted-foreground"
-                                    >
-                                        Rute
-                                    </p>
-                                    <p class="mt-1 text-sm font-semibold">
-                                        {openGroupDetail.rute}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
