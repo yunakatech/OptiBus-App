@@ -561,6 +561,10 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     let loadingEmptyDepartureSchedules = $state(false);
     let savingEmptyDeparture = $state(false);
     let cancelingDepartureKey = $state('');
+    let bulkDepartureKeys = $state<string[]>([]);
+    let bulkDepartureBusy = $state(false);
+    let bulkDepartureResult = $state('');
+    let bulkDepartureErrors = $state<string[]>([]);
 
     let routeError = $state('');
     let scheduleError = $state('');
@@ -2862,6 +2866,77 @@ return;
 
         return hasDepartureDateReached(group);
     };
+    const toggleBulkDeparture = (key: string, checked: boolean) => {
+        bulkDepartureKeys = checked ? [...new Set([...bulkDepartureKeys, key])] : bulkDepartureKeys.filter((item) => item !== key);
+    };
+    const runBulkDeparture = async (action: 'departed' | 'arrived' | 'closed') => {
+        if (bulkDepartureBusy || tenantWriteDisabled || !hasPermission(grantedPermissions, 'booking.update')) return;
+        const selected = visibleBookingGroups().filter((group) => bulkDepartureKeys.includes(group.key));
+        const eligible = selected.filter((group) => action === 'departed' ? canMarkDepartureDeparted(group) : action === 'arrived' ? canMarkDepartureArrived(group) : canCloseManifest(group));
+        const skipped = selected.length - eligible.length;
+        if (eligible.length === 0) {
+            bulkDepartureErrors = [];
+            bulkDepartureResult = 'Tidak ada keberangkatan terpilih yang memenuhi syarat untuk aksi ini.';
+            return;
+        }
+        bulkDepartureBusy = true;
+        bulkDepartureResult = '';
+        bulkDepartureErrors = [];
+        const failed: string[] = [];
+        let succeeded = 0;
+        for (const group of eligible) {
+            try {
+                await apiPost(action === 'departed' ? '/api/bookings/depart-departure' : action === 'arrived' ? '/api/bookings/arrive-departure' : '/api/bookings/close-manifest', {
+                    rute: group.rute, tanggal: group.tanggal, jam: normalizeJamToken(group.jam), unit: Number(group.unit) || 1,
+                });
+                succeeded += 1;
+            } catch (error) {
+                failed.push(`${group.departure_code}: ${error instanceof Error ? error.message : 'Gagal memperbarui status.'}`);
+            }
+        }
+        bulkDepartureKeys = [];
+        bulkDepartureErrors = failed;
+        bulkDepartureResult = `${succeeded} berhasil · ${skipped} tidak memenuhi syarat · ${failed.length} gagal.`;
+        bulkDepartureBusy = false;
+        markDataStale(['bookings', 'payments', 'flows', 'dashboard']);
+        requestBookingPage(bookingPagination.page || 1);
+    };
+
+    const runBulkPayment = async (payment: 'Lunas' | 'Belum Lunas') => {
+        if (bulkDepartureBusy || tenantWriteDisabled || !hasPermission(grantedPermissions, 'booking.update')) return;
+        const selected = visibleBookingGroups().filter((group) => bulkDepartureKeys.includes(group.key));
+        bulkDepartureBusy = true;
+        bulkDepartureResult = '';
+        bulkDepartureErrors = [];
+        const failed: string[] = [];
+        let updated = 0;
+        let skipped = 0;
+        for (const group of selected) {
+            if (isManifestLocked(group)) {
+                skipped += 1;
+                continue;
+            }
+            try {
+                const detail = await ensureGroupDetails(group);
+                const ids = detail.bookings.filter((row) => !isCanceledBooking(row.status) && !isRefundPayment(row.pembayaran) && (payment === 'Lunas' ? !isLunasPayment(row.pembayaran) : isLunasPayment(row.pembayaran))).map((row) => row.id);
+                if (ids.length === 0) {
+                    skipped += 1;
+                    continue;
+                }
+                const result = await apiPost('/api/bookings/bulk-payment', { booking_ids: ids, pembayaran: payment });
+                updated += Number(result.updated_count ?? 0);
+            } catch (error) {
+                failed.push(`${group.departure_code}: ${error instanceof Error ? error.message : 'Gagal memperbarui pembayaran.'}`);
+            }
+        }
+        bulkDepartureKeys = [];
+        bulkDepartureErrors = failed;
+        bulkDepartureResult = `${updated} pembayaran diubah menjadi ${payment} · ${skipped} keberangkatan dilewati · ${failed.length} gagal.`;
+        bulkDepartureBusy = false;
+        markDataStale(['bookings', 'payments', 'flows', 'dashboard']);
+        requestBookingPage(bookingPagination.page || 1);
+    };
+
     const selectedTripGroup = () =>
         localBookingGroups.find((group) => {
             return (
@@ -3282,6 +3357,7 @@ untrack(() => requestBookingPage(1));
         per_page: bookingPagination.per_page || 24,
     });
     const requestBookingPage = (nextPage = 1) => {
+        bulkDepartureKeys = [];
         if (!listOnly) {
 return;
 }
@@ -10888,6 +10964,25 @@ return;
                             filter.
                         </p>
                     {:else}
+                        {#if !tenantWriteDisabled && hasPermission(grantedPermissions, 'booking.update')}
+                            <div class="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-border bg-card p-3">
+                                <label class="flex min-h-10 items-center gap-2 text-sm font-medium">
+                                    <input type="checkbox" class="h-4 w-4 accent-primary" checked={visibleBookingGroups().length > 0 && visibleBookingGroups().every((group) => bulkDepartureKeys.includes(group.key))} disabled={bulkDepartureBusy} onchange={(event) => { bulkDepartureKeys = event.currentTarget.checked ? visibleBookingGroups().map((group) => group.key) : []; }} />
+                                    Pilih semua di halaman ini
+                                </label>
+                                <span class="text-sm text-muted-foreground">{bulkDepartureKeys.length} dipilih</span>
+                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkDeparture('departed')}>Tandai berangkat</Button>
+                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkDeparture('arrived')}>Tandai tiba</Button>
+                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkDeparture('closed')}>Tutup manifest</Button>
+                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkPayment('Lunas')}>Pembayaran lunas</Button>
+                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkPayment('Belum Lunas')}>Pembayaran belum lunas</Button>
+                                {#if bulkDepartureBusy}<span role="status" class="text-sm text-muted-foreground">Memproses...</span>{/if}
+                            </div>
+                            <div aria-live="polite" class="mb-3 space-y-1 text-sm">
+                                {#if bulkDepartureResult}<p>{bulkDepartureResult}</p>{/if}
+                                {#each bulkDepartureErrors as error}<p class="text-destructive">{error}</p>{/each}
+                            </div>
+                        {/if}
                         <div class="space-y-4">
                             {#if bookingListDesktopView === 'sheet'}
                                 <ViewportOnly minWidth={1024}
@@ -10946,6 +11041,7 @@ return;
                                                             class="border-b border-border/70 bg-muted/40 text-start text-xs font-semibold tracking-wide text-muted-foreground"
                                                         >
                                                             <tr>
+                                                                {#if !tenantWriteDisabled && hasPermission(grantedPermissions, 'booking.update')}<th scope="col" class="w-10 px-3 py-2"><span class="sr-only">Pilih keberangkatan</span></th>{/if}
                                                                 <th scope="col"
                                                                     class="w-24 px-3 py-2 text-start"
                                                                 >
@@ -10999,6 +11095,7 @@ return;
                                                                 <tr
                                                                     class={`align-top transition-colors hover:bg-muted/30 ${isCanceledDeparture(group) ? 'bg-rose-50/40 dark:bg-rose-950/15' : ''}`}
                                                                 >
+                                                                    {#if !tenantWriteDisabled && hasPermission(grantedPermissions, 'booking.update')}<td class="px-3 py-2"><input type="checkbox" class="h-4 w-4 accent-primary" aria-label={`Pilih keberangkatan ${group.departure_code}`} checked={bulkDepartureKeys.includes(group.key)} disabled={bulkDepartureBusy} onchange={(event) => toggleBulkDeparture(group.key, event.currentTarget.checked)} /></td>{/if}
                                                                     <td
                                                                         class="px-3 py-2"
                                                                     >
@@ -11371,6 +11468,7 @@ return;
                                         <div
                                             class="flex items-start justify-between gap-2 border-b border-border/60 pb-3"
                                         >
+                                            {#if !tenantWriteDisabled && hasPermission(grantedPermissions, 'booking.update')}<input type="checkbox" class="mt-1 h-4 w-4 shrink-0 accent-primary" aria-label={`Pilih keberangkatan ${group.departure_code}`} checked={bulkDepartureKeys.includes(group.key)} disabled={bulkDepartureBusy} onchange={(event) => toggleBulkDeparture(group.key, event.currentTarget.checked)} />{/if}
                                             <div class="min-w-0 space-y-1">
                                                 <div
                                                     class="flex items-center gap-2"
