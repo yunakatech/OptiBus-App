@@ -967,21 +967,21 @@ return raw;
                     <TerminalFilter
                         bind:query={driverSearch}
                         placeholder="Cari nama, kontak, atau kategori"
-                        class="min-w-0"
+                        class="min-w-0 border-0 bg-transparent p-0 shadow-none [&_input]:h-10 [&_button]:h-10 md:[html[data-density=compact]_&_input]:h-10 md:[html[data-density=compact]_&_button]:h-10"
                         on:search={() => void loadDrivers(1)}
                     />
                 </div>
 
                 <label
                     class="mobile-field grid w-full min-w-0 gap-1.5 text-sm font-medium sm:w-48"
-                    ><span>Periode</span>
+                    ><span class="sr-only">Filter periode</span>
                     <select
-                        class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         bind:value={driverPeriod}
                         onchange={() => void loadDrivers(1)}
                     >
                         {#each periodOptions as period (period.value)}
-                            <option value={period.value}>{period.label}</option>
+                            <option value={period.value}>Periode: {period.label}</option>
                         {/each}
                     </select></label
                 >

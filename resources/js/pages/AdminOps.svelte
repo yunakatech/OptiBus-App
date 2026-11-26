@@ -1033,7 +1033,6 @@
         `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
     );
     let armadaSearch = $state('');
-    let armadaPoolId = $state(0);
     let armadaPeriod = $state(
         `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
     );
@@ -1581,10 +1580,6 @@
                   ),
               ).sort((a, b) => a.localeCompare(b, 'id')),
     );
-    const armadaPoolOptions = $derived([
-        { id: 0, name: 'Semua Pool' },
-        ...poolOptions,
-    ]);
     const activePoolId = $derived(
         Number((page.props.auth as any)?.active_pool?.id ?? 0),
     );
@@ -3874,8 +3869,8 @@
             query.q = armadaSearch.trim();
         }
 
-        if (activeTab === 'armadas' && Number(armadaPoolId || 0) > 0) {
-            query.pool_id = Number(armadaPoolId || 0);
+        if (activeTab === 'armadas' && activePoolId > 0) {
+            query.pool_id = activePoolId;
         }
 
         if (activeTab === 'armadas' && armadaPeriod.trim() !== '') {
@@ -3952,7 +3947,6 @@
 
         if (initialTab === 'armadas') {
             armadaSearch = settingsQuery.q ?? '';
-            armadaPoolId = Number(settingsQuery.pool_id ?? 0);
             armadaPeriod = String(settingsQuery.period ?? armadaPeriod);
         }
 
@@ -4402,7 +4396,7 @@
             params.set('q', query);
         }
 
-        params.set('pool_id', String(Number(armadaPoolId || 0)));
+        params.set('pool_id', String(activePoolId));
 
         if (armadaPeriod.trim() !== '') {
             params.set('period', armadaPeriod.trim());
@@ -4440,7 +4434,7 @@
         }
 
         const params = new URLSearchParams();
-        params.set('pool_id', String(Number(armadaPoolId || 0)));
+        params.set('pool_id', String(activePoolId));
 
         if (armadaPeriod.trim() !== '') {
             params.set('period', armadaPeriod.trim());
@@ -5010,7 +5004,7 @@ return;
     };
     const openArmadaView = (id: number) => {
         const params = new URLSearchParams();
-        params.set('pool_id', String(Number(armadaPoolId || 0)));
+        params.set('pool_id', String(activePoolId));
 
         if (armadaPeriod.trim() !== '') {
             params.set('period', armadaPeriod.trim());
@@ -6089,7 +6083,6 @@ return;
                 activeMode === 'view' &&
                 armadaViewId > 0
             ) {
-                armadaPoolId = Number(settingsQuery?.pool_id ?? armadaPoolId);
                 armadaPeriod = String(settingsQuery?.period || armadaPeriod);
                 void loadArmadaDetail(armadaViewId);
             }
@@ -11289,8 +11282,7 @@ return;
                             {loadArmadas}
                             {openArmadaView}
                             {openArmadaEditor}
-                            {armadaPoolOptions}
-                            bind:armadaPoolId
+                            armadaPoolId={activePoolId}
                             bind:armadaPeriod
                             canExport={canExportArmadas}
                             canManage={canWriteTab('armadas')}
@@ -11326,8 +11318,7 @@ return;
                         {loadArmadas}
                         {openArmadaView}
                         {openArmadaEditor}
-                        {armadaPoolOptions}
-                        bind:armadaPoolId
+                        armadaPoolId={activePoolId}
                         bind:armadaPeriod
                         canExport={canExportArmadas}
                         canManage={canWriteTab('armadas')}

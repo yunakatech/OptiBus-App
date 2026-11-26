@@ -21,10 +21,6 @@
     import RevenueChartTable from './RevenueChartTable.svelte';
 
     type ViewMode = 'data' | 'form' | 'view' | 'layout';
-    type ArmadaPoolOption = {
-        id: number;
-        name: string;
-    };
     type ArmadaRow = {
         id: number;
         merk: string | null;
@@ -139,11 +135,10 @@
         armadaDetailLoading = false,
         armadas = [],
         armadaSearch = $bindable(''),
-        armadaPoolId = $bindable(0),
+        armadaPoolId = 0,
         armadaPeriod = $bindable(
             `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
         ),
-        armadaPoolOptions = [],
         formatCurrency,
         armadaGrossMargin,
         armadaNetMargin,
@@ -166,7 +161,6 @@
         armadaSearch?: string;
         armadaPoolId?: number;
         armadaPeriod?: string;
-        armadaPoolOptions?: ArmadaPoolOption[];
         formatCurrency: (value: number) => string;
         armadaGrossMargin: (row: ArmadaRow) => number;
         armadaNetMargin: (row: ArmadaRow) => number;
@@ -1290,7 +1284,7 @@
                     <TerminalFilter
                         bind:query={armadaSearch}
                         placeholder="Cari nopol, driver, pool, atau GPS"
-                        class="min-w-0"
+                        class="min-w-0 border-0 bg-transparent p-0 shadow-none [&_input]:h-10 [&_button]:h-10 md:[html[data-density=compact]_&_input]:h-10 md:[html[data-density=compact]_&_button]:h-10"
                         on:search={() => void loadArmadas()}
                     />
                 </div>
@@ -1298,33 +1292,16 @@
                 <div class="w-full min-w-0 sm:w-48">
                     <label
                         class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
-                        ><span>Filter pool</span>
-                        <select
-                            aria-label="Filter pool"
-                            class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            bind:value={armadaPoolId}
-                            onchange={() => void loadArmadas()}
-                        >
-                            {#each armadaPoolOptions as pool (pool.id)}
-                                <option value={pool.id}>{pool.name}</option>
-                            {/each}
-                        </select></label
-                    >
-                </div>
-
-                <div class="w-full min-w-0 sm:w-48">
-                    <label
-                        class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
-                        ><span>Filter periode</span>
+                        ><span class="sr-only">Filter periode</span>
                         <select
                             aria-label="Filter periode"
-                            class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            class="h-10 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             bind:value={armadaPeriod}
                             onchange={() => void loadArmadas()}
                         >
                             {#each periodOptions as period (period.value)}
                                 <option value={period.value}
-                                    >{period.label}</option
+                                    >Periode: {period.label}</option
                                 >
                             {/each}
                         </select></label

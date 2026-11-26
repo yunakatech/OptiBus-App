@@ -1774,13 +1774,6 @@
                             <div
                                 class="flex flex-col items-stretch gap-3 border-b border-border/70 px-4 py-3 sm:px-5 md:flex-row md:items-center md:justify-between"
                             >
-                                <div>
-                                    <p
-                                        class="text-sm font-semibold tracking-tight text-foreground"
-                                    >
-                                        Rute Carter
-                                    </p>
-                                </div>
                                 <ResponsiveFilterBar
                                     label="Rute Carter"
                                     bind:query={carterRouteQ}

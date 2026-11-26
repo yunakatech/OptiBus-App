@@ -158,6 +158,10 @@ class AdminOpsController extends Controller
         try {
             $listRequest = clone $request;
             $listRequest->query->set('paginate', '1');
+            if ($tab === 'armadas') {
+                $listRequest->query->set('pool_id', PoolScope::currentPoolId(auth()->id()));
+            }
+
             $unpaginatedRequest = clone $request;
             $unpaginatedRequest->query->remove('paginate');
             $routeOptions = [];
