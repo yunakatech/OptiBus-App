@@ -280,7 +280,7 @@ align = 'right';
 </script>
 
 <div
-    class={`flex min-w-0 flex-col rounded-2xl border p-4 text-card-foreground shadow-xs transition-all duration-300 hover:shadow-sm md:p-5 ${chartTheme().panelClass}`}
+    class={`flex h-full min-w-0 flex-col rounded-2xl border p-4 text-card-foreground shadow-xs md:p-5 ${chartTheme().panelClass}`}
 >
     <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -358,10 +358,10 @@ align = 'right';
         </div>
     </div>
 
-    <div class="mt-auto grid grid-cols-1 gap-3 pt-6 sm:grid-cols-3">
-        <div class="text-center">
+    <div class="mt-auto space-y-2 pt-5">
+        <div class="flex min-w-0 items-center gap-2">
             <div
-                class="mx-auto mb-1.5 h-2.5 w-2.5 rounded-full shadow-sm bg-primary"
+                class="h-2.5 w-2.5 shrink-0 rounded-full bg-primary"
             ></div>
             <p
                 class={`text-xs font-medium ${chartTheme().footerLabelClass}`}
@@ -369,17 +369,14 @@ align = 'right';
                 Booking
             </p>
             <p
-                class={`mt-1 break-words text-sm font-semibold tabular-nums ${chartTheme().footerValueClass}`}
+                class={`ms-auto min-w-0 break-words text-end text-sm font-semibold tabular-nums ${chartTheme().footerValueClass}`}
             >
                 {toCurrency(Number(summaryStats.revenue_booking || 0))}
             </p>
         </div>
-        <div class="text-center relative">
+        <div class="flex min-w-0 items-center gap-2">
             <div
-                class={`absolute -left-1 top-1 bottom-1 hidden w-px sm:block ${chartTheme().dividerClass}`}
-            ></div>
-            <div
-                class="mx-auto mb-1.5 h-2.5 w-2.5 rounded-full shadow-sm bg-indigo-400"
+                class="h-2.5 w-2.5 shrink-0 rounded-full bg-indigo-400"
             ></div>
             <p
                 class={`text-xs font-medium ${chartTheme().footerLabelClass}`}
@@ -387,17 +384,14 @@ align = 'right';
                 Carter
             </p>
             <p
-                class={`mt-1 break-words text-sm font-semibold tabular-nums ${chartTheme().footerValueClass}`}
+                class={`ms-auto min-w-0 break-words text-end text-sm font-semibold tabular-nums ${chartTheme().footerValueClass}`}
             >
                 {toCurrency(Number(summaryStats.revenue_charter || 0))}
             </p>
         </div>
-        <div class="text-center relative">
+        <div class="flex min-w-0 items-center gap-2">
             <div
-                class={`absolute -left-1 top-1 bottom-1 hidden w-px sm:block ${chartTheme().dividerClass}`}
-            ></div>
-            <div
-                class="mx-auto mb-1.5 h-2.5 w-2.5 rounded-full shadow-sm bg-emerald-400"
+                class="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400"
             ></div>
             <p
                 class={`text-xs font-medium ${chartTheme().footerLabelClass}`}
@@ -405,7 +399,7 @@ align = 'right';
                 Bagasi
             </p>
             <p
-                class={`mt-1 break-words text-sm font-semibold tabular-nums ${chartTheme().footerValueClass}`}
+                class={`ms-auto min-w-0 break-words text-end text-sm font-semibold tabular-nums ${chartTheme().footerValueClass}`}
             >
                 {toCurrency(Number(summaryStats.revenue_luggage || 0))}
             </p>

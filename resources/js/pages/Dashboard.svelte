@@ -12,7 +12,7 @@
 </script>
 
 <script lang="ts">
-    import { ArrowRight, BusFront, CheckCircle2, Circle, Copy, Package, Ticket, Wallet } from 'lucide-svelte';
+    import { ArrowRight, CheckCircle2, Circle, Copy } from 'lucide-svelte';
     import { SvelteSet } from 'svelte/reactivity';
     import AppHead from '@/components/AppHead.svelte';
     import DashboardSection from '@/components/dashboard/DashboardSection.svelte';
@@ -778,29 +778,11 @@
     <section id="dashboard-pendapatan" class="scroll-mt-24 space-y-4" aria-labelledby="dashboard-revenue-title">
         <div class="flex flex-wrap items-end justify-between gap-2">
             <div>
-                <h2 id="dashboard-revenue-title" class="text-lg font-semibold text-foreground">Ringkasan pendapatan</h2>
-                <p class="mt-1 text-sm text-muted-foreground">{safeSummaryPeriodByScope.month.current_label} · {_selectedPoolName}</p>
+                <h2 id="dashboard-revenue-title" class="text-lg font-semibold text-foreground">Pendapatan</h2>
+                <p class="mt-1 text-sm text-muted-foreground">{_selectedPoolName}</p>
             </div>
         </div>
-        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {#each [
-                { label: 'Total pendapatan', value: Number(activeSummaryStats.revenue_booking || 0) + Number(activeSummaryStats.revenue_charter || 0) + Number(activeSummaryStats.revenue_luggage || 0), icon: Wallet, accent: true },
-                { label: 'Booking', value: Number(activeSummaryStats.revenue_booking || 0), icon: Ticket, accent: false },
-                { label: 'Carter', value: Number(activeSummaryStats.revenue_charter || 0), icon: BusFront, accent: false },
-                { label: 'Bagasi', value: Number(activeSummaryStats.revenue_luggage || 0), icon: Package, accent: false },
-            ] as metric (metric.label)}
-                {@const MetricIcon = metric.icon}
-                <div class={`min-w-0 rounded-2xl border p-4 sm:p-5 ${metric.accent ? 'border-primary/30 bg-primary/5' : 'border-border bg-card'}`}>
-                    <div class="flex items-center justify-between gap-3">
-                        <p class="text-sm font-medium text-muted-foreground">{metric.label}</p>
-                        <span class="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><MetricIcon class="size-5" aria-hidden="true" /></span>
-                    </div>
-                    <p class="mt-4 break-words text-xl font-semibold tracking-tight text-foreground tabular-nums sm:text-2xl">{toCurrency(metric.value)}</p>
-                    <p class="mt-1 text-xs text-muted-foreground">{safeSummaryPeriodByScope.month.current_label}</p>
-                </div>
-            {/each}
-        </div>
-        <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+        <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-stretch">
             <!-- Revenue Activity Chart -->
             <DashboardSection data="dailyTrend" label="Pendapatan harian">
                 <LazyDashboardPanel
@@ -829,8 +811,8 @@
         </div>
     </section>
 
-    <div class="grid min-w-0 gap-3 xl:grid-cols-3 xl:items-start">
-        <div class="min-w-0 space-y-3 xl:col-span-2">
+    <div class="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)] xl:items-start">
+        <div class="min-w-0 space-y-4">
             <!-- Command Center -->
             <DashboardSection data="monthlyTrend" label="Pendapatan bulanan">
                 <LazyDashboardPanel
@@ -861,14 +843,14 @@
             </DashboardSection>
         </div>
 
-        <div class="min-w-0 space-y-4 xl:col-span-1">
+        <div class="min-w-0 space-y-4">
             <div id="dashboard-carter" class="scroll-mt-24">
             <DashboardSection
                 data={['upcomingCharterReminder']}
                 label="Carter mendatang"
             >
                 <Card
-                    class="overflow-hidden rounded-lg border border-border/80 shadow-sm"
+                    class="overflow-hidden rounded-2xl border border-border/80 shadow-sm"
                 >
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <div
@@ -975,7 +957,7 @@
                 label="Keberangkatan hari ini"
             >
                 <Card
-                    class="min-w-0 rounded-lg border border-border/80 shadow-sm"
+                    class="min-w-0 rounded-2xl border border-border/80 shadow-sm"
                 >
                     <CardHeader class="space-y-1 p-3 pb-2 sm:px-5 sm:pt-4">
                         <CardTitle class="text-[13px] sm:text-[14px]"
@@ -1066,7 +1048,7 @@
                 label="Aktivitas terbaru"
             >
                 <Card
-                    class="h-fit min-w-0 rounded-lg border border-border/80 shadow-sm"
+                    class="h-fit min-w-0 rounded-2xl border border-border/80 shadow-sm"
                 >
                     <CardHeader class="space-y-1 p-4 pb-2 sm:px-5 sm:pt-4">
                         <div class="flex items-start justify-between gap-3">
