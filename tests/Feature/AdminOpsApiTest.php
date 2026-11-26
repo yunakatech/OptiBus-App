@@ -26,6 +26,48 @@ class AdminOpsApiTest extends TestCase
         return (int) DB::table('tenants')->where('slug', 'qbus-default')->value('id');
     }
 
+    public function test_customer_history_shows_paginated_bookings_within_tenant(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $poolId = $this->activatePoolForTenant($tenantId, 'POOL RIWAYAT', 'RIWAYAT');
+        $customerId = DB::table('customers')->insertGetId([
+            'tenant_id' => $tenantId,
+            'pool_id' => $poolId,
+            'name' => 'PELANGGAN RIWAYAT',
+            'phone' => '089999123456',
+            'created_at' => now(),
+        ]);
+        $otherTenant = DB::table('tenants')->insertGetId([
+            'name' => 'Tenant lain', 'slug' => 'riwayat-lain', 'status' => 'active',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        for ($index = 1; $index <= 6; $index++) {
+            DB::table('bookings')->insert([
+                'tenant_id' => $tenantId, 'pool_id' => $poolId, 'rute' => 'RUTE RIWAYAT',
+                'tanggal' => now()->subDays($index)->toDateString(), 'jam' => '08:00:00',
+                'unit' => 1, 'seat' => (string) $index, 'name' => 'PELANGGAN RIWAYAT',
+                'phone' => '089999123456', 'status' => 'active', 'pembayaran' => 'Belum Lunas',
+                'created_at' => now(),
+            ]);
+        }
+        DB::table('bookings')->insert([
+            'tenant_id' => $otherTenant, 'rute' => 'RUTE TENANT LAIN',
+            'tanggal' => now()->toDateString(), 'jam' => '08:00:00', 'unit' => 1,
+            'seat' => '1', 'name' => 'PELANGGAN LAIN', 'phone' => '089999123456',
+            'status' => 'active', 'pembayaran' => 'Belum Lunas', 'created_at' => now(),
+        ]);
+
+        $this->getJson(route('api.admin.customers.history', ['id' => $customerId, 'per_page' => 5]))
+            ->assertOk()->assertJsonCount(5, 'bookings')
+            ->assertJsonPath('booking_pagination.total', 6)
+            ->assertJsonPath('bookings.0.rute', 'RUTE RIWAYAT');
+        $this->getJson(route('api.admin.customers.history', ['id' => $customerId, 'per_page' => 5, 'booking_page' => 2]))
+            ->assertOk()->assertJsonCount(1, 'bookings')
+            ->assertJsonPath('booking_pagination.page', 2);
+    }
+
     public function test_private_subscription_entitlements_are_saved_and_cleared_by_api(): void
     {
         $this->actingAsSuperAdmin();

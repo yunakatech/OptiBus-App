@@ -1366,6 +1366,7 @@ class AdminOpsApiController extends Controller
     {
         $cancellationPage = max(1, (int) $request->query('cancellation_page', 1));
         $departurePage = max(1, (int) $request->query('departure_page', 1));
+        $bookingPage = max(1, (int) $request->query('booking_page', 1));
         $perPage = max(5, min(50, (int) $request->query('per_page', 10)));
         $customerQuery = DB::table('customers')
             ->where('id', $id);
@@ -1379,11 +1380,30 @@ class AdminOpsApiController extends Controller
 
         $cancellations = collect();
         $departures = collect();
+        $bookings = collect();
         $cancellationPagination = $this->paginationMeta(0, $cancellationPage, $perPage);
         $departurePagination = $this->paginationMeta(0, $departurePage, $perPage);
+        $bookingPagination = $this->paginationMeta(0, $bookingPage, $perPage);
         $phone = trim((string) $customer->phone);
 
         if ($phone !== '' && SchemaCache::hasTable('bookings')) {
+            $bookingQuery = DB::table('bookings as b')
+                ->where('b.phone', $phone)
+                ->orderByDesc('b.tanggal')
+                ->orderByDesc('b.jam')
+                ->orderByDesc('b.id')
+                ->select(['b.id', 'b.rute', 'b.tanggal', 'b.jam', 'b.unit', 'b.seat', 'b.status', 'b.pembayaran']);
+            $this->applyTenantScopeIfExists($bookingQuery, 'bookings', 'b');
+            PoolScope::applyPoolOrRouteScope(
+                $bookingQuery,
+                SchemaCache::hasColumn('bookings', 'pool_id') ? 'b.pool_id' : '',
+                SchemaCache::hasColumn('bookings', 'route_id') ? 'b.route_id' : '',
+                'b.rute',
+            );
+            $bookingResult = $this->paginateQuery($bookingQuery, $bookingPage, $perPage);
+            $bookings = $bookingResult['data'];
+            $bookingPagination = $bookingResult['meta'];
+
             if (SchemaCache::hasTable('cancellations')) {
                 $cancellationQuery = DB::table('cancellations as c')
                     ->join('bookings as b', 'b.id', '=', 'c.booking_id')
@@ -1496,6 +1516,8 @@ class AdminOpsApiController extends Controller
                 'successful_departure_count' => $departurePagination['total'],
             ],
             'cancellations' => $cancellations->values()->all(),
+            'bookings' => $bookings->values()->all(),
+            'booking_pagination' => $bookingPagination,
             'cancellation_pagination' => $cancellationPagination,
             'successful_departures' => $departures->values()->all(),
             'successful_departure_pagination' => $departurePagination,

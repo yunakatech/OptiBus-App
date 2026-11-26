@@ -26,6 +26,7 @@
         Plus,
         Send,
         Trash2,
+        X,
     } from 'lucide-svelte';
     import { onDestroy, onMount, tick, untrack } from 'svelte';
     import { SvelteMap, SvelteSet } from 'svelte/reactivity';
@@ -234,6 +235,8 @@
         cancellation_pagination: Pagination;
         successful_departures: CustomerHistoryDeparture[];
         successful_departure_pagination: Pagination;
+        bookings: Array<{ id: number; rute: string; tanggal: string; jam: string; unit: number; seat: string; status: string; pembayaran: string }>;
+        booking_pagination: Pagination;
     };
     type Pagination = {
         page: number;
@@ -4213,6 +4216,7 @@
         cancellationPage = 1,
         departurePage = 1,
         clearCurrent = false,
+        bookingPage = 1,
     ) => {
         const requestId = ++customerHistoryRequest;
 
@@ -4227,6 +4231,7 @@
             const params = new URLSearchParams({
                 cancellation_page: String(cancellationPage),
                 departure_page: String(departurePage),
+                booking_page: String(bookingPage),
                 per_page: '10',
             });
             const result = await api(
@@ -4257,7 +4262,7 @@
     };
 
     const changeCustomerHistoryPage = (
-        section: 'cancellations' | 'departures',
+        section: 'cancellations' | 'departures' | 'bookings',
         page: number,
     ) => {
         if (!customerHistory || customerHistoryLoading) {
@@ -4274,7 +4279,8 @@
                 ? page
                 : customerHistory.successful_departure_pagination.page;
 
-        void loadCustomerHistory(customerId, cancellationPage, departurePage);
+        const bookingPage = section === 'bookings' ? page : customerHistory.booking_pagination.page;
+        void loadCustomerHistory(customerId, cancellationPage, departurePage, false, bookingPage);
     };
 
     const jumpCustomerPage = async (page: number) => {
@@ -13456,12 +13462,14 @@ return;
     </Card>
     <Dialog bind:open={customerHistoryOpen}>
         <DialogContent class="sm:max-w-3xl">
-            <div class="space-y-1">
+            <div class="flex items-start justify-between gap-4">
+                <div class="space-y-1">
                 <DialogTitle>Detail Riwayat Pelanggan</DialogTitle>
                 <DialogDescription>
-                    Riwayat pembatalan dan keberangkatan yang telah tiba pada
-                    tahun berjalan.
+                    Riwayat booking, pembatalan, dan keberangkatan yang telah tiba.
                 </DialogDescription>
+                </div>
+                <Button type="button" variant="ghost" size="icon" class="shrink-0" aria-label="Tutup detail riwayat" onclick={() => (customerHistoryOpen = false)}><X class="h-4 w-4" /></Button>
             </div>
 
             {#if customerHistoryLoading}
@@ -13503,6 +13511,35 @@ return;
                             </Badge>
                         </div>
                     </div>
+
+                    <section class="space-y-2">
+                        <h3 class="text-sm font-semibold">Riwayat booking</h3>
+                        {#if customerHistory.bookings.length === 0}
+                            <p class="rounded-lg border border-dashed border-border/70 px-3 py-4 text-center text-xs text-muted-foreground">Belum ada riwayat booking untuk nomor pelanggan ini.</p>
+                        {:else}
+                            <div class="max-h-56 space-y-2 overflow-y-auto">
+                                {#each customerHistory.bookings as booking (booking.id)}
+                                    <article class="rounded-lg border border-border/70 px-3 py-2 text-sm">
+                                        <div class="flex flex-wrap items-start justify-between gap-2">
+                                            <p class="min-w-0 break-words font-semibold">{booking.rute}</p>
+                                            <Badge variant="secondary">{booking.status}</Badge>
+                                        </div>
+                                        <p class="mt-1 text-xs text-muted-foreground">{booking.tanggal} · {String(booking.jam ?? '').slice(0, 5)} · Unit {booking.unit} · Kursi {booking.seat}</p>
+                                        <p class="mt-1 text-xs text-muted-foreground">Pembayaran: {booking.pembayaran}</p>
+                                    </article>
+                                {/each}
+                            </div>
+                            {#if customerHistory.booking_pagination.last_page > 1}
+                                <div class="flex flex-wrap items-center justify-between gap-2 border-t border-border/60 pt-2">
+                                    <span class="text-xs text-muted-foreground">Halaman {customerHistory.booking_pagination.page} dari {customerHistory.booking_pagination.last_page} · {customerHistory.booking_pagination.total} data</span>
+                                    <div class="flex gap-2">
+                                        <Button type="button" size="sm" variant="outline" disabled={customerHistoryLoading || customerHistory.booking_pagination.page <= 1} onclick={() => changeCustomerHistoryPage('bookings', customerHistory!.booking_pagination.page - 1)}>Sebelumnya</Button>
+                                        <Button type="button" size="sm" variant="outline" disabled={customerHistoryLoading || customerHistory.booking_pagination.page >= customerHistory.booking_pagination.last_page} onclick={() => changeCustomerHistoryPage('bookings', customerHistory!.booking_pagination.page + 1)}>Berikutnya</Button>
+                                    </div>
+                                </div>
+                            {/if}
+                        {/if}
+                    </section>
 
                     <section class="space-y-2">
                         <h3 class="text-sm font-semibold">

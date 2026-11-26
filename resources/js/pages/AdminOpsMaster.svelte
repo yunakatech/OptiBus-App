@@ -1800,21 +1800,21 @@
                                         resetMasterFilterDraft('rute-carter')}
                                     onCancel={() =>
                                         beginMasterFilterDraft('rute-carter')}
-                                    class="w-full md:w-auto md:min-w-[22rem]"
+                                    class="w-full md:w-[28rem] md:max-w-full"
                                 >
                                     {#snippet desktop()}
-                                        <div class="flex gap-2">
+                                        <div class="flex items-end gap-2">
                                             <label
-                                                class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                                                class="mobile-field grid min-w-0 flex-1 gap-1.5 text-sm font-medium"
                                                 ><span>Pencarian</span><Input
-                                                    class="h-9 w-full rounded-xl bg-background"
+                                                    class="h-10 w-full rounded-xl bg-background"
                                                     placeholder="Cari nama, asal, atau tujuan"
                                                     bind:value={carterRouteQ}
                                                 /></label
                                             >
                                             <Button
                                                 type="button"
-                                                class="h-9 rounded-xl px-4"
+                                                class="h-10 shrink-0 rounded-xl px-5"
                                                 onclick={() =>
                                                     void applySearch(
                                                         'rute-carter',
@@ -1839,6 +1839,36 @@
                                 </ResponsiveFilterBar>
                             </div>
 
+                            {#snippet carterRouteActions(row: CarterRoute)}
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button type="button" variant="ghost" size="icon" class="h-9 w-9" aria-label={`Aksi rute ${row.name}`}>
+                                            <MoreHorizontal class="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" sideOffset={8} class="z-[120] w-44">
+                                        <DropdownMenuItem disabled={tenantWriteDisabled} onclick={() => {
+                                            carterRouteForm = {
+                                                id: row.id,
+                                                name: row.name,
+                                                origin: row.origin ?? '',
+                                                destination: row.destination ?? '',
+                                                duration: row.duration ?? defaultMasterCarterService,
+                                                rental_price: Number(row.rental_price),
+                                                bop_price: Number(row.bop_price),
+                                                notes: row.notes ?? '',
+                                            };
+                                            setFormMode('form');
+                                        }}>
+                                            <Pencil class="mr-2 h-3.5 w-3.5" /> Edit
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem disabled={pendingDeleteKey === `/api/admin/charter-routes/${row.id}` || tenantWriteDisabled} onclick={() => void removeRow(`/api/admin/charter-routes/${row.id}`, 'Rute carter deleted.')}>
+                                            <Trash2 class="mr-2 h-3.5 w-3.5" />
+                                            {pendingDeleteKey === `/api/admin/charter-routes/${row.id}` ? 'Menghapus...' : 'Hapus'}
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            {/snippet}
                             {#if carterRoutes.length > 0}
                                 <ViewportOnly minWidth={0} maxWidth={767}
                                     ><div class="space-y-3 p-3 md:hidden">
@@ -1867,11 +1897,14 @@
                                                                 '-'}
                                                         </p>
                                                     </div>
+                                                    <div class="flex shrink-0 items-center gap-1">
                                                     <span
                                                         class="shrink-0 rounded-full border border-cyan-200/70 bg-cyan-50 px-2.5 py-1 text-xs md:text-[11px] font-semibold text-cyan-800"
                                                     >
                                                         {row.duration ?? '-'}
                                                     </span>
+                                                    {@render carterRouteActions(row)}
+                                                    </div>
                                                 </div>
                                                 <div
                                                     class="mt-4 grid grid-cols-2 gap-3 rounded-lg bg-muted/40 p-3"
@@ -1905,62 +1938,6 @@
                                                         </p>
                                                     </div>
                                                 </div>
-                                                <div
-                                                    class="mt-4 grid grid-cols-2 gap-2"
-                                                >
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        class="h-10 w-full rounded-lg"
-                                                        disabled={tenantWriteDisabled}
-                                                        onclick={() => {
-                                                            carterRouteForm = {
-                                                                id: row.id,
-                                                                name: row.name,
-                                                                origin:
-                                                                    row.origin ??
-                                                                    '',
-                                                                destination:
-                                                                    row.destination ??
-                                                                    '',
-                                                                duration:
-                                                                    row.duration ??
-                                                                    defaultMasterCarterService,
-                                                                rental_price:
-                                                                    Number(
-                                                                        row.rental_price,
-                                                                    ),
-                                                                bop_price:
-                                                                    Number(
-                                                                        row.bop_price,
-                                                                    ),
-                                                                notes:
-                                                                    row.notes ??
-                                                                    '',
-                                                            };
-                                                            setFormMode('form');
-                                                        }}>Edit</Button
-                                                    >
-                                                    <Button
-                                                        type="button"
-                                                        size="sm"
-                                                        variant="outline"
-                                                        class="h-10 w-full rounded-lg"
-                                                        disabled={pendingDeleteKey ===
-                                                            `/api/admin/charter-routes/${row.id}` ||
-                                                            tenantWriteDisabled}
-                                                        onclick={() =>
-                                                            void removeRow(
-                                                                `/api/admin/charter-routes/${row.id}`,
-                                                                'Rute carter deleted.',
-                                                            )}
-                                                        >{pendingDeleteKey ===
-                                                        `/api/admin/charter-routes/${row.id}`
-                                                            ? 'Menghapus...'
-                                                            : 'Delete'}</Button
-                                                    >
-                                                </div>
                                             </article>
                                         {/each}
                                     </div></ViewportOnly
@@ -1975,27 +1952,27 @@
                                             >
                                                 <tr>
                                                     <th
-                                                        class="px-4 py-3 text-left font-semibold"
+                                                        class="px-4 py-2.5 text-left font-semibold"
                                                         >Nama</th
                                                     >
                                                     <th
-                                                        class="px-4 py-3 text-left font-semibold"
+                                                        class="px-4 py-2.5 text-left font-semibold"
                                                         >Asal</th
                                                     >
                                                     <th
-                                                        class="px-4 py-3 text-left font-semibold"
+                                                        class="px-4 py-2.5 text-left font-semibold"
                                                         >Tujuan</th
                                                     >
                                                     <th
-                                                        class="px-4 py-3 text-left font-semibold"
+                                                        class="px-4 py-2.5 text-left font-semibold"
                                                         >Layanan</th
                                                     >
                                                     <th
-                                                        class="px-4 py-3 text-left font-semibold"
+                                                        class="px-4 py-2.5 text-left font-semibold"
                                                         >Harga</th
                                                     >
                                                     <th
-                                                        class="px-4 py-3 text-left font-semibold"
+                                                        class="px-4 py-2.5 text-left font-semibold"
                                                         >Aksi</th
                                                     >
                                                 </tr>
@@ -2008,7 +1985,7 @@
                                                         class="transition-colors hover:bg-muted/30"
                                                     >
                                                         <td
-                                                            class="px-4 py-4 align-top"
+                                                            class="px-4 py-2.5 align-middle"
                                                         >
                                                             <p
                                                                 class="font-semibold text-foreground"
@@ -2017,7 +1994,7 @@
                                                             </p>
                                                         </td>
                                                         <td
-                                                            class="px-4 py-4 align-top"
+                                                            class="px-4 py-2.5 align-middle"
                                                         >
                                                             <p
                                                                 class="font-medium text-foreground"
@@ -2027,7 +2004,7 @@
                                                             </p>
                                                         </td>
                                                         <td
-                                                            class="px-4 py-4 align-top"
+                                                            class="px-4 py-2.5 align-middle"
                                                         >
                                                             <p
                                                                 class="font-medium text-foreground"
@@ -2037,17 +2014,17 @@
                                                             </p>
                                                         </td>
                                                         <td
-                                                            class="px-4 py-4 align-top"
+                                                            class="px-4 py-2.5 align-middle"
                                                         >
                                                             <span
-                                                                class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-3 py-1 text-xs font-semibold tracking-wide text-cyan-800"
+                                                                class="inline-flex items-center rounded-full border border-cyan-200/70 bg-cyan-50 px-2.5 py-0.5 text-xs font-semibold text-cyan-800"
                                                             >
                                                                 {row.duration ??
                                                                     '-'}
                                                             </span>
                                                         </td>
                                                         <td
-                                                            class="px-4 py-4 align-top"
+                                                            class="px-4 py-2.5 align-middle"
                                                         >
                                                             <div
                                                                 class="space-y-1"
@@ -2069,70 +2046,9 @@
                                                             </div>
                                                         </td>
                                                         <td
-                                                            class="px-4 py-4 align-top"
+                                                            class="px-4 py-2.5 align-middle"
                                                         >
-                                                            <div
-                                                                class="flex flex-wrap gap-2"
-                                                            >
-                                                                <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    class="rounded-full px-4"
-                                                                    disabled={tenantWriteDisabled}
-                                                                    onclick={() => {
-                                                                        carterRouteForm =
-                                                                            {
-                                                                                id: row.id,
-                                                                                name: row.name,
-                                                                                origin:
-                                                                                    row.origin ??
-                                                                                    '',
-                                                                                destination:
-                                                                                    row.destination ??
-                                                                                    '',
-                                                                                duration:
-                                                                                    row.duration ??
-                                                                                    defaultMasterCarterService,
-                                                                                rental_price:
-                                                                                    Number(
-                                                                                        row.rental_price,
-                                                                                    ),
-                                                                                bop_price:
-                                                                                    Number(
-                                                                                        row.bop_price,
-                                                                                    ),
-                                                                                notes:
-                                                                                    row.notes ??
-                                                                                    '',
-                                                                            };
-                                                                        setFormMode(
-                                                                            'form',
-                                                                        );
-                                                                    }}
-                                                                >
-                                                                    Edit
-                                                                </Button>
-                                                                <Button
-                                                                    type="button"
-                                                                    size="sm"
-                                                                    variant="outline"
-                                                                    class="rounded-full px-4"
-                                                                    disabled={pendingDeleteKey ===
-                                                                        `/api/admin/charter-routes/${row.id}` ||
-                                                                        tenantWriteDisabled}
-                                                                    onclick={() =>
-                                                                        void removeRow(
-                                                                            `/api/admin/charter-routes/${row.id}`,
-                                                                            'Rute carter deleted.',
-                                                                        )}
-                                                                >
-                                                                    {pendingDeleteKey ===
-                                                                    `/api/admin/charter-routes/${row.id}`
-                                                                        ? 'Menghapus...'
-                                                                        : 'Delete'}
-                                                                </Button>
-                                                            </div>
+                                                            {@render carterRouteActions(row)}
                                                         </td>
                                                     </tr>
                                                 {/each}

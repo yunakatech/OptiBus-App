@@ -18,6 +18,7 @@
     import AppLogo from '@/components/AppLogo.svelte';
     import NavigationMetrics from '@/components/NavigationMetrics.svelte';
     import ViewportOnly from '@/components/ViewportOnly.svelte';
+    import { getSupportWhatsappHref } from '@/lib/support';
 
     type PlanFeature = {
         name: string;
@@ -97,10 +98,7 @@
     const isAuthenticated = $derived(Boolean(page.props.auth?.user));
     const appHref = '/dashboard';
     const subscriptionHref = '/subscription';
-    const supportWhatsappMessage = encodeURIComponent(
-        'Halo tim OptiBus, saya membutuhkan bantuan.',
-    );
-    const supportWhatsappHref = `https://wa.me/6287778110950?text=${supportWhatsappMessage}`;
+    const supportWhatsappHref = getSupportWhatsappHref();
     let landingRoot: HTMLDivElement;
 
     onMount(() => {

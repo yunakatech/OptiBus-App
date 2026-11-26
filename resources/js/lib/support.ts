@@ -1,4 +1,4 @@
-const DEFAULT_SUPPORT_WHATSAPP_NUMBER = '6287778110950';
+const DEFAULT_SUPPORT_WHATSAPP_NUMBER = '6285255877227';
 
 function normalizeWhatsappNumber(value: string): string {
     const digits = value.replace(/[^0-9]/g, '');

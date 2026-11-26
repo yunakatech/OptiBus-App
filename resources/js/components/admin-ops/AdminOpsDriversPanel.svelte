@@ -961,9 +961,9 @@ return raw;
     >
         {#snippet controls()}
             <div
-                class="grid gap-2 xl:grid-cols-[minmax(0,1fr)_minmax(180px,220px)_auto]"
+                class="flex flex-wrap items-end gap-3"
             >
-                <div class="min-w-0">
+                <div class="w-full min-w-0 sm:w-[24rem] sm:max-w-full">
                     <TerminalFilter
                         bind:query={driverSearch}
                         placeholder="Cari nama, kontak, atau kategori"
@@ -973,7 +973,7 @@ return raw;
                 </div>
 
                 <label
-                    class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
+                    class="mobile-field grid w-full min-w-0 gap-1.5 text-sm font-medium sm:w-48"
                     ><span>Periode</span>
                     <select
                         class="h-9 w-full rounded-md border border-input bg-background px-2.5 text-[13px] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -989,10 +989,11 @@ return raw;
                 {#if canExport}
                     <a
                         href={exportHref}
-                        class="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md bg-emerald-600 px-3 text-[13px] font-semibold text-white shadow-sm transition hover:bg-emerald-700 active:scale-[0.98] xl:w-auto"
+                        aria-label="Ekspor data driver ke Excel"
+                        title="Ekspor data driver ke Excel"
+                        class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-emerald-600 text-white shadow-sm transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 active:scale-[0.98]"
                     >
                         <Download class="h-4 w-4" />
-                        Export Data Driver (Excel)
                     </a>
                 {/if}
             </div>
