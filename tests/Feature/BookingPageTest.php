@@ -125,6 +125,27 @@ class BookingPageTest extends TestCase
                 ->where('bookingGroups.0.departure_status', 'arrived')));
     }
 
+    public function test_departure_driver_and_plate_filters_apply_before_pagination(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $driverId = DB::table('drivers')->insertGetId(['tenant_id' => $tenantId, 'nama' => 'DRIVER ANDI', 'created_at' => now()]);
+        foreach (['DD 1234 AB', 'DD 1234 AB', 'DD 9999 XY'] as $index => $plate) {
+            DB::table('trip_assignments')->insert([
+                'tenant_id' => $tenantId, 'rute' => 'RUTE FILTER', 'tanggal' => '2099-01-0'.($index + 1),
+                'jam' => '09:00:00', 'unit' => 1, 'driver_id' => $driverId,
+                'armada_nopol' => $plate, 'status' => 'active', 'created_at' => now(),
+            ]);
+        }
+        $this->get(route('bookings.index', [
+            'from' => '2099-01-01', 'to' => '2099-01-03', 'driver' => 'andi', 'nopol' => '1234', 'per_page' => 1, 'page' => 2,
+        ]))->assertInertia(fn (Assert $page) => $page
+            ->where('bookingQuery.driver', 'andi')->where('bookingQuery.nopol', '1234')
+            ->loadDeferredProps('booking-list', fn (Assert $reload) => $reload
+                ->where('bookingPagination.total', 2)->where('bookingPagination.page', 2)
+                ->has('bookingGroups', 1)->where('bookingGroups.0.tanggal', '2099-01-02')));
+    }
+
     public function test_booking_route_filter_follows_master_routes_and_refund_is_counted_separately(): void
     {
         $this->actingAsSuperAdmin();

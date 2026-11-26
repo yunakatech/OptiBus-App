@@ -632,6 +632,8 @@ class BookingController extends Controller
         return [
             'from' => min($from, $to), 'to' => max($from, $to),
             'route' => (string) $request->query('route', 'all'),
+            'driver' => mb_substr(trim((string) $request->query('driver', '')), 0, 120),
+            'nopol' => mb_substr(trim((string) $request->query('nopol', '')), 0, 50),
             'departure_status' => in_array($request->query('departure_status'), ['open', 'departed', 'arrived', 'closed'], true)
                 ? $request->query('departure_status') : 'all',
             'payment' => in_array($request->query('payment'), ['lunas', 'belum_lunas'], true)
@@ -720,13 +722,16 @@ class BookingController extends Controller
         $identities = array_values(array_filter($identities, fn (array $trip): bool => ($filters['route'] === 'all' || $this->normalizeTripRoute($trip['rute']) === $this->normalizeTripRoute($filters['route']))
             && ($filters['payment'] !== 'lunas' || ($trip['unpaid'] === 0 && $trip['refunded'] === 0))
             && ($filters['payment'] !== 'belum_lunas' || $trip['unpaid'] > 0)));
-        if ($filters['departure_status'] !== 'all' && $identities !== []) {
+        if (($filters['departure_status'] !== 'all' || $filters['driver'] !== '' || $filters['nopol'] !== '') && $identities !== []) {
             $matchingKeys = collect();
             foreach (array_chunk($identities, 100) as $chunk) {
                 foreach ($this->buildBookingGroups($chunk, false) as $group) {
-                    if ($filters['departure_status'] === 'open'
+                    $statusMatches = $filters['departure_status'] === 'all' || ($filters['departure_status'] === 'open'
                         ? in_array($group['departure_status'], ['active', 'departed', 'arrived'], true)
-                        : $group['departure_status'] === $filters['departure_status']) {
+                        : $group['departure_status'] === $filters['departure_status']);
+                    $driverMatches = $filters['driver'] === '' || mb_stripos($group['driver_name'], $filters['driver']) !== false;
+                    $nopolMatches = $filters['nopol'] === '' || mb_stripos($group['armada_nopol'], $filters['nopol']) !== false;
+                    if ($statusMatches && $driverMatches && $nopolMatches) {
                         $matchingKeys->put($group['key'], true);
                     }
                 }
