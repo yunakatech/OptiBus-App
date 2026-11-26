@@ -10455,6 +10455,7 @@ return;
                                 >
                                     <button
                                         type="button"
+                                        aria-pressed={bookingListDesktopView === 'sheet'}
                                         class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
                                             bookingListDesktopView === 'sheet'
                                                 ? 'bg-background text-foreground shadow-xs font-semibold'
@@ -10468,6 +10469,7 @@ return;
                                     </button>
                                     <button
                                         type="button"
+                                        aria-pressed={bookingListDesktopView === 'cards'}
                                         class={`inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition ${
                                             bookingListDesktopView === 'cards'
                                                 ? 'bg-background text-foreground shadow-xs font-semibold'
@@ -10547,13 +10549,13 @@ return;
                                 {/snippet}
                                 {#snippet desktop()}
                                     <div
-                                        class="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1fr)_auto]"
+                                        class="grid max-w-5xl gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.85fr)_minmax(0,1fr)_auto] xl:items-end"
                                     >
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
-                                            ><span>Filter berdasarkan rute</span
+                                            ><span>Rute</span
                                             ><select
-                                                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                class="flex h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                                 bind:value={bookingListRoute}
                                                 aria-label="Filter berdasarkan rute"
                                             >
@@ -10578,14 +10580,14 @@ return;
                                                 readonly
                                                 autocomplete="off"
                                                 placeholder="Pilih tanggal"
-                                                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                                                class="flex h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                             /></label
                                         >
                                         <label
                                             class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
                                             ><span>Status pembayaran</span
                                             ><select
-                                                class="flex h-9 w-full rounded-lg border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                class="flex h-10 w-full min-w-0 rounded-lg border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                                 bind:value={bookingListPayment}
                                                 aria-label="Status pembayaran"
                                             >
@@ -10604,10 +10606,10 @@ return;
                                             type="button"
                                             size="sm"
                                             variant="outline"
-                                            class="h-9 rounded-lg px-3 text-xs"
+                                            class="h-10 w-fit self-end rounded-lg px-4 text-sm"
                                             onclick={resetBookingListFilters}
                                         >
-                                            Reset Filter
+                                            Reset filter
                                         </Button>
                                     </div>
                                 {/snippet}
@@ -10951,12 +10953,13 @@ return;
                                                     </div>
                                                 </div>
 
-                                                <div class="table-container">
+                                                <p class="px-3 pt-2 text-xs text-muted-foreground">Geser tabel ke samping jika ada kolom yang belum terlihat.</p>
+                                                <div class="table-container" role="region" aria-label={`Daftar keberangkatan ${section.label}`} tabindex="0">
                                                     <table
-                                                        class="min-w-full text-start text-xs"
+                                                        class="min-w-[1020px] w-full text-start text-sm"
                                                     >
                                                         <thead
-                                                            class="sticky top-0 z-10 border-b border-border/70 bg-muted/40 text-start text-xs font-semibold uppercase tracking-wider text-muted-foreground backdrop-blur md:text-[11px]"
+                                                            class="border-b border-border/70 bg-muted/40 text-start text-xs font-semibold tracking-wide text-muted-foreground"
                                                         >
                                                             <tr>
                                                                 <th
@@ -10994,7 +10997,7 @@ return;
                                                             </tr>
                                                         </thead>
                                                         <tbody
-                                                            class="divide-y divide-border/60 text-xs"
+                                                            class="divide-y divide-border/60 text-sm"
                                                         >
                                                             {#each section.groups as group, index (`section-group-${index}-${group.key}`)}
                                                                 {@const unpaidAmount =
@@ -11013,7 +11016,7 @@ return;
                                                                     class={`align-top transition-colors hover:bg-muted/30 ${isCanceledDeparture(group) ? 'bg-rose-50/40 dark:bg-rose-950/15' : ''}`}
                                                                 >
                                                                     <td
-                                                                        class="px-3.5 py-2.5"
+                                                                        class="px-3.5 py-3"
                                                                     >
                                                                         <div
                                                                             class="space-y-1"
@@ -11077,16 +11080,16 @@ return;
                                                                         <div
                                                                             class="space-y-0.5"
                                                                         >
-                                                                            <span
-                                                                                class="font-mono text-xs md:text-[10px] uppercase font-semibold text-muted-foreground tracking-wider"
-                                                                            >
-                                                                                {group.departure_code}
-                                                                            </span>
                                                                             <p
-                                                                                class="font-semibold text-foreground text-xs leading-snug"
+                                                                                class="break-words text-sm font-semibold leading-snug text-foreground"
                                                                             >
                                                                                 {group.rute}
                                                                             </p>
+                                                                            <span
+                                                                                class="block break-all font-mono text-xs font-medium text-muted-foreground"
+                                                                            >
+                                                                                {group.departure_code}
+                                                                            </span>
                                                                         </div>
                                                                     </td>
                                                                     <td
@@ -11197,7 +11200,7 @@ return;
                                                                             class="space-y-1"
                                                                         >
                                                                             <div
-                                                                                class="flex items-center justify-between text-xs md:text-[11px]"
+                                                                                class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-xs"
                                                                             >
                                                                                 <span
                                                                                     class="text-muted-foreground"
@@ -11205,7 +11208,7 @@ return;
                                                                                     ({group.lunas})</span
                                                                                 >
                                                                                 <span
-                                                                                    class="font-medium text-emerald-700 dark:text-emerald-400"
+                                                                                    class="font-medium text-emerald-700 tabular-nums dark:text-emerald-400"
                                                                                     >{formatCurrency(
                                                                                         bookingGroupPaidAmount(
                                                                                             group,
@@ -11215,7 +11218,7 @@ return;
                                                                             </div>
                                                                             {#if unpaidAmount > 0}
                                                                                 <div
-                                                                                    class="flex items-center justify-between text-xs md:text-[11px] rounded bg-amber-50 dark:bg-amber-950/20 px-1.5 py-0.5 border border-amber-200/80 dark:border-amber-500/25"
+                                                                                    class="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 rounded border border-amber-200/80 bg-amber-50 px-2 py-1 text-xs dark:border-amber-500/25 dark:bg-amber-950/20"
                                                                                 >
                                                                                     <span
                                                                                         class="font-medium text-amber-700 dark:text-amber-300"
@@ -11223,7 +11226,7 @@ return;
                                                                                         ({group.belum_lunas})</span
                                                                                     >
                                                                                     <span
-                                                                                        class="font-semibold text-amber-700 dark:text-amber-300"
+                                                                                        class="font-semibold text-amber-700 tabular-nums dark:text-amber-300"
                                                                                         >{formatCurrency(
                                                                                             unpaidAmount,
                                                                                         )}</span
@@ -11244,13 +11247,13 @@ return;
                                                                         class="px-3.5 py-2.5"
                                                                     >
                                                                         <div
-                                                                            class="flex items-center justify-end gap-1.5"
+                                                                            class="flex flex-wrap items-center justify-end gap-2"
                                                                         >
                                                                             <Button
                                                                                 type="button"
                                                                                 size="sm"
                                                                                 variant="outline"
-                                                                                class="h-7 rounded-md px-2.5 text-xs font-medium"
+                                                                                class="h-9 rounded-md px-3 text-xs font-medium"
                                                                                 onclick={() =>
                                                                                     navigateToGroupDetail(
                                                                                         group,
@@ -11262,7 +11265,7 @@ return;
                                                                                 <Button
                                                                                     type="button"
                                                                                     size="sm"
-                                                                                    class="h-7 rounded-md bg-amber-600 hover:bg-amber-700 text-white px-2 text-xs"
+                                                                                    class="h-9 rounded-md bg-amber-600 px-3 text-xs text-white hover:bg-amber-700"
                                                                                     onclick={() =>
                                                                                         void markDepartureDeparted(
                                                                                             group,
@@ -11279,7 +11282,7 @@ return;
                                                                                 <Button
                                                                                     type="button"
                                                                                     size="sm"
-                                                                                    class="h-7 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white px-2 text-xs"
+                                                                                    class="h-9 rounded-md bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700"
                                                                                     onclick={() =>
                                                                                         void markDepartureArrived(
                                                                                             group,
@@ -11305,7 +11308,8 @@ return;
                                                                                             type="button"
                                                                                             size="icon"
                                                                                             variant="ghost"
-                                                                                            class="h-7 w-7 rounded-md text-muted-foreground hover:text-foreground"
+                                                                                            class="h-9 w-9 rounded-md text-muted-foreground hover:text-foreground"
+                                                                                            aria-label={`Aksi keberangkatan ${group.departure_code}`}
                                                                                             onclick={props.onclick}
                                                                                             aria-expanded={props[
                                                                                                 'aria-expanded'
