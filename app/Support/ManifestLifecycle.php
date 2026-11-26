@@ -87,7 +87,7 @@ class ManifestLifecycle
             (string) ($assignment->tanggal ?? ''),
             (string) ($assignment->jam ?? ''),
             $now,
-        ) && self::activeBookingsArePaid($assignment);
+        ) && self::hasRequiredAssignment($assignment) && self::activeBookingsArePaid($assignment);
     }
 
     public static function syncTripAssignmentStatus(?object $assignment, ?CarbonInterface $now = null): string
@@ -145,7 +145,35 @@ class ManifestLifecycle
         return substr($value, 0, 8);
     }
 
-    private static function activeBookingsArePaid(object $assignment): bool
+    public static function hasRequiredAssignment(object $assignment): bool
+    {
+        $id = (int) ($assignment->id ?? 0);
+        if ($id <= 0 || ! Schema::hasTable('drivers') || ! Schema::hasColumn('trip_assignments', 'driver_id')) {
+            return false;
+        }
+
+        $query = DB::table('trip_assignments as t')->where('t.id', $id)
+            ->leftJoin('drivers as d', 't.driver_id', '=', 'd.id');
+        $columns = ['d.nama as driver_name'];
+        if (Schema::hasColumn('trip_assignments', 'armada_nopol')) {
+            $columns[] = 't.armada_nopol';
+        }
+        if (Schema::hasColumn('trip_assignments', 'armada_id') && Schema::hasTable('armadas')) {
+            $query->leftJoin('armadas as a', 't.armada_id', '=', 'a.id');
+            $columns[] = 'a.nopol as armada_nopol_fallback';
+        }
+        $row = $query->first($columns);
+        if (! $row) {
+            return false;
+        }
+        $valid = static fn (mixed $value): bool => ! in_array(strtolower(trim((string) $value)),
+            ['', '-', 'null', 'undefined', 'n/a', 'na', 'belum diisi', 'belum ada', 'belum dipilih'], true);
+
+        return $valid($row->driver_name ?? null)
+            && ($valid($row->armada_nopol ?? null) || $valid($row->armada_nopol_fallback ?? null));
+    }
+
+    public static function activeBookingsArePaid(object $assignment): bool
     {
         if (
             ! Schema::hasTable('bookings')
@@ -161,7 +189,7 @@ class ManifestLifecycle
             ->where('unit', max(1, (int) ($assignment->unit ?? 1)));
 
         if (Schema::hasColumn('bookings', 'status')) {
-            $query->where('status', '!=', 'canceled');
+            $query->whereRaw("LOWER(TRIM(COALESCE(status, ''))) != ?", ['canceled']);
         }
 
         if (

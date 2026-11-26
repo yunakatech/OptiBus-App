@@ -655,6 +655,10 @@ class AdminOpsApiController extends Controller
             $poolId = (int) ($validated['pool_id'] ?? 0);
             [$monthStart, $monthEnd] = $this->driverPeriodBounds($validated['period'] ?? null);
             $rows = collect($this->driverRowsForMonth($monthStart, $monthEnd, $poolId));
+            if ($request->boolean('available_for_departure')) {
+                $blocked = $this->unfinishedDepartureResources()['driver_ids'];
+                $rows = $rows->reject(static fn (array $row): bool => in_array((int) ($row['id'] ?? 0), $blocked, true))->values();
+            }
 
             if ($q !== '') {
                 $needle = mb_strtolower($q);
@@ -4662,6 +4666,42 @@ class AdminOpsApiController extends Controller
         return $select;
     }
 
+    /** @return array{driver_ids: array<int>, armada_ids: array<int>, armada_nopols: array<string>} */
+    private function unfinishedDepartureResources(): array
+    {
+        $blocked = ['driver_ids' => [], 'armada_ids' => [], 'armada_nopols' => []];
+        if (! SchemaCache::hasTable('trip_assignments') || ! SchemaCache::hasColumn('trip_assignments', 'status')) {
+            return $blocked;
+        }
+
+        $query = DB::table('trip_assignments as t')->where('t.tanggal', '<', now()->toDateString())
+            ->whereNotIn(DB::raw("LOWER(TRIM(COALESCE(t.status, '')))"), ['closed', 'canceled']);
+        $this->applyTenantScopeIfExists($query, 'trip_assignments', 't');
+        $columns = ['t.id', 't.rute', 't.tanggal', 't.jam', 't.unit', 't.status'];
+        foreach (['tenant_id', 'driver_id', 'armada_id', 'armada_nopol'] as $column) {
+            if (SchemaCache::hasColumn('trip_assignments', $column)) {
+                $columns[] = 't.'.$column;
+            }
+        }
+        foreach ($query->get($columns) as $assignment) {
+            if (ManifestLifecycle::syncTripAssignmentStatus($assignment) === 'closed') {
+                continue;
+            }
+            if ((int) ($assignment->driver_id ?? 0) > 0) {
+                $blocked['driver_ids'][] = (int) $assignment->driver_id;
+            }
+            if ((int) ($assignment->armada_id ?? 0) > 0) {
+                $blocked['armada_ids'][] = (int) $assignment->armada_id;
+            }
+            $nopol = strtoupper(trim((string) ($assignment->armada_nopol ?? '')));
+            if ($nopol !== '') {
+                $blocked['armada_nopols'][] = $nopol;
+            }
+        }
+
+        return array_map(static fn (array $values): array => array_values(array_unique($values)), $blocked);
+    }
+
     public function assignmentsConflicts(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -5541,6 +5581,16 @@ class AdminOpsApiController extends Controller
             ->orderBy('nopol');
         if ($poolId > 0) {
             $this->applyPoolScopeIfExists($query, 'armadas', '', $poolId);
+        }
+
+        if ($request->boolean('available_for_departure')) {
+            $blocked = $this->unfinishedDepartureResources();
+            if ($blocked['armada_ids'] !== []) {
+                $query->whereNotIn('armadas.id', $blocked['armada_ids']);
+            }
+            if ($blocked['armada_nopols'] !== []) {
+                $query->whereNotIn(DB::raw('UPPER(TRIM(armadas.nopol))'), $blocked['armada_nopols']);
+            }
         }
 
         if ($q !== '') {

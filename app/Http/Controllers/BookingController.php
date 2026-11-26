@@ -871,6 +871,7 @@ class BookingController extends Controller
                         'lunas' => 0,
                         'refund' => 0,
                         'belum_lunas' => 0,
+                        'active_unpaid' => 0,
                         'bop' => 0,
                         'departure_status' => 'active',
                         'departure_can_arrive' => false,
@@ -907,6 +908,9 @@ class BookingController extends Controller
                 }
 
                 if ($status !== 'canceled') {
+                    if (trim($payment) !== 'lunas') {
+                        $grouped[$tripKey]['active_unpaid'] += $count;
+                    }
                     $amount = $includePassengers
                         ? max(0, (float) ($row->price ?? 0) - (float) ($row->discount ?? 0))
                         : (float) ($row->amount_total ?? 0);
@@ -1005,6 +1009,7 @@ class BookingController extends Controller
                             'lunas' => 0,
                             'refund' => 0,
                             'belum_lunas' => 0,
+                        'active_unpaid' => 0,
                             'bop' => 0,
                             'departure_status' => 'active',
                             'departure_can_arrive' => false,

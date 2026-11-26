@@ -99,6 +99,37 @@ class AdminOpsApiTest extends TestCase
         $this->assertEqualsCanonicalizing(['arrived', 'closed'], array_column($response->json('successful_departures'), 'status'));
     }
 
+    public function test_departure_suggestions_exclude_resources_with_unclosed_previous_manifests(): void
+    {
+        $this->actingAsSuperAdmin();
+        $tenantId = $this->defaultTenantId();
+        $blockedDriver = DB::table('drivers')->insertGetId(['tenant_id' => $tenantId, 'nama' => 'DRIVER TERKUNCI', 'created_at' => now()]);
+        $availableDriver = DB::table('drivers')->insertGetId(['tenant_id' => $tenantId, 'nama' => 'DRIVER TERSEDIA', 'created_at' => now()]);
+        $blockedArmada = DB::table('armadas')->insertGetId(['tenant_id' => $tenantId, 'nopol' => 'DD 1111 AA', 'created_at' => now()]);
+        $availableArmada = DB::table('armadas')->insertGetId(['tenant_id' => $tenantId, 'nopol' => 'DD 2222 BB', 'created_at' => now()]);
+        $assignmentId = DB::table('trip_assignments')->insertGetId([
+            'tenant_id' => $tenantId, 'rute' => 'RUTE LAMA', 'tanggal' => now()->subDay()->toDateString(),
+            'jam' => '08:00:00', 'unit' => 1, 'driver_id' => $blockedDriver, 'armada_id' => $blockedArmada,
+            'armada_nopol' => 'DD 1111 AA', 'status' => 'departed', 'created_at' => now(),
+        ]);
+        DB::table('trip_assignments')->insert([
+            'tenant_id' => $tenantId, 'rute' => 'RUTE HARI INI', 'tanggal' => now()->toDateString(),
+            'jam' => '08:00:00', 'unit' => 1, 'driver_id' => $availableDriver, 'armada_id' => $availableArmada,
+            'armada_nopol' => 'DD 2222 BB', 'status' => 'departed', 'created_at' => now(),
+        ]);
+
+        $driverIds = array_column($this->getJson(route('api.admin.drivers.index', ['available_for_departure' => 1]))->assertOk()->json('drivers'), 'id');
+        $armadaIds = array_column($this->getJson(route('api.admin.armadas.index', ['available_for_departure' => 1]))->assertOk()->json('armadas'), 'id');
+        $this->assertNotContains($blockedDriver, $driverIds);
+        $this->assertContains($availableDriver, $driverIds);
+        $this->assertNotContains($blockedArmada, $armadaIds);
+        $this->assertContains($availableArmada, $armadaIds);
+
+        DB::table('trip_assignments')->where('id', $assignmentId)->update(['status' => 'closed']);
+        $this->assertContains($blockedDriver, array_column($this->getJson(route('api.admin.drivers.index', ['available_for_departure' => 1]))->assertOk()->json('drivers'), 'id'));
+        $this->assertContains($blockedArmada, array_column($this->getJson(route('api.admin.armadas.index', ['available_for_departure' => 1]))->assertOk()->json('armadas'), 'id'));
+    }
+
     public function test_private_subscription_entitlements_are_saved_and_cleared_by_api(): void
     {
         $this->actingAsSuperAdmin();

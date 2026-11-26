@@ -1641,6 +1641,9 @@ return '-';
                                                                 ></DropdownMenuTrigger
                                                             >
                                                             <DropdownMenuContent
+                                                                side="top"
+                                                                align="end"
+                                                                sideOffset={6}
                                                             >
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
@@ -2398,6 +2401,9 @@ return '-';
                                                                 ></DropdownMenuTrigger
                                                             >
                                                             <DropdownMenuContent
+                                                                side="top"
+                                                                align="end"
+                                                                sideOffset={6}
                                                             >
                                                                 <DropdownMenuItem
                                                                     onclick={() =>
@@ -3193,6 +3199,9 @@ return '-';
                                                                 ></DropdownMenuTrigger
                                                             >
                                                             <DropdownMenuContent
+                                                                side="top"
+                                                                align="end"
+                                                                sideOffset={6}
                                                             >
                                                                 {#if inv.gateway_checkout_url}
                                                                     <DropdownMenuItem

@@ -1203,6 +1203,14 @@ class BookingApiController extends Controller
             return $this->error('Manifest hanya bisa ditutup setelah armada tiba.', 422);
         }
 
+        if (! $this->departureHasRequiredAssignmentMeta($assignment)) {
+            return $this->error('Driver dan nomor polisi harus diisi sebelum manifest ditutup.', 422);
+        }
+
+        if (! ManifestLifecycle::activeBookingsArePaid($assignment)) {
+            return $this->error('Semua pembayaran penumpang aktif harus lunas sebelum manifest ditutup.', 422);
+        }
+
         $this->closeManifestAssignment(
             (int) $assignment->id,
             $routeName,

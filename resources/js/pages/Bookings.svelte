@@ -121,6 +121,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
         lunas: number;
         refund: number;
         belum_lunas: number;
+        active_unpaid: number;
         bop: number;
         departure_status?: string;
         departure_can_arrive?: boolean;
@@ -2818,7 +2819,7 @@ return;
             return false;
         }
 
-        return isArrivedDeparture(group);
+        return isArrivedDeparture(group) && hasRequiredDepartureAssignmentMeta(group) && group.active_unpaid === 0;
     };
     const canMarkDepartureDeparted = (
         group: BookingGroup | null | undefined,
@@ -3815,6 +3816,7 @@ clearTimeout(bookingListReloadTimer);
             lunas,
             refund,
             belum_lunas: belumLunas,
+            active_unpaid: group.bookings.filter((row) => !isCanceledBooking(row.status) && !isLunasPayment(row.pembayaran)).length,
         };
     };
 
@@ -4950,6 +4952,7 @@ clearTimeout(bookingListReloadTimer);
         try {
             const json = await apiGet('/api/admin/armadas', {
                 q: query.trim(),
+                ...(quickDriverOpen ? { available_for_departure: 1 } : {}),
             });
             const armadaRows = Array.isArray(json.armadas) ? json.armadas : [];
             groupArmadas = armadaRows
@@ -5129,7 +5132,7 @@ clearTimeout(bookingListReloadTimer);
 
         try {
             const [driverJson, assignmentJson] = await Promise.all([
-                apiGet('/api/admin/drivers', {}),
+                apiGet('/api/admin/drivers', quickDriverOpen ? { available_for_departure: 1 } : {}),
                 apiGet('/api/admin/assignments', {
                     rute: group.rute,
                     tanggal: group.tanggal,
@@ -5710,6 +5713,10 @@ throw new Error('Detail keberangkatan gagal dimuat.');
 
     const saveQuickDriver = async () => {
         formError = '';
+        if (groupArmadaSearch.trim() !== '' && groupArmadaSelectedId === '0') {
+            formError = 'Pilih nomor polisi dari daftar armada yang tersedia.';
+            return;
+        }
         await saveGroupDriverMapping();
         if (!groupMappingEditMode && !formError) {
             quickDriverOpen = false;
@@ -8563,7 +8570,7 @@ return;
                                         <span class="block font-medium">{driver.nama}</span><span class="block text-xs text-muted-foreground">{driver.phone || 'Driver aktif'}</span>
                                     </button>
                                 {:else}
-                                    <p class="px-3 py-2 text-sm text-muted-foreground">Driver tidak ditemukan.</p>
+                                    <p class="px-3 py-2 text-sm text-muted-foreground">Driver tidak ditemukan atau masih memiliki manifest yang belum ditutup.</p>
                                 {/each}
                             </div>
                         {/if}
@@ -8581,7 +8588,7 @@ return;
                                             <span class="block font-medium">{armada.nopol}</span><span class="block text-xs text-muted-foreground">{[armada.merk, armada.kategori].filter(Boolean).join(' · ') || 'Armada aktif'}</span>
                                         </button>
                                     {:else}
-                                        <p class="px-3 py-2 text-sm text-muted-foreground">Armada tidak ditemukan.</p>
+                                        <p class="px-3 py-2 text-sm text-muted-foreground">Armada tidak ditemukan atau masih memiliki manifest yang belum ditutup.</p>
                                     {/each}
                                 {/if}
                             </div>
@@ -8667,7 +8674,7 @@ return;
                             {:else if isManifestClosed(openGroupDetail)}
                                 <Badge
                                     variant="outline"
-                                    class="rounded border-slate-300 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                    class="rounded border-rose-300 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 dark:border-rose-500/40 dark:bg-rose-950/25 dark:text-rose-200"
                                 >
                                     Manifest Close
                                 </Badge>
@@ -8728,7 +8735,7 @@ return;
                                 Salin data
                             </Button>
                         {/if}
-                        {#if isArrivedDeparture(openGroupDetail) && !isManifestLocked(openGroupDetail)}
+                        {#if canCloseManifest(openGroupDetail)}
                             <Button
                                 type="button"
                                 size="sm"
@@ -11042,7 +11049,7 @@ return;
                                                                                 {:else if isManifestClosed(group)}
                                                                                     <Badge
                                                                                         variant="outline"
-                                                                                        class="rounded border-slate-300 bg-slate-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                                                                        class="rounded border-rose-300 bg-rose-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-rose-700 dark:border-rose-500/40 dark:bg-rose-950/25 dark:text-rose-200"
                                                                                     >
                                                                                         Manifest
                                                                                         Close
@@ -11226,18 +11233,13 @@ return;
                                                                         <div
                                                                             class="flex items-center justify-end gap-1"
                                                                         >
-                                                                            <Button
-                                                                                type="button"
-                                                                                size="sm"
-                                                                                variant="outline"
-                                                                                class="h-9 rounded-md px-3 text-xs font-medium"
-                                                                                onclick={() =>
-                                                                                    navigateToGroupDetail(
-                                                                                        group,
-                                                                                    )}
-                                                                            >
-                                                                                Detail
-                                                                            </Button>
+                                                                            {#if canMarkDepartureDeparted(group)}
+                                                                                <Button type="button" size="sm" class="h-9 shrink-0 bg-amber-600 px-3 text-xs text-white hover:bg-amber-700" disabled={cancelingDepartureKey === group.key} onclick={() => void markDepartureDeparted(group)}>{cancelingDepartureKey === group.key ? 'Memproses...' : 'Berangkat'}</Button>
+                                                                            {:else if canMarkDepartureArrived(group)}
+                                                                                <Button type="button" size="sm" class="h-9 shrink-0 bg-emerald-600 px-3 text-xs text-white hover:bg-emerald-700" disabled={cancelingDepartureKey === group.key} onclick={() => void markDepartureArrived(group)}>{cancelingDepartureKey === group.key ? 'Memproses...' : 'Tiba'}</Button>
+                                                                            {:else}
+                                                                                <Button type="button" size="sm" variant="outline" class="h-9 shrink-0 px-3 text-xs" onclick={() => navigateToGroupDetail(group)}>Detail</Button>
+                                                                            {/if}
                                                                             <DropdownMenu
                                                                             >
                                                                                 <DropdownMenuTrigger
@@ -11268,6 +11270,7 @@ return;
                                                                                 </DropdownMenuTrigger>
                                                                                 <DropdownMenuContent
                                                                                     align="end"
+                                                                                    side="top"
                                                                                     sideOffset={6}
                                                                                     class="z-[120] w-44 text-xs md:text-[11px] shadow-lg"
                                                                                 >
@@ -11302,35 +11305,7 @@ return;
                                                                                         Print
                                                                                         Manifest
                                                                                     </DropdownMenuItem>
-                                                                                    {#if canMarkDepartureDeparted(group)}
-                                                                                        <DropdownMenuItem
-                                                                                            disabled={cancelingDepartureKey === group.key}
-                                                                                            onclick={() =>
-                                                                                                void markDepartureDeparted(
-                                                                                                    group,
-                                                                                                )}
-                                                                                        >
-                                                                                            {cancelingDepartureKey ===
-                                                                                            group.key
-                                                                                                ? 'Memproses...'
-                                                                                                : 'Armada Sudah Berangkat'}
-                                                                                        </DropdownMenuItem>
-                                                                                    {/if}
-                                                                                    {#if canMarkDepartureArrived(group)}
-                                                                                        <DropdownMenuItem
-                                                                                            disabled={cancelingDepartureKey === group.key}
-                                                                                            onclick={() =>
-                                                                                                void markDepartureArrived(
-                                                                                                    group,
-                                                                                                )}
-                                                                                        >
-                                                                                            {cancelingDepartureKey ===
-                                                                                            group.key
-                                                                                                ? 'Memproses...'
-                                                                                                : 'Armada Sudah Tiba'}
-                                                                                        </DropdownMenuItem>
-                                                                                    {/if}
-                                                                                    {#if isArrivedDeparture(group) && !isManifestLocked(group)}
+                                                                                    {#if canCloseManifest(group)}
                                                                                         <DropdownMenuItem
                                                                                             class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
                                                                                             onclick={() =>
@@ -11440,7 +11415,7 @@ return;
                                                     {:else if isManifestClosed(group)}
                                                         <Badge
                                                             variant="outline"
-                                                            class="rounded border-slate-300 bg-slate-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-slate-700 dark:border-slate-600 dark:bg-slate-900 dark:text-slate-200"
+                                                            class="rounded border-rose-300 bg-rose-50 px-1.5 py-0 text-xs md:text-[10px] font-medium text-rose-700 dark:border-rose-500/40 dark:bg-rose-950/25 dark:text-rose-200"
                                                         >
                                                             Manifest Close
                                                         </Badge>
@@ -11549,7 +11524,7 @@ return;
                                                                 : 'Armada Sudah Tiba'}
                                                         </DropdownMenuItem>
                                                     {/if}
-                                                    {#if isArrivedDeparture(group) && !isManifestLocked(group)}
+                                                    {#if canCloseManifest(group)}
                                                         <DropdownMenuItem
                                                             class="text-rose-600 hover:bg-rose-50 hover:text-rose-700 dark:text-rose-300 dark:hover:bg-rose-950/30 dark:hover:text-rose-200"
                                                             onclick={() =>

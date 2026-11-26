@@ -1053,6 +1053,21 @@ class BookingApiTest extends TestCase
             'updated_at' => now(),
         ]);
 
+        $closePayload = ['rute' => 'PINRANG - MAKASSAR', 'tanggal' => '2026-05-15', 'jam' => '09:00', 'unit' => 1];
+        $this->postJson(route('api.bookings.close-manifest'), $closePayload)
+            ->assertStatus(422)->assertJsonPath('error', 'Semua pembayaran penumpang aktif harus lunas sebelum manifest ditutup.');
+        DB::table('trip_assignments')->where('id', $assignmentId)->update(['driver_id' => null]);
+        $this->postJson(route('api.bookings.close-manifest'), $closePayload)
+            ->assertStatus(422)->assertJsonPath('error', 'Driver dan nomor polisi harus diisi sebelum manifest ditutup.');
+        DB::table('trip_assignments')->where('id', $assignmentId)->update(['driver_id' => $driverId, 'armada_nopol' => null]);
+        $this->postJson(route('api.bookings.close-manifest'), $closePayload)
+            ->assertStatus(422)->assertJsonPath('error', 'Driver dan nomor polisi harus diisi sebelum manifest ditutup.');
+        DB::table('trip_assignments')->where('id', $assignmentId)->update(['armada_nopol' => 'DD 9999 ZZ', 'status' => 'departed']);
+        $this->postJson(route('api.bookings.close-manifest'), $closePayload)
+            ->assertStatus(422)->assertJsonPath('error', 'Manifest hanya bisa ditutup setelah armada tiba.');
+        DB::table('trip_assignments')->where('id', $assignmentId)->update(['status' => 'arrived']);
+        DB::table('bookings')->where('id', $bookingId)->update(['pembayaran' => 'Lunas']);
+
         $closeResponse = $this->postJson(route('api.bookings.close-manifest'), [
             'rute' => 'PINRANG - MAKASSAR',
             'tanggal' => '2026-05-15',
@@ -1240,13 +1255,18 @@ class BookingApiTest extends TestCase
 
         Carbon::setTestNow(Carbon::create(2026, 5, 17, 11, 0, 0));
         try {
-            foreach ([1, 2, 3] as $unit) {
+            $driverId = DB::table('drivers')->insertGetId([
+                'tenant_id' => $tenantId, 'nama' => 'DRIVER AUTO CLOSE', 'created_at' => now(),
+            ]);
+            foreach ([1, 2, 3, 4] as $unit) {
                 DB::table('trip_assignments')->insert([
                     'tenant_id' => $tenantId,
                     'rute' => 'PINRANG - MAKASSAR',
                     'tanggal' => '2026-05-16',
                     'jam' => '10:00:00',
                     'unit' => $unit,
+                    'driver_id' => $unit === 4 ? null : $driverId,
+                    'armada_nopol' => 'DD 1234 AB',
                     'status' => $unit === 3 ? 'departed' : 'arrived',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -1257,6 +1277,7 @@ class BookingApiTest extends TestCase
                 [1, 'Lunas'],
                 [2, 'Belum Lunas'],
                 [3, 'Lunas'],
+                [4, 'Lunas'],
             ] as [$unit, $payment]) {
                 DB::table('bookings')->insert([
                     'tenant_id' => $tenantId,
@@ -1288,6 +1309,10 @@ class BookingApiTest extends TestCase
             $this->assertDatabaseHas('trip_assignments', [
                 'unit' => 3,
                 'status' => 'departed',
+            ]);
+            $this->assertDatabaseHas('trip_assignments', [
+                'unit' => 4,
+                'status' => 'arrived',
             ]);
         } finally {
             Carbon::setTestNow();
