@@ -353,18 +353,15 @@ return;
                         <span>OptiBus</span>
                     </div>
                     <div
-                        class="hero-product relative mx-auto mt-7 w-full max-w-[290px] sm:mt-8 sm:max-w-[470px] lg:max-w-[500px]"
+                        class="hero-product relative mx-auto mt-7 w-full max-w-[340px] sm:mt-8 sm:max-w-[520px] lg:max-w-[560px]"
                     >
-                        <img
-                            src="/landing/iPhone 12 Pro (Wooden Hands).webp"
-                            alt="Mockup aplikasi OptiBus di iPhone saat memilih kursi perjalanan"
-                            width="3000"
-                            height="2250"
-                            loading="eager"
-                            decoding="async"
-                            fetchpriority="high"
-                            class="product-shot relative z-10 h-auto w-full object-contain"
-                        />
+                        <div class="desktop-mockup relative z-10 overflow-hidden rounded-[18px] bg-white">
+                            <div class="desktop-mockup__bar" aria-hidden="true"><span></span><span></span><span></span><p>optibus.app / dashboard</p></div>
+                            <img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dalam mockup desktop" width="1920" height="827" loading="eager" decoding="async" fetchpriority="high" class="product-shot block h-auto w-full" />
+                        </div>
+                        <div class="hero-phone absolute -right-3 -bottom-8 z-20 hidden overflow-hidden rounded-[22px] bg-white p-1.5 sm:block">
+                            <img src="/landing/booking-mobile.png" alt="Peta kursi OptiBus pada ponsel" width="317" height="689" loading="eager" decoding="async" class="block h-auto w-full rounded-[16px]" />
+                        </div>
                     </div>
                 </div>
             </div>
@@ -493,7 +490,7 @@ return;
         <section class="border-b border-[#DCE9E6] bg-[#F1F8F5]">
             <div class="mx-auto grid max-w-7xl items-center gap-10 px-4 py-14 sm:px-6 sm:py-20 lg:grid-cols-[1fr_1fr] lg:px-10">
                 <div><p class="text-xs font-bold uppercase tracking-[0.18em] text-[#087F79]">Booking dari ponsel</p><h2 class="mt-4 max-w-xl text-3xl font-medium leading-tight tracking-tight text-[#163A39] sm:text-4xl">Peta kursi dan pesanan dalam genggaman.</h2><p class="mt-4 max-w-lg text-sm leading-7 text-[#42635f]">Lihat kursi yang tersedia, pilih tempat duduk, dan lanjutkan pengisian data penumpang dari ponsel.</p></div>
-                <figure class="flex justify-center rounded-3xl border border-[#c8e5da] bg-white p-5 sm:p-8"><img src="/landing/booking-mobile.png" alt="Tampilan peta kursi dan rekap booking OptiBus pada ponsel" width="317" height="689" loading="lazy" decoding="async" class="h-auto w-full max-w-[280px] rounded-xl border border-[#DCE9E6] shadow-lg" /></figure>
+                <figure class="mobile-mockup-stage flex justify-center rounded-3xl border border-[#c8e5da] bg-white p-6 sm:p-10"><div class="phone-mockup"><div class="phone-mockup__speaker" aria-hidden="true"></div><img src="/landing/booking-mobile.png" alt="Tampilan peta kursi dan rekap booking OptiBus pada ponsel" width="317" height="689" loading="lazy" decoding="async" class="block h-auto w-full rounded-[1.45rem]" /></div></figure>
             </div>
         </section>
 
@@ -502,9 +499,9 @@ return;
                 <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#087F79]">Lihat OptiBus bekerja</p>
                 <h2 class="mt-4 max-w-2xl text-3xl font-medium leading-tight tracking-tight text-[#163A39] sm:text-4xl">Informasi perjalanan, siap dilihat tim Anda.</h2>
                 <div class="mt-8 grid gap-6 lg:grid-cols-2">
-                    <figure class="overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><img src="/landing/keberangkatan-desktop.png" alt="Tabel data keberangkatan, driver, armada, dan status pembayaran di OptiBus" width="1920" height="827" loading="lazy" decoding="async" class="h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Pantau keberangkatan dan manifest</figcaption></figure>
-                    <figure class="overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><img src="/landing/booking-desktop.png" alt="Form booking dan peta kursi OptiBus di komputer" width="1920" height="827" loading="lazy" decoding="async" class="h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Catat booking dan pilih kursi</figcaption></figure>
-                    <figure class="overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9] lg:col-span-2"><img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dengan grafik pendapatan dan ringkasan layanan" width="1920" height="827" loading="lazy" decoding="async" class="h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Lihat perkembangan pendapatan</figcaption></figure>
+                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Keberangkatan</p></div><img src="/landing/keberangkatan-desktop.png" alt="Tabel data keberangkatan, driver, armada, dan status pembayaran di OptiBus" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Pantau keberangkatan dan manifest</figcaption></figure>
+                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Booking</p></div><img src="/landing/booking-desktop.png" alt="Form booking dan peta kursi OptiBus di komputer" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Catat booking dan pilih kursi</figcaption></figure>
+                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9] lg:col-span-2"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Dashboard operasional</p></div><img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dengan grafik pendapatan dan ringkasan layanan" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Lihat perkembangan pendapatan</figcaption></figure>
                 </div>
             </div>
         </section>
@@ -739,6 +736,100 @@ return;
         scroll-margin-top: 6rem;
     }
 
+    .desktop-mockup {
+        border: 1px solid oklch(0 0 0 / 0.1);
+        box-shadow:
+            0 1px 2px oklch(0 0 0 / 0.08),
+            0 20px 44px oklch(0.22 0.04 175 / 0.2);
+    }
+
+    .desktop-mockup__bar,
+    .screen-chrome {
+        display: flex;
+        align-items: center;
+        gap: 0.32rem;
+        height: 1.75rem;
+        padding: 0 0.72rem;
+        background: #f4f7f6;
+        border-bottom: 1px solid #dce9e6;
+    }
+
+    .desktop-mockup__bar span,
+    .screen-chrome span {
+        width: 0.42rem;
+        height: 0.42rem;
+        border-radius: 999px;
+        background: #afc9c3;
+    }
+
+    .desktop-mockup__bar span:first-child,
+    .screen-chrome span:first-child {
+        background: #55e8b4;
+    }
+
+    .desktop-mockup__bar p,
+    .screen-chrome p {
+        margin-left: 0.4rem;
+        overflow: hidden;
+        color: #42635f;
+        font-size: 0.58rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-overflow: ellipsis;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .hero-phone {
+        width: clamp(5.8rem, 18%, 7.4rem);
+        border: 1px solid oklch(0 0 0 / 0.1);
+        box-shadow:
+            0 1px 2px oklch(0 0 0 / 0.1),
+            0 16px 30px oklch(0.22 0.04 175 / 0.22);
+        transform: rotate(5deg);
+    }
+
+    .mobile-mockup-stage {
+        background-image: radial-gradient(circle at 50% 26%, #e7faf3, transparent 62%);
+    }
+
+    .phone-mockup {
+        position: relative;
+        width: min(100%, 18.5rem);
+        padding: 0.48rem;
+        border: 1px solid oklch(0 0 0 / 0.1);
+        border-radius: 2rem;
+        background: #163a39;
+        box-shadow:
+            0 1px 2px oklch(0 0 0 / 0.1),
+            0 22px 42px oklch(0.22 0.04 175 / 0.2);
+    }
+
+    .phone-mockup__speaker {
+        position: absolute;
+        top: 0.78rem;
+        left: 50%;
+        z-index: 1;
+        width: 4rem;
+        height: 1.15rem;
+        border-radius: 999px;
+        background: #163a39;
+        transform: translateX(-50%);
+    }
+
+    .screenshot-card {
+        border-color: transparent;
+        box-shadow:
+            0 1px 2px oklch(0 0 0 / 0.06),
+            0 12px 28px oklch(0.22 0.04 175 / 0.1);
+    }
+
+    .screenshot-image {
+        outline: 1px solid oklch(0 0 0 / 0.1);
+        outline-offset: -1px;
+        filter: contrast(1.025) saturate(1.04);
+    }
+
     @media (prefers-reduced-motion: no-preference) {
         .hero-copy > * {
             animation: hero-arrive 560ms cubic-bezier(0.22, 1, 0.36, 1)
@@ -801,7 +892,7 @@ return;
                 transform: translateX(3px);
             }
             .hero-product:hover .product-shot {
-                transform: scale(1.025) rotate(-0.5deg);
+                transform: scale(1.015);
             }
             .plan-panel:hover,
             .plan-panel:focus-within {
