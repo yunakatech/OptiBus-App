@@ -625,7 +625,7 @@
             </div>
 
             {#if reportRows.length > 0}
-                <div class="table-container max-h-[70vh]">
+                <div class="report-table min-w-0 overflow-x-auto">
                     {#if reportSummary.type === 'booking'}
                         <ViewportOnly minWidth={0} maxWidth={767}
                             ><div class="grid gap-3 p-3 md:hidden">
@@ -743,9 +743,7 @@
                             </div></ViewportOnly
                         >
                         <table class="hidden w-full text-sm md:table">
-                            <thead
-                                class="sticky top-0 z-10 bg-background/95 backdrop-blur"
-                            >
+                            <thead class="bg-background/95">
                                 <tr
                                     class="border-b border-border/70 text-xs md:text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
@@ -997,9 +995,7 @@
                             </div></ViewportOnly
                         >
                         <table class="hidden w-full text-sm md:table">
-                            <thead
-                                class="sticky top-0 z-10 bg-background/95 backdrop-blur"
-                            >
+                            <thead class="bg-background/95">
                                 <tr
                                     class="border-b border-border/70 text-xs md:text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
@@ -1243,9 +1239,7 @@
                             </div></ViewportOnly
                         >
                         <table class="hidden w-full text-sm md:table">
-                            <thead
-                                class="sticky top-0 z-10 bg-background/95 backdrop-blur"
-                            >
+                            <thead class="bg-background/95">
                                 <tr
                                     class="border-b border-border/70 text-xs md:text-[11px] uppercase tracking-[0.12em] text-muted-foreground"
                                 >
@@ -1363,7 +1357,7 @@
                     {/if}
                 </div>
                 <div
-                    class="flex flex-col gap-3 border-t border-border/70 px-5 py-4 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-6"
+                    class="flex min-w-0 flex-col gap-3 border-t border-border/70 px-4 py-3 text-xs text-muted-foreground sm:flex-row sm:flex-wrap sm:items-center sm:justify-between md:px-6"
                 >
                     <span>
                         Menampilkan halaman {reportMeta.page} dari
@@ -1372,7 +1366,7 @@
                     </span>
                     <div
                         class:mobile-pagination={true}
-                        class="flex items-center gap-2"
+                        class="flex min-w-0 flex-wrap items-center gap-2"
                     >
                         <Button
                             type="button"
@@ -1429,3 +1423,37 @@
         </div>
     {/if}
 </div>
+
+<style>
+    @media (min-width: 768px) {
+        .report-table :global(table) {
+            min-width: 48rem;
+            border-collapse: collapse;
+        }
+
+        .report-table :global(th) {
+            padding: 0.65rem 0.8rem;
+            font-size: 1rem;
+            line-height: 1.3;
+            letter-spacing: 0.04em;
+        }
+
+        .report-table :global(td) {
+            padding: 0.65rem 0.8rem;
+            font-size: 1.05rem;
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+        }
+
+        .report-table :global(td > div + div) {
+            margin-top: 0.15rem;
+        }
+
+        .report-table :global(td span[class*='rounded-full']) {
+            padding: 0.15rem 0.5rem;
+            font-size: 1rem;
+            line-height: 1.3;
+            white-space: nowrap;
+        }
+    }
+</style>
