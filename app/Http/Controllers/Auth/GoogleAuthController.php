@@ -27,6 +27,8 @@ class GoogleAuthController extends Controller
      */
     public function redirect(Request $request)
     {
+        $request->session()->forget(['google_invitation_token', 'google_registration']);
+
         if ($request->filled('invite')) {
             session(['google_invitation_token' => trim((string) $request->query('invite'))]);
         }
@@ -34,6 +36,7 @@ class GoogleAuthController extends Controller
         $intent = trim((string) $request->query('intent', ''));
         $plan = trim((string) $request->query('plan', ''));
         if ($intent !== '' || $plan !== '') {
+            $request->session()->put('google_registration', true);
             if ($intent === 'payment') {
                 $intent = 'paid';
             }
@@ -74,6 +77,11 @@ class GoogleAuthController extends Controller
         $name = $googleUser->getName() ?? $googleUser->getNickname() ?? 'Google User';
         $avatar = $googleUser->getAvatar();
         $inviteToken = (string) $request->session()->pull('google_invitation_token', '');
+        $isRegistration = (bool) $request->session()->pull('google_registration', false);
+
+        if (! is_string($email) || trim($email) === '') {
+            return redirect()->route('login')->with('status', 'Akun Google tidak memiliki alamat email. Silakan gunakan akun lain.');
+        }
 
         $invitationResult = $this->tenantInvitationService->consumeForGoogle($email, $name, $avatar, $inviteToken);
         if (($invitationResult['status'] ?? '') === 'consumed' && $invitationResult['user'] instanceof User) {
@@ -98,6 +106,12 @@ class GoogleAuthController extends Controller
         // Find or create user
         $user = User::where('email', $email)->first();
         $isNewUser = ! $user;
+
+        if ($isNewUser && ! $isRegistration) {
+            $request->session()->forget(['registration_intent', 'registration_plan']);
+
+            return redirect()->route('login')->with('status', 'Email Google ini belum terdaftar. Silakan daftar terlebih dahulu.');
+        }
 
         if ($isNewUser) {
             // New user — create account

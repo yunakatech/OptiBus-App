@@ -241,7 +241,7 @@ return;
                         : registerHref}
                     class="inline-flex h-10 items-center justify-center bg-[#087F79] px-4 text-xs font-semibold text-white transition-colors hover:bg-[#075B5B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087F79]"
                 >
-                    {isAuthenticated ? 'Dasbor' : 'Mulai'}
+                    {isAuthenticated ? 'Dasbor' : 'Daftar gratis'}
                 </a>
             </div>
         </div>
@@ -360,7 +360,7 @@ return;
                                 <div class="laptop-camera" aria-hidden="true"></div>
                                 <div class="desktop-mockup overflow-hidden bg-white">
                                     <div class="desktop-mockup__bar" aria-hidden="true"><span></span><span></span><span></span><p>optibus.app / dashboard</p></div>
-                                    <img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dalam mockup laptop" width="1920" height="827" loading="eager" decoding="async" fetchpriority="high" class="product-shot block h-auto w-full" />
+                                    <div class="screenshot-crop"><img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dalam mockup laptop" width="1920" height="827" loading="eager" decoding="async" fetchpriority="high" class="product-shot block h-auto" /></div>
                                 </div>
                             </div>
                             <div class="laptop-base" aria-hidden="true"></div>
@@ -506,9 +506,9 @@ return;
                 <p class="text-xs font-bold uppercase tracking-[0.18em] text-[#087F79]">Lihat OptiBus bekerja</p>
                 <h2 class="mt-4 max-w-2xl text-3xl font-medium leading-tight tracking-tight text-[#163A39] sm:text-4xl">Informasi perjalanan, siap dilihat tim Anda.</h2>
                 <div class="mt-8 grid gap-6 lg:grid-cols-2">
-                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Keberangkatan</p></div><img src="/landing/keberangkatan-desktop.png" alt="Tabel data keberangkatan, driver, armada, dan status pembayaran di OptiBus" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Pantau keberangkatan dan manifest</figcaption></figure>
-                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Booking</p></div><img src="/landing/booking-desktop.png" alt="Form booking dan peta kursi OptiBus di komputer" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Catat booking dan pilih kursi</figcaption></figure>
-                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9] lg:col-span-2"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Dashboard operasional</p></div><img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dengan grafik pendapatan dan ringkasan layanan" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto w-full" /><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Lihat perkembangan pendapatan</figcaption></figure>
+                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Keberangkatan</p></div><div class="screenshot-crop"><img src="/landing/keberangkatan-desktop.png" alt="Tabel data keberangkatan, driver, armada, dan status pembayaran di OptiBus" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto" /></div><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Pantau keberangkatan dan manifest</figcaption></figure>
+                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9]"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Booking</p></div><div class="screenshot-crop"><img src="/landing/booking-desktop.png" alt="Form booking dan peta kursi OptiBus di komputer" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto" /></div><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Catat booking dan pilih kursi</figcaption></figure>
+                    <figure class="screenshot-card overflow-hidden rounded-2xl border border-[#DCE9E6] bg-[#F7FAF9] lg:col-span-2"><div class="screen-chrome" aria-hidden="true"><span></span><span></span><span></span><p>Dashboard operasional</p></div><div class="screenshot-crop"><img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dengan grafik pendapatan dan ringkasan layanan" width="1920" height="827" loading="lazy" decoding="async" class="screenshot-image h-auto" /></div><figcaption class="px-5 py-4 text-sm font-semibold text-[#163A39]">Lihat perkembangan pendapatan</figcaption></figure>
                 </div>
             </div>
         </section>
@@ -876,6 +876,16 @@ return;
         box-shadow:
             0 1px 2px oklch(0 0 0 / 0.06),
             0 12px 28px oklch(0.22 0.04 175 / 0.1);
+    }
+
+    .screenshot-crop {
+        overflow: hidden;
+    }
+
+    .screenshot-crop img {
+        display: block;
+        width: 101.3%;
+        max-width: none;
     }
 
     .screenshot-image {
