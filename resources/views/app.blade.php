@@ -41,7 +41,7 @@
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link rel="manifest" href="/manifest.json?v=4">
         <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=4">
-        <link rel="apple-touch-icon" href="/apple-touch-icon-v2.png?v=4">
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v2.png?v=4">
 
         @fonts
 

@@ -355,11 +355,18 @@ return;
                     <div
                         class="hero-product relative mx-auto mt-7 w-full max-w-[340px] sm:mt-8 sm:max-w-[520px] lg:max-w-[560px]"
                     >
-                        <div class="desktop-mockup relative z-10 overflow-hidden rounded-[18px] bg-white">
-                            <div class="desktop-mockup__bar" aria-hidden="true"><span></span><span></span><span></span><p>optibus.app / dashboard</p></div>
-                            <img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dalam mockup desktop" width="1920" height="827" loading="eager" decoding="async" fetchpriority="high" class="product-shot block h-auto w-full" />
+                        <div class="laptop-mockup relative z-10">
+                            <div class="laptop-screen">
+                                <div class="laptop-camera" aria-hidden="true"></div>
+                                <div class="desktop-mockup overflow-hidden bg-white">
+                                    <div class="desktop-mockup__bar" aria-hidden="true"><span></span><span></span><span></span><p>optibus.app / dashboard</p></div>
+                                    <img src="/landing/dashboard-desktop.png" alt="Dashboard OptiBus dalam mockup laptop" width="1920" height="827" loading="eager" decoding="async" fetchpriority="high" class="product-shot block h-auto w-full" />
+                                </div>
+                            </div>
+                            <div class="laptop-base" aria-hidden="true"></div>
                         </div>
-                        <div class="hero-phone absolute -right-3 -bottom-8 z-20 hidden overflow-hidden rounded-[22px] bg-white p-1.5 sm:block">
+                        <div class="hero-phone absolute -right-2 -bottom-8 z-20 overflow-hidden rounded-[22px] p-1.5">
+                            <div class="hero-phone__speaker" aria-hidden="true"></div>
                             <img src="/landing/booking-mobile.png" alt="Peta kursi OptiBus pada ponsel" width="317" height="689" loading="eager" decoding="async" class="block h-auto w-full rounded-[16px]" />
                         </div>
                     </div>
@@ -736,11 +743,46 @@ return;
         scroll-margin-top: 6rem;
     }
 
+    .laptop-screen {
+        padding: 0.65rem 0.55rem 0.5rem;
+        border: 1px solid #405654;
+        border-radius: 14px 14px 4px 4px;
+        background: #1d3332;
+        box-shadow: 0 18px 36px oklch(0.22 0.04 175 / 0.18);
+    }
+
+    .laptop-camera {
+        width: 4px;
+        height: 4px;
+        margin: -0.38rem auto 0.25rem;
+        border-radius: 50%;
+        background: #829795;
+    }
+
+    .laptop-base {
+        position: relative;
+        width: 106%;
+        height: 0.65rem;
+        margin-left: -3%;
+        border-radius: 1px 1px 50% 50%;
+        background: linear-gradient(#d4e0dd, #8fa6a2);
+        box-shadow: 0 8px 12px oklch(0 0 0 / 0.12);
+    }
+
+    .laptop-base::after {
+        position: absolute;
+        top: 0;
+        left: 42%;
+        width: 16%;
+        height: 0.2rem;
+        border-radius: 0 0 5px 5px;
+        background: #94aaa6;
+        content: '';
+    }
+
     .desktop-mockup {
+        border-radius: 3px;
         border: 1px solid oklch(0 0 0 / 0.1);
-        box-shadow:
-            0 1px 2px oklch(0 0 0 / 0.08),
-            0 20px 44px oklch(0.22 0.04 175 / 0.2);
     }
 
     .desktop-mockup__bar,
@@ -781,12 +823,24 @@ return;
     }
 
     .hero-phone {
-        width: clamp(5.8rem, 18%, 7.4rem);
+        width: clamp(4.8rem, 22%, 7.4rem);
         border: 1px solid oklch(0 0 0 / 0.1);
+        background: #163a39;
         box-shadow:
             0 1px 2px oklch(0 0 0 / 0.1),
             0 16px 30px oklch(0.22 0.04 175 / 0.22);
         transform: rotate(5deg);
+    }
+
+    .hero-phone__speaker {
+        position: absolute;
+        top: 0.5rem;
+        left: 35%;
+        z-index: 1;
+        width: 30%;
+        height: 0.4rem;
+        border-radius: 999px;
+        background: #163a39;
     }
 
     .mobile-mockup-stage {
