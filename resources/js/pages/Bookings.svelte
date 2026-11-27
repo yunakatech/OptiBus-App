@@ -580,6 +580,15 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
     let bulkDepartureBusy = $state(false);
     let bulkDepartureResult = $state('');
     let bulkDepartureErrors = $state<string[]>([]);
+    let bulkActionOpen = $state(false);
+    let bulkAction = $state<'departed' | 'arrived' | 'closed' | 'paid' | 'unpaid' | ''>('');
+    const bulkActionOptions = [
+        { value: 'departed', label: 'Tandai berangkat' },
+        { value: 'arrived', label: 'Tandai tiba' },
+        { value: 'closed', label: 'Tutup manifest' },
+        { value: 'paid', label: 'Pembayaran lunas' },
+        { value: 'unpaid', label: 'Pembayaran belum lunas' },
+    ] as const;
 
     let routeError = $state('');
     let scheduleError = $state('');
@@ -2883,6 +2892,17 @@ return;
     };
     const toggleBulkDeparture = (key: string, checked: boolean) => {
         bulkDepartureKeys = checked ? [...new Set([...bulkDepartureKeys, key])] : bulkDepartureKeys.filter((item) => item !== key);
+    };
+    const submitBulkAction = () => {
+        if (!bulkAction || bulkDepartureBusy || bulkDepartureKeys.length === 0) return;
+        const action = bulkAction;
+        bulkActionOpen = false;
+        bulkAction = '';
+        if (action === 'paid' || action === 'unpaid') {
+            void runBulkPayment(action === 'paid' ? 'Lunas' : 'Belum Lunas');
+        } else {
+            void runBulkDeparture(action);
+        }
     };
     const runBulkDeparture = async (action: 'departed' | 'arrived' | 'closed') => {
         if (bulkDepartureBusy || tenantWriteDisabled || !hasPermission(grantedPermissions, 'booking.update')) return;
@@ -11058,13 +11078,30 @@ return;
                                     Pilih semua di halaman ini
                                 </label>
                                 <span class="text-sm text-muted-foreground">{bulkDepartureKeys.length} dipilih</span>
-                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkDeparture('departed')}>Tandai berangkat</Button>
-                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkDeparture('arrived')}>Tandai tiba</Button>
-                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkDeparture('closed')}>Tutup manifest</Button>
-                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkPayment('Lunas')}>Pembayaran lunas</Button>
-                                <Button type="button" variant="outline" size="sm" disabled={bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={() => void runBulkPayment('Belum Lunas')}>Pembayaran belum lunas</Button>
+                                {#if bulkDepartureKeys.length > 0}
+                                    <Button type="button" size="sm" class="bg-amber-400 text-amber-950 hover:bg-amber-500" disabled={bulkDepartureBusy} onclick={() => { bulkAction = ''; bulkActionOpen = true; }}>Action</Button>
+                                {/if}
                                 {#if bulkDepartureBusy}<span role="status" class="text-sm text-muted-foreground">Memproses...</span>{/if}
                             </div>
+                            <Dialog bind:open={bulkActionOpen}>
+                                <DialogContent class="sm:max-w-md">
+                                    <DialogTitle>Action keberangkatan</DialogTitle>
+                                    <DialogDescription>Pilih perubahan untuk {bulkDepartureKeys.length} keberangkatan yang dipilih di halaman ini. Keberangkatan yang tidak memenuhi syarat akan dilewati.</DialogDescription>
+                                    <fieldset class="mt-4 space-y-2" disabled={bulkDepartureBusy}>
+                                        <legend class="mb-2 text-sm font-semibold">Pilih perubahan</legend>
+                                        {#each bulkActionOptions as option (option.value)}
+                                            <label class="flex min-h-11 cursor-pointer items-center gap-3 rounded-md border border-border px-3 py-2 text-sm hover:bg-muted/50">
+                                                <input type="radio" name="bulk-departure-action" value={option.value} bind:group={bulkAction} class="h-4 w-4 accent-primary" />
+                                                {option.label}
+                                            </label>
+                                        {/each}
+                                    </fieldset>
+                                    <div class="mt-5 flex justify-end gap-2">
+                                        <Button type="button" variant="outline" onclick={() => { bulkActionOpen = false; }}>Batal</Button>
+                                        <Button type="button" disabled={!bulkAction || bulkDepartureBusy || bulkDepartureKeys.length === 0} onclick={submitBulkAction}>Terapkan perubahan</Button>
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                             <div aria-live="polite" class="mb-3 space-y-1 text-sm">
                                 {#if bulkDepartureResult}<p>{bulkDepartureResult}</p>{/if}
                                 {#each bulkDepartureErrors as error}<p class="text-destructive">{error}</p>{/each}

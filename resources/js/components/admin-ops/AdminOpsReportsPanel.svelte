@@ -162,16 +162,6 @@
         }
 
         if (
-            normalized.includes('lunas') ||
-            normalized.includes('done') ||
-            normalized.includes('arrived') ||
-            normalized.includes('delivered') ||
-            normalized.includes('tiba')
-        ) {
-            return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/35 dark:text-emerald-300';
-        }
-
-        if (
             normalized.includes('pending') ||
             normalized.includes('belum') ||
             normalized.includes('received') ||
@@ -179,6 +169,16 @@
             normalized.includes('diterima')
         ) {
             return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/35 dark:text-amber-300';
+        }
+
+        if (
+            normalized.includes('lunas') ||
+            normalized.includes('done') ||
+            normalized.includes('arrived') ||
+            normalized.includes('delivered') ||
+            normalized.includes('tiba')
+        ) {
+            return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/35 dark:text-emerald-300';
         }
 
         return 'border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-800 dark:bg-slate-900/35 dark:text-slate-300';
@@ -411,6 +411,7 @@
                         onclick={() =>
                             (reportFiltersExpanded = !reportFiltersExpanded)}
                         aria-expanded={reportFiltersExpanded}
+                        aria-controls="report-filters"
                     >
                         {reportFiltersExpanded
                             ? 'Sembunyikan Filter'
@@ -419,9 +420,10 @@
                 </div></ViewportOnly
             >
             <div
+                id="report-filters"
                 class={reportFiltersExpanded
-                    ? `grid gap-4 rounded-xl border p-4 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`
-                    : `hidden rounded-xl border p-4 md:grid md:gap-4 md:grid-cols-2 xl:grid-cols-3 ${resolvedMeta(reportSummary, reportType).subtleTone}`}
+                    ? 'grid grid-cols-1 gap-3 rounded-lg border border-border/70 bg-muted/10 p-4 sm:grid-cols-2 xl:grid-cols-3'
+                    : 'hidden rounded-lg border border-border/70 bg-muted/10 p-4 md:grid md:grid-cols-2 md:gap-3 xl:grid-cols-3'}
             >
                 <label class="flex min-w-0 flex-col gap-2">
                     <span
@@ -532,7 +534,7 @@
 
             {#if reportSummary}
                 <div
-                    class="grid gap-3 rounded-lg border border-border/70 bg-background/80 p-3 md:grid-cols-2 lg:grid-cols-4"
+                    class="grid gap-3 rounded-lg border border-border/70 bg-background/80 p-3 sm:grid-cols-2 lg:grid-cols-3"
                 >
                     <div class="rounded-lg bg-muted/20 px-4 py-3">
                         <p
@@ -541,7 +543,7 @@
                             Total Pendapatan
                         </p>
                         <p
-                            class="mt-2 text-2xl font-semibold tracking-tight tabular-nums"
+                            class="mt-1 text-lg font-semibold leading-snug tabular-nums"
                         >
                             {formatCurrency(reportSummary.revenue_total)}
                         </p>
@@ -561,7 +563,7 @@
                             Total BOP
                         </p>
                         <p
-                            class="mt-2 text-2xl font-semibold tracking-tight tabular-nums text-rose-700 dark:text-rose-300"
+                            class="mt-1 text-lg font-semibold leading-snug tabular-nums text-rose-700 dark:text-rose-300"
                         >
                             {formatCurrency(reportSummary.bop_total ?? 0)}
                         </p>
@@ -577,7 +579,7 @@
                             Margin
                         </p>
                         <p
-                            class={`mt-2 text-2xl font-semibold tracking-tight tabular-nums ${(reportSummary.margin_total ?? 0) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}
+                            class={`mt-1 text-lg font-semibold leading-snug tabular-nums ${(reportSummary.margin_total ?? 0) >= 0 ? 'text-emerald-700 dark:text-emerald-300' : 'text-rose-700 dark:text-rose-300'}`}
                         >
                             {formatCurrency(reportSummary.margin_total ?? 0)}
                         </p>
@@ -586,19 +588,6 @@
                         </p>
                     </div>
 
-                    <div class="rounded-lg bg-muted/20 px-4 py-3">
-                        <p
-                            class="text-xs md:text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"
-                        >
-                            Volume Data
-                        </p>
-                        <p class="mt-2 text-2xl font-semibold tracking-tight">
-                            {reportSummary.total_rows}
-                        </p>
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            {resolvedMeta(reportSummary, reportType).dataLabel}
-                        </p>
-                    </div>
                 </div>
             {/if}
         </div>
@@ -790,7 +779,7 @@
                                     >
                                 </tr>
                             </thead>
-                            <tbody class="text-[13px]">
+                            <tbody class="text-sm leading-normal">
                                 {#each asBookingRows(reportRows) as row (row.id)}
                                     <tr
                                         class="border-b border-border/60 align-top transition hover:bg-muted/15"
@@ -1044,7 +1033,7 @@
                                     >
                                 </tr>
                             </thead>
-                            <tbody class="text-[13px]">
+                            <tbody class="text-sm leading-normal">
                                 {#each asCharterRows(reportRows) as row (row.id)}
                                     <tr
                                         class="border-b border-border/60 align-top transition hover:bg-muted/15"
@@ -1290,7 +1279,7 @@
                                     >
                                 </tr>
                             </thead>
-                            <tbody class="text-[13px]">
+                            <tbody class="text-sm leading-normal">
                                 {#each asLuggageRows(reportRows) as row (row.id)}
                                     <tr
                                         class="border-b border-border/60 align-top transition hover:bg-muted/15"
