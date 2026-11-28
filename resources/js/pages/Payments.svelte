@@ -47,7 +47,7 @@
         consumeDataStale,
         markDataStale,
     } from '@/lib/data-invalidation';
-    import { loadFlatpickr  } from '@/lib/flatpickr';
+    import { loadFlatpickr, prepareMobileDateInput } from '@/lib/flatpickr';
 import type {FlatpickrInstance} from '@/lib/flatpickr';
 
     type StatusKey = 'unpaid' | 'dp' | 'paid';
@@ -372,6 +372,8 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
             'maxDate',
             from ? formatDateValue(addMonthsClamped(from, 3)) : null,
         );
+        if (dateFromPicker) prepareMobileDateInput(dateFromPicker);
+        if (dateToPicker) prepareMobileDateInput(dateToPicker);
     };
 
     const syncDatePickerValues = () => {
@@ -449,7 +451,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
         if (dateFromInput && !dateFromPicker) {
             dateFromPicker = flatpickr(dateFromInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 defaultDate: dateFrom || undefined,
                 onChange: (_selectedDates, dateStr) => {
                     dateFrom = dateStr || '';
@@ -461,7 +463,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
         if (dateToInput && !dateToPicker) {
             dateToPicker = flatpickr(dateToInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 defaultDate: dateTo || undefined,
                 onChange: (_selectedDates, dateStr) => {
                     dateTo = dateStr || '';

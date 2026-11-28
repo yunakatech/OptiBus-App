@@ -65,7 +65,7 @@
         formatCurrencyInput as formatSharedCurrencyInput,
         parseCurrencyInput as parseSharedCurrencyInput,
     } from '@/lib/currency';
-    import { loadFlatpickr } from '@/lib/flatpickr';
+    import { loadFlatpickr, prepareMobileDateInput } from '@/lib/flatpickr';
     import type { FlatpickrInstance } from '@/lib/flatpickr';
 
     type Stats = {
@@ -2824,7 +2824,7 @@
         if (reportFromInput && !reportFromPicker) {
             reportFromPicker = flatpickr(reportFromInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 defaultDate: reportFrom || today,
                 onChange: (_selectedDates, dateStr) => {
                     reportFrom = dateStr || today;
@@ -2835,7 +2835,7 @@
         if (reportToInput && !reportToPicker) {
             reportToPicker = flatpickr(reportToInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 defaultDate: reportTo || today,
                 onChange: (_selectedDates, dateStr) => {
                     reportTo = dateStr || today;

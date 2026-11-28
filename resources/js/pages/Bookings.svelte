@@ -78,7 +78,7 @@
         consumeDataStale,
         markDataStale,
     } from '@/lib/data-invalidation';
-    import { loadFlatpickr  } from '@/lib/flatpickr';
+    import { loadFlatpickr, prepareMobileDateInput } from '@/lib/flatpickr';
 import type {FlatpickrInstance} from '@/lib/flatpickr';
     import { readUiPreferences, saveUiPreferences } from '@/lib/ui-preferences';
     import { openExternal } from '@/lib/webview';
@@ -6678,7 +6678,7 @@ return;
                     minDate: 'today',
                     dateFormat: 'Y-m-d',
                     defaultDate: bookingDate,
-                    disableMobile: true,
+                    onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                     onChange: (_selectedDates, dateStr) => {
                         if (dateStr && dateStr !== bookingDate) {
                             bookingDate = dateStr;

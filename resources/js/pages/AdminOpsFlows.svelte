@@ -40,7 +40,7 @@
         consumeDataStale,
         markDataStale,
     } from '@/lib/data-invalidation';
-    import { loadFlatpickr  } from '@/lib/flatpickr';
+    import { loadFlatpickr, prepareMobileDateInput } from '@/lib/flatpickr';
 import type {FlatpickrInstance} from '@/lib/flatpickr';
 
     type TabName = 'charters' | 'luggages' | 'assignments' | 'export';
@@ -778,7 +778,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
 
         charterFilterDatePicker = flatpickr(charterFilterDateInput, {
             dateFormat: 'Y-m-d',
-            disableMobile: true,
+            onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
             defaultDate: filterFrom || undefined,
             onChange: (selectedDates, dateStr) => {
                 if (selectedDates.length === 0 || dateStr.trim() === '') {
@@ -811,7 +811,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
 
         luggageFilterDatePicker = flatpickr(luggageFilterDateInput, {
             dateFormat: 'Y-m-d',
-            disableMobile: true,
+            onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
             defaultDate: filterFrom || undefined,
             onChange: (selectedDates, dateStr) => {
                 if (selectedDates.length === 0 || dateStr.trim() === '') {
@@ -844,7 +844,7 @@ import type {FlatpickrInstance} from '@/lib/flatpickr';
 
         luggageDatePicker = flatpickr(luggageDateInput, {
             dateFormat: 'Y-m-d',
-            disableMobile: true,
+            onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
             defaultDate: luggageForm.tanggal || today,
             onChange: (_selectedDates, dateStr) => {
                 luggageForm.tanggal = dateStr || today;
@@ -866,7 +866,7 @@ return;
         if (assignmentDateInput && !assignmentDatePicker) {
             assignmentDatePicker = flatpickr(assignmentDateInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 defaultDate: assignmentForm.tanggal || today,
                 onChange: (_selectedDates, dateStr) => {
                     assignmentForm.tanggal = dateStr || today;
@@ -903,7 +903,7 @@ return;
         if (exportFromDateInput && !exportFromDatePicker) {
             exportFromDatePicker = flatpickr(exportFromDateInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 defaultDate: filterFrom || undefined,
                 onChange: (_selectedDates, dateStr) => {
                     filterFrom = dateStr || '';
@@ -914,7 +914,7 @@ return;
         if (exportToDateInput && !exportToDatePicker) {
             exportToDatePicker = flatpickr(exportToDateInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 defaultDate: filterTo || undefined,
                 onChange: (_selectedDates, dateStr) => {
                     filterTo = dateStr || '';
@@ -941,7 +941,7 @@ return;
         if (charterStartDateInput && !charterStartDatePicker) {
             charterStartDatePicker = flatpickr(charterStartDateInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 minDate: today,
                 defaultDate: charterForm.start_date || today,
                 onChange: (_selectedDates, dateStr) => {
@@ -950,6 +950,7 @@ return;
                         'minDate',
                         charterForm.start_date || today,
                     );
+                    if (charterEndDatePicker) prepareMobileDateInput(charterEndDatePicker);
 
                     if (
                         !charterForm.end_date ||
@@ -969,7 +970,7 @@ return;
         if (charterEndDateInput && !charterEndDatePicker) {
             charterEndDatePicker = flatpickr(charterEndDateInput, {
                 dateFormat: 'Y-m-d',
-                disableMobile: true,
+                onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                 minDate: charterForm.start_date || today,
                 defaultDate: charterForm.end_date || today,
                 onChange: (_selectedDates, dateStr) => {
@@ -997,6 +998,8 @@ return;
     const syncCharterPickerValues = () => {
         charterStartDatePicker?.set('minDate', today);
         charterEndDatePicker?.set('minDate', charterForm.start_date || today);
+        if (charterStartDatePicker) prepareMobileDateInput(charterStartDatePicker);
+        if (charterEndDatePicker) prepareMobileDateInput(charterEndDatePicker);
         charterStartDatePicker?.setDate(
             charterForm.start_date || today,
             false,

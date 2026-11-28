@@ -19,7 +19,7 @@
     import { onMount, tick } from 'svelte';
     import ExternalLinkFallback from '@/components/ExternalLinkFallback.svelte';
     import NavigationMetrics from '@/components/NavigationMetrics.svelte';
-    import { loadFlatpickr } from '@/lib/flatpickr';
+    import { loadFlatpickr, prepareMobileDateInput } from '@/lib/flatpickr';
     import type { FlatpickrInstance } from '@/lib/flatpickr';
     import { overlay } from '@/lib/mobile-overlay';
     import { measureBar, registerBackHandler } from '@/lib/mobile-runtime';
@@ -238,7 +238,7 @@
                     defaultDate: dateValue || dateMin,
                     minDate: dateMin,
                     maxDate: dateMax,
-                    disableMobile: true,
+                    onReady: (_dates, _value, picker) => prepareMobileDateInput(picker),
                     onChange: (_selectedDates, dateStr) => {
                         changeDate(dateStr || dateMin);
                     },
