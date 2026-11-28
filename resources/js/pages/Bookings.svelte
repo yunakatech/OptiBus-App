@@ -6789,17 +6789,18 @@ return;
                     </div>
                 </CardHeader>
             {/if}
-            <CardContent class="space-y-5 p-4 md:p-5">
+            <CardContent class="booking-console-fields space-y-4 p-3 sm:p-4 md:p-5">
                 <ViewportOnly minWidth={0} maxWidth={767}
-                    ><div class="space-y-3 md:hidden">
+                    ><div class="space-y-2 md:hidden">
                         <div
-                            class="rounded-lg border border-cyan-200/70 bg-cyan-50/70 p-3 shadow-sm dark:border-cyan-900/60 dark:bg-cyan-950/20"
+                            class="rounded-lg border border-border bg-muted/20 p-2"
                         >
                             <div class="grid grid-cols-3 gap-1.5">
                                 {#each mobileStepItems as item (item.step)}
                                     <button
                                         type="button"
-                                        class={`rounded-xl border px-2 py-2 text-center transition ${mobileBookingStep === item.step ? 'border-primary bg-primary text-primary-foreground shadow-sm' : mobileBookingStep > item.step ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-border bg-background text-muted-foreground'}`}
+                                        class={`flex min-h-11 items-center justify-center gap-1.5 rounded-md border px-2 py-1.5 text-center transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${mobileBookingStep === item.step ? 'border-primary bg-primary text-primary-foreground' : mobileBookingStep > item.step ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200' : 'border-border bg-background text-muted-foreground'}`}
+                                        aria-current={mobileBookingStep === item.step ? 'step' : undefined}
                                         onclick={() => {
                                             if (item.step === 1) {
                                                 mobileBookingStep = 1;
@@ -6811,26 +6812,24 @@ return;
                                         }}
                                     >
                                         <span
-                                            class="block text-xs md:text-[10px] font-black uppercase tracking-wide"
-                                            >Tab {item.step}</span
+                                            class="text-xs font-semibold tabular-nums"
+                                            >{item.step}.</span
                                         >
                                         <span
-                                            class="block text-xs font-semibold"
+                                            class="text-xs font-semibold"
                                             >{item.label}</span
                                         >
                                     </button>
                                 {/each}
                             </div>
-                            <div
-                                class="mt-3 rounded-xl bg-background/75 px-3 py-2"
-                            >
+                            <div class="mt-2 rounded-md border border-border/70 bg-background px-3 py-2">
                                 <p
-                                    class="text-xs md:text-[10px] font-bold uppercase tracking-wide text-muted-foreground"
+                                    class="text-xs font-medium text-muted-foreground"
                                 >
                                     Ringkasan Jadwal
                                 </p>
                                 <p
-                                    class="truncate text-xs font-semibold text-foreground"
+                                    class="mt-0.5 break-words text-sm font-semibold leading-snug text-foreground"
                                 >
                                     {mobileTripSummary()}
                                 </p>
@@ -6840,11 +6839,11 @@ return;
                 >
 
                 <div
-                    class={`gap-3 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.35fr)] ${mobileBookingStep === 1 ? 'grid' : 'hidden md:grid'}`}
+                    class={`gap-4 rounded-lg border border-border bg-background/70 p-3 sm:p-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.35fr)] ${mobileBookingStep === 1 ? 'grid' : 'hidden md:grid'}`}
                 >
                     <div>
                         <div
-                            class="rounded-xl border border-input bg-background/70 p-2.5 shadow-sm"
+                            class="min-w-0"
                         >
                             <div
                                 class="mb-2 flex items-center justify-between gap-2"
@@ -6871,7 +6870,7 @@ return;
                                     ><span>Tanggal keberangkatan</span><input
                                         id="booking-date"
                                         bind:this={bookingDateInput}
-                                        class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-center text-sm font-semibold shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-start text-sm font-medium shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                         type="text"
                                         value={bookingDate}
                                         readonly
@@ -6904,13 +6903,13 @@ return;
                     <div class="grid gap-3">
                         <div>
                             <div
-                                class="rounded-xl border border-input bg-background/70 p-2.5 shadow-sm lg:p-1.5"
+                                class="min-w-0"
                             >
                                 <label
                                     class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
                                     ><span>Rute</span><select
                                         id="booking-route"
-                                        class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-base font-semibold lg:h-10 lg:text-sm"
+                                        class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-start text-base font-medium lg:text-sm"
                                         bind:value={selectedRoute}
                                         onchange={() => void onRouteChange()}
                                         disabled={loadingRoutes}
@@ -6929,13 +6928,13 @@ return;
                         <div class="grid gap-3 md:grid-cols-2 lg:gap-2">
                             <div>
                                 <div
-                                    class="rounded-xl border border-input bg-background/70 p-2.5 shadow-sm lg:p-1.5"
+                                    class="min-w-0"
                                 >
                                     <label
                                         class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
                                         ><span>Jam keberangkatan</span><select
                                             id="booking-jam"
-                                            class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-base font-semibold lg:h-10 lg:text-sm"
+                                            class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-start text-base font-medium lg:text-sm"
                                             bind:value={selectedJam}
                                             onchange={() =>
                                                 void onScheduleChange()}
@@ -6970,13 +6969,13 @@ return;
 
                             <div>
                                 <div
-                                    class="rounded-xl border border-input bg-background/70 p-2.5 shadow-sm lg:p-1.5"
+                                    class="min-w-0"
                                 >
                                     <label
                                         class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
                                         ><span>Nomor unit</span><select
                                             id="booking-unit"
-                                            class="flex h-12 w-full rounded-xl border border-input bg-background px-3 py-1 text-center text-sm lg:h-10 lg:text-xs"
+                                            class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-start text-base font-medium lg:text-sm"
                                             bind:value={selectedUnit}
                                             onchange={() =>
                                                 void loadSeatDetails()}
@@ -7430,7 +7429,7 @@ return;
                                         {@const complete =
                                             passengerDraftIsComplete(seat)}
                                         <div
-                                            class={`flex min-w-[156px] shrink-0 items-stretch rounded-xl border transition ${activePassengerSeat === seat ? 'border-primary bg-primary/10' : 'border-border bg-background hover:bg-muted/60'}`}
+                                            class={`flex min-w-[130px] shrink-0 items-stretch rounded-lg border transition ${activePassengerSeat === seat ? 'border-primary bg-primary/10' : 'border-border bg-background hover:bg-muted/60'}`}
                                         >
                                             <button
                                                 type="button"
@@ -7687,7 +7686,7 @@ return;
                                     <label
                                         for="booking-form-pickup"
                                         class="mb-1.5 block text-xs font-medium text-muted-foreground"
-                                        >Titik Jemput (Titik jemput)</label
+                                        >Titik Jemput</label
                                     >
                                     <Input
                                         id="booking-form-pickup"
@@ -12400,6 +12399,24 @@ return;
 </div>
 
 <style>
+    :global(.booking-console-fields input:not([type='checkbox']):not([type='radio'])),
+    :global(.booking-console-fields select) {
+        min-width: 0;
+        max-width: 100%;
+        border-radius: 0.5rem;
+    }
+
+    :global(.booking-console-fields select:focus-visible),
+    :global(.booking-console-fields input:focus-visible) {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+    }
+
+    :global(.booking-console-fields select:disabled) {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
     @keyframes seat-tap-pop {
         0% {
             transform: scale(1);
