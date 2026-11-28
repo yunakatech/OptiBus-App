@@ -381,6 +381,21 @@
             min-width: 0;
             max-width: 100%;
         }
+
+        input[type='date'] {
+            display: block;
+            width: 100%;
+            text-align: center !important;
+        }
+
+        /* WebKit renders the date value and empty prompt in a separate box. */
+        input[type='date']::-webkit-date-and-time-value {
+            text-align: center;
+        }
+
+        input[type='date']::-webkit-datetime-edit {
+            text-align: center;
+        }
     }
 
     @media (min-width: 1024px) {
