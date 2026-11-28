@@ -365,12 +365,21 @@
 }
 
 @layer base {
-    /* Mobile Safari zooms focused form fields rendered below 16px. */
+    /* Keep editable text at least 16px to avoid iOS focus zoom. */
     @media (max-width: 767px), (pointer: coarse) {
         input:not([type='checkbox']):not([type='radio']),
         select,
-        textarea {
-            font-size: 16px !important;
+        textarea,
+        [contenteditable='true'] {
+            font-size: max(16px, 1em) !important;
+        }
+
+        input[type='date'],
+        input[type='datetime-local'],
+        input[type='time'] {
+            box-sizing: border-box;
+            min-width: 0;
+            max-width: 100%;
         }
     }
 

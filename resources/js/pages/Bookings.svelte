@@ -6841,7 +6841,7 @@ return;
                 <div
                     class={`gap-4 rounded-lg border border-border bg-background/70 p-3 sm:p-4 lg:grid-cols-[minmax(280px,0.9fr)_minmax(0,1.35fr)] ${mobileBookingStep === 1 ? 'grid' : 'hidden md:grid'}`}
                 >
-                    <div>
+                    <div class="min-w-0">
                         <div
                             class="min-w-0"
                         >
@@ -6864,13 +6864,13 @@ return;
                                 </Button>
                             </div>
 
-                            <div class="relative">
+                            <div class="relative min-w-0">
                                 <label
                                     class="mobile-field grid min-w-0 gap-1.5 text-sm font-medium"
                                     ><span>Tanggal keberangkatan</span><input
                                         id="booking-date"
                                         bind:this={bookingDateInput}
-                                        class="flex h-11 w-full rounded-lg border border-input bg-background px-3 py-1 text-start text-sm font-medium shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                                        class="block h-11 w-full min-w-0 max-w-full rounded-lg border border-input bg-background px-3 py-1 text-start text-sm font-medium shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                                         type="text"
                                         value={bookingDate}
                                         readonly
@@ -12401,6 +12401,7 @@ return;
 <style>
     :global(.booking-console-fields input:not([type='checkbox']):not([type='radio'])),
     :global(.booking-console-fields select) {
+        box-sizing: border-box;
         min-width: 0;
         max-width: 100%;
         border-radius: 0.5rem;
