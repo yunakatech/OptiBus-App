@@ -256,7 +256,7 @@ return;
                 ></div></ViewportOnly
             >
             <div
-                class="relative mx-auto grid max-w-7xl gap-8 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-[minmax(0,0.94fr)_minmax(420px,1.06fr)] lg:items-center lg:gap-12 lg:px-10 lg:py-20"
+                class="relative mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,0.94fr)_minmax(420px,1.06fr)] lg:items-start lg:gap-12 lg:px-10 lg:py-12"
             >
                 <div
                     class="hero-copy relative z-10 flex flex-col justify-center"
@@ -301,50 +301,10 @@ return;
                     <p class="mt-1 text-sm font-medium text-[#42635f]">
                         {trialAvailable ? `Daftar gratis · Uji coba Starter ${trialDays} hari` : 'Pilih paket sesuai kebutuhan operasional Anda'}
                     </p>
-                    <dl
-                        class="mt-8 grid max-w-xl grid-cols-3 gap-2 border-y border-[#DCE9E6] py-4 sm:mt-10 sm:gap-5 sm:py-5"
-                    >
-                        <div>
-                            <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]"
-                            >
-                                Transaksi
-                            </dt>
-                            <dd
-                                class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
-                            >
-                                Kursi, carter, bagasi
-                            </dd>
-                        </div>
-                        <div>
-                            <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]"
-                            >
-                                Cakupan
-                            </dt>
-                            <dd
-                                class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
-                            >
-                                Tim & pool
-                            </dd>
-                        </div>
-                        <div>
-                            <dt
-                                class="text-xs md:text-[10px] font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]"
-                            >
-                                Audit
-                            </dt>
-                            <dd
-                                class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base"
-                            >
-                                Data terpisah
-                            </dd>
-                        </div>
-                    </dl>
                 </div>
 
                 <div
-                    class="relative flex items-center justify-center overflow-hidden rounded-3xl border border-[#c8e5da] bg-[#E7FAF3] px-4 py-3 sm:px-8 sm:py-6 lg:min-h-[550px]"
+                    class="relative flex items-start justify-center overflow-hidden rounded-3xl border border-[#c8e5da] bg-[#E7FAF3] px-4 pt-8 pb-10 sm:px-8 sm:pt-10 sm:pb-12 lg:min-h-[380px]"
                 >
                     <div
                         class="absolute inset-x-0 top-0 flex items-center justify-between border-b border-[#DCE9E6] px-4 py-2 text-xs md:text-[9px] font-semibold uppercase tracking-[0.18em] text-[#42635f] sm:px-6"
@@ -353,7 +313,7 @@ return;
                         <span>OptiBus</span>
                     </div>
                     <div
-                        class="hero-product relative mx-auto mt-7 w-full max-w-[340px] sm:mt-8 sm:max-w-[520px] lg:max-w-[560px]"
+                        class="hero-product relative mx-auto mt-2 w-full max-w-[340px] sm:mt-3 sm:max-w-[520px] lg:max-w-[560px]"
                     >
                         <div class="laptop-mockup relative z-10">
                             <div class="laptop-screen">
@@ -371,6 +331,11 @@ return;
                         </div>
                     </div>
                 </div>
+                <dl class="grid max-w-xl grid-cols-3 gap-2 border-y border-[#DCE9E6] py-4 sm:gap-5 sm:py-5 lg:col-span-2">
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]">Transaksi</dt><dd class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base">Kursi, carter, bagasi</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]">Cakupan</dt><dd class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base">Tim &amp; pool</dd></div>
+                    <div><dt class="text-xs font-semibold uppercase tracking-[0.12em] text-[#42635f] sm:text-[11px]">Audit</dt><dd class="mt-1 text-sm font-semibold text-[#163A39] sm:text-base">Data terpisah</dd></div>
+                </dl>
             </div>
         </section>
 
